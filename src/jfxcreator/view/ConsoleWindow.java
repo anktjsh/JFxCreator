@@ -5,10 +5,16 @@
  */
 package jfxcreator.view;
 
+import jfxcreator.core.Console;
+
 /**
  *
  * @author Aniket
  */
 public class ConsoleWindow {
+    private final Console console;
     
+    public ConsoleWindow(Console c) {
+        console = c;
+    }
 }
