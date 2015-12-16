@@ -193,7 +193,6 @@ public class Project {
                             }
                             if (!already) {
                                 addScriptsToList(child);
-//                                addScript(new Program(child.getFileName().toString(), child, new ArrayList<>(), Project.this));
                             }
                             checkSources();
                         } else if (kind == ENTRY_MODIFY) {
@@ -207,7 +206,6 @@ public class Project {
                             }
                             if (!already) {
                                 addScriptsToList(child);
-//                                addScript(new Program(child.getFileName().toString(), child, new ArrayList<>(), Project.this));
                             } else {
                                 reloadScript(child, scra);
                             }
@@ -369,11 +367,15 @@ public class Project {
     }
 
     private void saveConfig() {
-
+        try{
+            Files.write(config,
+                    FXCollections.observableArrayList(mainClassName));
+        }catch(IOException e) {
+        }
     }
 
     private void readConfig() {
-
+//
     }
     
     public String serialize() {
@@ -431,7 +433,12 @@ public class Project {
     }
 
     private void addExistingPrograms() {
-
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(source)) {
+            for (Path file : stream) {
+                addScriptsToList(file);
+            }
+        } catch (IOException | DirectoryIteratorException x) {
+        }
     }
 
     public void addProjectListener(ProjectListener pl) {
@@ -467,7 +474,7 @@ public class Project {
     }
 
     public void delete() {
-
+        //
     }
 
     public void close() {
@@ -533,11 +540,11 @@ public class Project {
     }
 
     public ProcessItem macCompile() {
-        return null;
+        return null;//
     }
 
     public ProcessItem macBuild() {
-        return null;
+        return null;//
     }
 
     public ProcessItem windowsBuild() {
@@ -578,7 +585,20 @@ public class Project {
     }
 
     public ProcessItem run() {
-        return null;
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")) {
+            return windowsRun();
+        } else {
+            return macRun();
+        }
+    }
+    
+    private ProcessItem windowsRun() {
+        return null;//
+    }
+    
+    private ProcessItem macRun() {
+        return null;//
     }
 
     private void almostDeepDelete(File p) {
@@ -664,10 +684,6 @@ public class Project {
                 console.log(in.nextLine());
             }
         }
-    }
-
-    private ProcessBuilder getBuilder(String directory) {
-        return null;
     }
     
     public static Project unserialize(String s) {

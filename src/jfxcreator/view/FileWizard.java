@@ -67,8 +67,8 @@ public class FileWizard {
                 "Java Main Class",
                 "Java Interface",
                 /*"JavaFx Main Class",
-                "JavaFx Preloader",
-        */
+                 "JavaFx Preloader",
+                 */
                 "Empty Java File",
                 "Other File"));
         options.setOnMouseClicked((e) -> {
@@ -146,7 +146,7 @@ public class FileWizard {
         String sourcepath = project.getSource().toAbsolutePath().toString();
         destination.setText(sourcepath + File.separator + filename.getText());
         filename.textProperty().addListener((ob, older, newer) -> {
-            destination.setText(sourcepath + File.separator + newer + ".java");
+            destination.setText(sourcepath + File.separator + newer);
         });
         bottom.getChildren().addAll(1, FXCollections.observableArrayList(back = new Button("Back")));
         back.setOnAction((e) -> {
@@ -214,7 +214,7 @@ public class FileWizard {
             return description;
         }
     }
-    
+
     public static List<String> getTemplateCode(String desc, String className) {
         if (className.contains(".")) {
             String pack = className.substring(0, className.lastIndexOf('.'));
@@ -322,7 +322,6 @@ public class FileWizard {
 //    private static List<String> five(String pack, String clas) {
 //        
 //    }
-
     private static List<String> six(String pack, String clas) {
         return new ArrayList<>();
     }

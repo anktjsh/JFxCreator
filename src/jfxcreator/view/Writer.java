@@ -18,6 +18,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
@@ -40,6 +41,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -451,10 +453,17 @@ public class Writer extends BorderPane {
         openPreviousProjects();
         addDragAndDrop();
         setOnKeyPressed((e) -> {
-            //
+            evaluate(e);
         });
         bottom = new BorderPane();
         console = new TabPane();
+        console.getTabs().addListener((ListChangeListener.Change<? extends Tab> c) -> {
+            c.next();
+            if (c.getList().isEmpty()) {
+                bottom.setCenter(null);
+                bottom.setCenter(console);
+            }
+        });
         setBottom(bottom);
         bottom.setCenter(console);
         bottom.setPadding(new Insets(5, 10, 5, 10));
@@ -481,7 +490,18 @@ public class Writer extends BorderPane {
     }
 
     private boolean scriptContains(ObservableList<TreeItem<String>> pti, Program pro) {
-        return pti.stream().filter((tr) -> (tr instanceof ProgramTreeItem)).map((tr) -> (ProgramTreeItem) tr).anyMatch((pra) -> (pra.getScript().equals(pro)));
+        for (TreeItem<String> tr : pti) {
+            if (tr instanceof ProgramTreeItem) {
+                ProgramTreeItem pra = (ProgramTreeItem) tr;
+                if (pra.getScript().equals(pro)) {
+                    return true;
+                }
+            } else if (tr instanceof DirectoryTreeItem) {
+                DirectoryTreeItem dti = (DirectoryTreeItem) tr;
+                return scriptContains(dti.getChildren(), pro);
+            }
+        }
+        return false;
     }
 
     private void addScriptTreeItem(ProjectTreeItem pti, ProgramTreeItem sti) {
@@ -492,9 +512,14 @@ public class Writer extends BorderPane {
         if (left.contains(File.separator)) {
             DirectoryTreeItem last = null;
             while (left.contains(File.separator)) {
-                DirectoryTreeItem dti = new DirectoryTreeItem(pti.getProject(), Paths.get(one + File.separator + left.substring(0, left.indexOf(File.separator) + 1)));
-                left = left.substring(left.indexOf(File.separator) + 1);
-                pti.getChildren().add(dti);
+                Path a = Paths.get(one + File.separator + left.substring(0, left.indexOf(File.separator) + 1));
+                DirectoryTreeItem dti = getDirectoryItem(pti, a.getFileName().toString());
+                if (dti == null) {
+                    dti = new DirectoryTreeItem(pti.getProject(), a);
+                    pti.getChildren().add(dti);
+                }
+                left = left.substring(left.indexOf(File.separator) + 1);                
+                pti = dti;
                 last = dti;
             }
             if (last != null) {
@@ -503,6 +528,19 @@ public class Writer extends BorderPane {
         } else {
             pti.getChildren().add(sti);
         }
+    }
+
+    private DirectoryTreeItem getDirectoryItem(ProjectTreeItem pro, String name) {
+        for (TreeItem<String> tri : pro.getChildren()) {
+            if (tri instanceof DirectoryTreeItem) {
+                if (tri.getValue().equals(name)) {
+                    return (DirectoryTreeItem) tri;
+                } else {
+                    return getDirectoryItem((DirectoryTreeItem) tri, name);
+                }
+            }
+        }
+        return null;
     }
 
     public Project getCurrentProject() {
@@ -867,19 +905,20 @@ public class Writer extends BorderPane {
                 Program sc;
                 if (show.get().getDescription().contains("Other")) {
                     sc = new Program(Program.RESOURCE,
-                            Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separatorChar + show.get().getName()),
+                            Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separatorChar + Program.getFilePath(show.get().getName())),
                             FileWizard.getTemplateCode(show.get().getDescription(),
                                     show.get().getName()),
                             getCurrentProject());
                 } else {
                     sc = new Program(Program.JAVA,
                             show.get().getName(),
-                            Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separator + show.get().getName()),
+                            Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separator + Program.getFilePath(show.get().getName()) + ".java"),
                             FileWizard.getTemplateCode(show.get().getDescription(),
                                     show.get().getName()),
                             getCurrentProject());
                 }
                 getCurrentProject().addScript(sc);
+                loadFile(sc.getFile().toFile(), sc, sc.getProject());
             }
         } else {
             Alert al = new Alert(Alert.AlertType.ERROR);
@@ -1034,6 +1073,10 @@ public class Writer extends BorderPane {
 
     private void addConsoleWindow(ProcessItem c) {
         console.getTabs().add(new ConsoleWindow(c));
+    }
+    
+    public final void evaluate(KeyEvent ke) {
+        
     }
 
 }
