@@ -5,10 +5,18 @@
  */
 package jfxcreator.view;
 
+import jfxcreator.core.Project;
+
 /**
  *
  * @author Aniket
  */
 public class ProjectProperties {
+
+    private final Project pro;
     
+    public ProjectProperties(Project p) {
+        pro = p;
+        
+    }
 }

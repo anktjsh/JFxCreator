@@ -10,5 +10,5 @@ package jfxcreator.core;
  * @author Aniket
  */
 public class Highlighter {
-    
+
 }

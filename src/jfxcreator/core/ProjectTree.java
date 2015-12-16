@@ -59,6 +59,7 @@ public class ProjectTree {
     public void addListener(ProjectTreeListener al) {
         listeners.add(al);
     }
+
     public interface ProjectTreeListener {
 
         public void projectAdded(Project pro);

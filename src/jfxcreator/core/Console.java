@@ -6,6 +6,7 @@
 package jfxcreator.core;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 /**
@@ -26,5 +27,20 @@ public class Console {
 
     public void log(String st) {
         list.add(st);
+    }
+
+    public void merge(Console col) {
+        col.getList().addAll(0, getList());
+        getList().addListener(new ListChangeListener<String>() {
+
+            @Override
+            public void onChanged(ListChangeListener.Change<? extends String> c) {
+                c.next();
+                if (c.wasAdded()) {
+                    col.getList().addAll(c.getAddedSubList());
+                }
+            }
+
+        });
     }
 }

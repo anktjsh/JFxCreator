@@ -101,6 +101,14 @@ public class Program {
         return !code.equals(lastCode);
     }
 
+    public void save(List<String> code) {
+        try {
+            Files.write(file, code);
+        } catch (IOException ex) {
+        }
+        lastCode = code;
+    }
+
     private List<String> readCode() {
         try {
             return Files.readAllLines(getFile());

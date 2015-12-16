@@ -5,10 +5,35 @@
  */
 package jfxcreator.view;
 
+import java.nio.file.Path;
+import javafx.collections.ListChangeListener;
+import javafx.scene.control.TreeItem;
+import jfxcreator.core.Project;
+
 /**
  *
  * @author Aniket
  */
-public class DirectoryTreeItem {
-    
+public class DirectoryTreeItem extends ProjectTreeItem {
+
+    private final Path path;
+
+    public DirectoryTreeItem(Project pro, Path dir) {
+        super(pro);
+        path = dir;
+        setValue(dir.getFileName().toString());
+        getChildren().addListener((ListChangeListener.Change<? extends TreeItem<String>> c) -> {
+            c.next();
+            if (getChildren().size() == 0) {
+                if (getParent() != null) {
+                    getParent().getChildren().remove(DirectoryTreeItem.this);
+                }
+            }
+        });
+    }
+
+    public Path getPath() {
+        return path;
+    }
+
 }

@@ -5,10 +5,152 @@
  */
 package jfxcreator.view;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.stage.Window;
+import static jfxcreator.JFxCreator.icon;
+import jfxcreator.core.Project;
+
 /**
  *
  * @author Aniket
  */
 public class ProjectWizard {
-    
+
+    public static Project createProject(Window w) {
+        String loca = Dependencies.workplace_location;
+        Path f = Paths.get(loca);
+        if (!Files.exists(f)) {
+            try {
+                Files.createDirectories(f);
+            } catch (IOException ex) {
+            }
+        }
+        List<String> file = new ProjectWizard(w).showAndWait();
+        if (file.isEmpty()) {
+            return null;
+        }
+        return new Project(Paths.get(file.get(0)), file.get(1), true);
+    }
+
+    private final Stage stage;
+    private final TextField projectPath, projectName, mainClassName;
+    private final Button confirm, cancel;
+    private final VBox box;
+
+    public ProjectWizard(Window w) {
+        stage = new Stage();
+        stage.setTitle("New Project");
+        stage.setMinHeight(400);
+        stage.setMinWidth(600);
+        stage.getIcons().add(icon);
+        stage.initOwner(w);
+        stage.setResizable(false);
+        stage.setOnCloseRequest((e) -> {
+            e.consume();
+            cancel();
+        });
+        stage.setScene(new Scene(box = new VBox(10)));
+        box.setPadding(new Insets(5, 10, 5, 10));
+        HBox hb;
+        box.getChildren().addAll(new Label("New Project"),
+                projectName = new TextField(getDefaultProjectName()),
+                projectPath = new TextField(),
+                mainClassName = new TextField(),
+                hb = new HBox(5,
+                        cancel = new Button("Cancel"),
+                        confirm = new Button("Confirm")));
+        box.setAlignment(Pos.CENTER);
+        hb.setAlignment(Pos.CENTER_RIGHT);
+        projectPath.setText(Dependencies.workplace_location + File.separator + projectName.getText());
+        projectPath.setEditable(false);
+        projectName.textProperty().addListener((ob, older, newer) -> {
+            projectPath.setText(Dependencies.workplace_location + File.separator + newer);
+        });
+        cancel.setOnAction((e) -> {
+            cancel();
+        });
+        confirm.setOnAction((e) -> {
+            if (projectName.getText().length() > 0) {
+                if (verify(projectName.getText())) {
+                    if (!mainClassName.getText().isEmpty()) {
+                        confirmed = true;
+                        stage.close();
+                    } else {
+                        Alert al = new Alert(Alert.AlertType.ERROR);
+                        al.setTitle("Error");
+                        al.setHeaderText("Project");
+                        al.initOwner(stage);
+                        al.setContentText("Main-Class Name cannot be empty!");
+                        ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+                        al.showAndWait();
+                    }
+                } else {
+                    Alert al = new Alert(Alert.AlertType.ERROR);
+                    al.setTitle("New Project");
+                    al.initOwner(stage);
+                    al.setHeaderText("Project : " + projectName.getText());
+                    al.setContentText("Project already exists!");
+                    ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+                    al.showAndWait();
+                }
+            } else {
+                Alert al = new Alert(Alert.AlertType.ERROR);
+                al.setTitle("Error");
+                al.setHeaderText("Project");
+                al.initOwner(stage);
+                al.setContentText("Project name cannot be empty!");
+                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+                al.showAndWait();
+            }
+        });
+    }
+
+    private void cancel() {
+        confirmed = false;
+        stage.close();
+    }
+
+    private boolean verify(String s) {
+        File f = new File(s);
+        return !f.exists();
+    }
+
+    private boolean confirmed;
+
+    public List<String> showAndWait() {
+        stage.showAndWait();
+        if (confirmed) {
+            return FXCollections.observableArrayList(projectPath.getText(), mainClassName.getText());
+        }
+        return new ArrayList<>();
+    }
+
+    private String getDefaultProjectName() {
+        int x = 1;
+        File f = new File(Dependencies.workplace_location + File.separator + "JavaProject" + x);
+        if (f.exists()) {
+            while (f.exists()) {
+                x++;
+                f = new File(Dependencies.workplace_location + File.separator + "JavaProject" + x);
+            }
+        }
+        return f.getName();
+    }
 }

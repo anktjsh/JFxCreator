@@ -5,10 +5,37 @@
  */
 package jfxcreator.view;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import jfxcreator.core.Program;
+import jfxcreator.core.Project;
+import net.sf.image4j.codec.ico.ICODecoder;
+
 /**
  *
  * @author Aniket
  */
-public class Viewer {
-    
+public class Viewer extends EnvironmentTab {
+
+    public Viewer(Program scr, Project pro) {
+        super(scr, pro);
+        if (scr.getFile().toAbsolutePath().toString().endsWith(".ico")) {
+            Image ico = null;
+            try {
+                ico = SwingFXUtils.toFXImage(ICODecoder.read(scr.getFile().toFile()).get(0), null);
+            } catch (Exception ex) {
+                Logger.getLogger(Viewer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            if (ico != null) {
+                getCenter().setCenter(new ScrollPane(new ImageView(ico)));
+            }
+        } else {
+            getCenter().setCenter(new ScrollPane(new ImageView(scr.getFile().toUri().toString())));
+        }
+    }
+
 }

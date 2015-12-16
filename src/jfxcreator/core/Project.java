@@ -8,6 +8,7 @@ package jfxcreator.core;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
@@ -30,6 +31,8 @@ import java.util.Scanner;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import jfxcreator.core.ProcessPool.ProcessItem;
+import jfxcreator.view.ProjectProperties;
 
 /**
  *
@@ -37,6 +40,7 @@ import javafx.concurrent.Task;
  */
 public class Project {
 
+    private final ProjectProperties prop;
     private final Path rootDirectory;
     private final String projectName;
     private final Path source, libs, dist, build;
@@ -100,6 +104,37 @@ public class Project {
         } else {
             readConfig();
         }
+        prop = new ProjectProperties(this);
+    }
+    
+    public Path getConfig() {
+        return config;
+    }
+    
+    public static Project loadProject(Path pro, boolean isNew) {
+        Path config = Paths.get(pro.toAbsolutePath().toString() + File.separator + "settings.config");
+        if (Files.exists(config)) {
+            String main = null;
+            try {
+                main = getMainClassFromConfig(config);
+            } catch (IOException ex) {
+                return null;
+            }
+            if (main==null) {
+                return null;
+            }
+            return new Project(pro, main, isNew);
+        }
+        return null;
+    }
+    
+    public static String getMainClassFromConfig(Path pa) throws IOException {
+        List<String> al = Files.readAllLines(pa);
+        if (al.isEmpty()) {
+            return null;
+        } else {
+            return al.get(0);
+        }
     }
 
     private class FileWatcher extends Task<Void> {
@@ -140,8 +175,6 @@ public class Project {
                         Path filename = ev.context();
                         Path child = dir.resolve(filename);
 
-                        //Console.log("File Watcher Event Type: " + kind.name());
-                        //Console.log("File Changed Absolute Path : " + filename.toFile().getAbsolutePath());
                         if (Files.isDirectory(child) || !child.getFileName().toString().contains(".")) {
                             if (kind == ENTRY_DELETE) {
                                 deleteInside(child);
@@ -342,10 +375,14 @@ public class Project {
     private void readConfig() {
 
     }
+    
+    public String serialize() {
+        return "Project : " + getRootDirectory().toAbsolutePath().toString() + " : " + getMainClassName();
+    }
 
     private void initializeProject() {
         Program pro = new Program(Program.JAVA,
-                Paths.get(source.toAbsolutePath() + Program.getFilePath(mainClassName)+".java"),
+                Paths.get(source.toAbsolutePath() + Program.getFilePath(mainClassName) + ".java"),
                 getInitialCode(mainClassName),
                 this);
         addScript(pro);
@@ -387,6 +424,10 @@ public class Project {
                     + "";
             return FXCollections.observableArrayList(list.split("\n"));
         }
+    }
+    
+    public ArrayList<Program> getPrograms() {
+        return programs;
     }
 
     private void addExistingPrograms() {
@@ -435,21 +476,168 @@ public class Project {
         }
         saveConfig();
     }
-    
-    public Console build() {
+
+    public ProcessItem build() {
+        ProcessItem con = compile();
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")) {
+            return con.merge(windowsBuild());
+        } else {
+            return con.merge(macBuild());
+        }
+    }
+
+    public ProcessItem compile() {
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")) {
+            return windowsCompile();
+        } else {
+            return macCompile();
+        }
+    }
+
+    public ProcessItem windowsCompile() {
+        String JAVA_HOME;
+        JAVA_HOME = "C:\\Program Files\\Java\\jdk1.8.0_45\\bin";
+        ProcessBuilder pb = new ProcessBuilder("cmd");
+        String one = "javac"
+                + getFileList() + " -d "
+                + build.toAbsolutePath().toString();
+        System.out.println(one);
+        pb.environment().put("PATH", JAVA_HOME);
+        pb.directory(rootDirectory.toFile());
+        pb.redirectErrorStream(true);
+        Console con = new Console();
+        ProcessItem pro;
+        try {
+            Process start = pb.start();
+            ProcessPool.getPool().addItem(pro = new ProcessItem("Compile Files for Project " + getProjectName(), start, con));
+            (new Thread(new Reader(start.getInputStream(), con))).start();
+            try (PrintStream writer = new PrintStream(start.getOutputStream())) {
+                writer.println(one);
+                writer.flush();
+            }
+            int waitFor = start.waitFor();
+        } catch (IOException | InterruptedException e) {
+            pro = null;
+        }
+        return pro;
+    }
+
+    private String getFileList() {
+        StringBuilder sb = new StringBuilder();
+        for (Program p : programs) {
+            sb.append(" ").append(p.getFile().toAbsolutePath().toString().endsWith(".java") ? p.getFile().toAbsolutePath().toString() : "");
+        }
+        return sb.toString();
+    }
+
+    public ProcessItem macCompile() {
         return null;
     }
-    
-    public Console clean() {
+
+    public ProcessItem macBuild() {
         return null;
     }
-    
-    public Console cleanAndBuild() {
+
+    public ProcessItem windowsBuild() {
+        String JAVA_HOME;
+        JAVA_HOME = "C:\\Program Files\\Java\\jdk1.8.0_45\\bin";
+        ProcessBuilder pb = new ProcessBuilder("cmd");
+        String one = "javapackager -createjar -appclass " + getMainClassName()
+                + " -srcdir " + build.toAbsolutePath().toString() + " -outdir "
+                + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar";
+        System.out.println(one);
+        pb.environment().put("PATH", JAVA_HOME);
+        pb.directory(rootDirectory.toFile());
+        pb.redirectErrorStream(true);
+        Console con = new Console();
+        ProcessItem pro;
+        try {
+            Process start = pb.start();
+            ProcessPool.getPool().addItem(pro = new ProcessItem("Build Jar File for Project " + getProjectName(), start, con));
+            (new Thread(new Reader(start.getInputStream(), con))).start();
+            try (PrintStream writer = new PrintStream(start.getOutputStream())) {
+                writer.println(one);
+                writer.flush();
+            }
+            int waitFor = start.waitFor();
+        } catch (IOException | InterruptedException e) {
+            pro = null;
+        }
+        return pro;
+    }
+
+    public void clean() {
+        almostDeepDelete(build.toFile());
+    }
+
+    public ProcessItem cleanAndBuild() {
+        clean();
+        return build();
+    }
+
+    public ProcessItem run() {
         return null;
     }
-    
-    public Console run() {
-        return null;
+
+    private void almostDeepDelete(File p) {
+        if (p.isDirectory()) {
+            for (File f : p.listFiles()) {
+                deepDelete(f.toPath());
+            }
+        }
+    }
+
+    private void deepDelete(Path fe) {
+        if (!Files.exists(fe)) {
+            return;
+        }
+        if (Files.isDirectory(fe) || !fe.getFileName().toString().contains(".")) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(fe)) {
+                for (Path run : stream) {
+                    deepDelete(run);
+                }
+            } catch (IOException | DirectoryIteratorException x) {
+            }
+            try {
+                Files.delete(fe);
+            } catch (IOException ex) {
+            }
+        } else {
+            try {
+                Files.delete(fe);
+            } catch (IOException ex) {
+            }
+        }
+    }
+
+    private void deepCopy(Path start, Path end, boolean isDirectory) {
+        if (!Files.exists(end)) {
+            if (isDirectory) {
+                try {
+                    Files.createDirectories(end);
+                } catch (IOException ex) {
+                }
+            }
+        }
+        if (Files.isDirectory(start) || !start.getFileName().toString().contains(".")) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(start)) {
+                for (Path f : stream) {
+                    if (Files.isDirectory(f) || !f.getFileName().toString().contains(".")) {
+                        deepCopy(f, Paths.get(end.toAbsolutePath().toString() + File.separator + f.getFileName().toString()), true);
+                    } else {
+                        deepCopy(f, Paths.get(end.toAbsolutePath().toString() + File.separator + f.getFileName().toString()), false);
+                    }
+                }
+            } catch (IOException | DirectoryIteratorException x) {
+            }
+        } else {
+            try {
+                Files.copy(start, end);
+            } catch (IOException ex) {
+            }
+        }
     }
 
     public interface ProjectListener {
@@ -458,7 +646,7 @@ public class Project {
 
         public void fileRemoved(Project pro, Program scr);
     }
-    
+
     public static class Reader implements Runnable {
 
         private final InputStream strea;
@@ -477,9 +665,25 @@ public class Project {
             }
         }
     }
-    
+
     private ProcessBuilder getBuilder(String directory) {
         return null;
     }
+    
+    public static Project unserialize(String s) {
+        try {
+            String[] split = s.split(" : ");
+            return unserialize(Paths.get(split[1]));
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
+    public static Project unserialize(Path f) {
+        return loadProject(f, false);
+    }
+    
+    public void addListener(ProjectListener al) {
+        listeners.add(al);
+    }
 }
