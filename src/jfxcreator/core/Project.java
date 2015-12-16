@@ -106,11 +106,11 @@ public class Project {
         }
         prop = new ProjectProperties(this);
     }
-    
+
     public Path getConfig() {
         return config;
     }
-    
+
     public static Project loadProject(Path pro, boolean isNew) {
         Path config = Paths.get(pro.toAbsolutePath().toString() + File.separator + "settings.config");
         if (Files.exists(config)) {
@@ -120,14 +120,14 @@ public class Project {
             } catch (IOException ex) {
                 return null;
             }
-            if (main==null) {
+            if (main == null) {
                 return null;
             }
             return new Project(pro, main, isNew);
         }
         return null;
     }
-    
+
     public static String getMainClassFromConfig(Path pa) throws IOException {
         List<String> al = Files.readAllLines(pa);
         if (al.isEmpty()) {
@@ -367,17 +367,17 @@ public class Project {
     }
 
     private void saveConfig() {
-        try{
+        try {
             Files.write(config,
                     FXCollections.observableArrayList(mainClassName));
-        }catch(IOException e) {
+        } catch (IOException e) {
         }
     }
 
     private void readConfig() {
 //
     }
-    
+
     public String serialize() {
         return "Project : " + getRootDirectory().toAbsolutePath().toString() + " : " + getMainClassName();
     }
@@ -427,7 +427,7 @@ public class Project {
             return FXCollections.observableArrayList(list.split("\n"));
         }
     }
-    
+
     public ArrayList<Program> getPrograms() {
         return programs;
     }
@@ -592,11 +592,11 @@ public class Project {
             return macRun();
         }
     }
-    
+
     private ProcessItem windowsRun() {
         return null;//
     }
-    
+
     private ProcessItem macRun() {
         return null;//
     }
@@ -685,7 +685,7 @@ public class Project {
             }
         }
     }
-    
+
     public static Project unserialize(String s) {
         try {
             String[] split = s.split(" : ");
@@ -698,7 +698,7 @@ public class Project {
     public static Project unserialize(Path f) {
         return loadProject(f, false);
     }
-    
+
     public void addListener(ProjectListener al) {
         listeners.add(al);
     }

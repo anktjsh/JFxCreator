@@ -74,7 +74,7 @@
             <zipgroupfileset dir="dist/lib" includes="*.jar"/>
 
             <manifest>
-                <attribute name="Main-Class" value="scriptfx.ScriptFx"/>
+                <attribute name="Main-Class" value="jfxcreator.JFxCreator"/>
             </manifest>
         </jar>
 

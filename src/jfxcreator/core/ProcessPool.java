@@ -83,7 +83,7 @@ public class ProcessPool {
         public Console getConsole() {
             return console;
         }
-        
+
         public ProcessItem merge(ProcessItem pti) {
             console.merge(pti.getConsole());
             return pti;

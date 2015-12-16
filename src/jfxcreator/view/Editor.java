@@ -330,7 +330,7 @@ public class Editor extends EnvironmentTab {
     public void paste() {
         area.paste();
     }
-    
+
     public void selectAll() {
         area.selectAll();
     }

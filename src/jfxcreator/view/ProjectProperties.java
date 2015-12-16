@@ -14,9 +14,9 @@ import jfxcreator.core.Project;
 public class ProjectProperties {
 
     private final Project pro;
-    
+
     public ProjectProperties(Project p) {
         pro = p;
-        
+
     }
 }
