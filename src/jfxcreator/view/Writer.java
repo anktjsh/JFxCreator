@@ -1072,7 +1072,9 @@ public class Writer extends BorderPane {
     }
 
     private void addConsoleWindow(ProcessItem c) {
-        console.getTabs().add(new ConsoleWindow(c));
+        ConsoleWindow con;
+        console.getTabs().add(con = new ConsoleWindow(c));
+        console.getSelectionModel().select(con);
     }
     
     public final void evaluate(KeyEvent ke) {
