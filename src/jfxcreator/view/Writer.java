@@ -18,9 +18,9 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.print.Printer;
@@ -41,6 +41,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
@@ -53,6 +54,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import jfxcreator.JFxCreator;
 import static jfxcreator.JFxCreator.icon;
+import jfxcreator.core.Console;
 import jfxcreator.core.ProcessPool;
 import jfxcreator.core.ProcessPool.ProcessItem;
 import jfxcreator.core.Program;
@@ -66,11 +68,11 @@ import jfxcreator.view.FileWizard.FileDescription;
  * @author Aniket
  */
 public class Writer extends BorderPane {
-    
+
     public static final ObjectProperty<Font> fontSize = new SimpleObjectProperty(new Font(15));
     public static final BooleanProperty wrapText = new SimpleBooleanProperty(false);
     public static final ObjectProperty<Project> currentProject = new SimpleObjectProperty(null);
-    
+
     private final TabPane tabPane;
     private final MenuBar bar;
     private final Menu file, edit, launch, view, deploy, settings, help;
@@ -86,7 +88,7 @@ public class Writer extends BorderPane {
     private final ComboBox<String> fontSizes;
     private final BorderPane bottom;
     private final TabPane console;
-    
+
     public Writer() {
         tabPane = new TabPane();
         setCenter(tabPane);
@@ -144,7 +146,7 @@ public class Writer extends BorderPane {
         settings.getItems().addAll(jPlatforms = new MenuItem("Java Platforms"),
                 pDirectory = new MenuItem("Workplace Directory"));
         help.getItems().add(about = new MenuItem("About"));
-        
+
         nFile.setOnAction((e) -> {
             newFile();
         });
@@ -238,13 +240,13 @@ public class Writer extends BorderPane {
             al.initOwner(getScene().getWindow());
             al.showAndWait();
         });
-        
+
         tree = new TreeView();
         setLeft(tree);
         tree.setRoot(new TreeItem<>("Projects"));
         tree.getRoot().setExpanded(true);
         ProjectTree.getTree().addListener(new ProjectTree.ProjectTreeListener() {
-            
+
             @Override
             public void projectAdded(Project added) {
                 if (!projectContains(tree.getRoot().getChildren(), added)) {
@@ -252,14 +254,14 @@ public class Writer extends BorderPane {
                     tree.getRoot().getChildren().add(item = new ProjectTreeItem(added));
                     item.setExpanded(true);
                     added.addListener((new Project.ProjectListener() {
-                        
+
                         @Override
                         public void fileAdded(Project pro, Program add) {
                             if (!scriptContains(item.getChildren(), add)) {
                                 addScriptTreeItem(item, new ProgramTreeItem(add));
                             }
                         }
-                        
+
                         @Override
                         public void fileRemoved(Project pro, Program scr) {
                             findScriptTreeItem(item, scr);
@@ -278,10 +280,10 @@ public class Writer extends BorderPane {
                     });
                 }
             }
-            
+
             @Override
             public void projectRemoved(Project pro) {
-                
+
                 for (TreeItem<String> tre : tree.getRoot().getChildren()) {
                     if (tre instanceof ProjectTreeItem) {
                         ProjectTreeItem pri = (ProjectTreeItem) tre;
@@ -304,7 +306,7 @@ public class Writer extends BorderPane {
                 }
             }
         });
-        
+
         tree.setOnMouseClicked((e) -> {
             if (e.getClickCount() == 2) {
                 if (e.getClickCount() == 2) {
@@ -428,7 +430,7 @@ public class Writer extends BorderPane {
                     }
                 });
                 prop.setOnAction((efd) -> {
-                    //property(((ProjectTreeItem) select).getProject());
+                    property(((ProjectTreeItem) select).getProject());
                 });
                 details.setOnAction((ejgf) -> {
                     Details.getDetails((Stage) getScene().getWindow(), ((ProjectTreeItem) select).getProject().getRootDirectory()).showAndWait();
@@ -457,19 +459,12 @@ public class Writer extends BorderPane {
         });
         bottom = new BorderPane();
         console = new TabPane();
-        console.getTabs().addListener((ListChangeListener.Change<? extends Tab> c) -> {
-            c.next();
-            if (c.getList().isEmpty()) {
-                bottom.setCenter(null);
-                bottom.setCenter(console);
-            }
-        });
         setBottom(bottom);
         bottom.setCenter(console);
         bottom.setPadding(new Insets(5, 10, 5, 10));
-        
+
     }
-    
+
     private void findScriptTreeItem(ProjectTreeItem pro, Program scr) {
         for (int x = pro.getChildren().size() - 1; x >= 0; x--) {
             TreeItem<String> al = pro.getChildren().get(x);
@@ -484,11 +479,11 @@ public class Writer extends BorderPane {
             }
         }
     }
-    
+
     private boolean projectContains(ObservableList<TreeItem<String>> tre, Project pr) {
         return tre.stream().filter((tr) -> (tr instanceof ProjectTreeItem)).map((tr) -> (ProjectTreeItem) tr).anyMatch((pra) -> (pra.getProject().equals(pr)));
     }
-    
+
     private boolean scriptContains(ObservableList<TreeItem<String>> pti, Program pro) {
         for (TreeItem<String> tr : pti) {
             if (tr instanceof ProgramTreeItem) {
@@ -503,7 +498,7 @@ public class Writer extends BorderPane {
         }
         return false;
     }
-    
+
     private void addScriptTreeItem(ProjectTreeItem pti, ProgramTreeItem sti) {
         String one, two;
         one = pti.getProject().getRootDirectory().toAbsolutePath().toString() + File.separator + "src" + File.separator;
@@ -518,7 +513,7 @@ public class Writer extends BorderPane {
                     dti = new DirectoryTreeItem(pti.getProject(), a);
                     pti.getChildren().add(dti);
                 }
-                left = left.substring(left.indexOf(File.separator) + 1);                
+                left = left.substring(left.indexOf(File.separator) + 1);
                 pti = dti;
                 last = dti;
             }
@@ -529,7 +524,7 @@ public class Writer extends BorderPane {
             pti.getChildren().add(sti);
         }
     }
-    
+
     private DirectoryTreeItem getDirectoryItem(ProjectTreeItem pro, String name) {
         for (TreeItem<String> tri : pro.getChildren()) {
             if (tri instanceof DirectoryTreeItem) {
@@ -542,11 +537,11 @@ public class Writer extends BorderPane {
         }
         return null;
     }
-    
+
     public Project getCurrentProject() {
         return currentProject.get();
     }
-    
+
     private void addDragAndDrop() {
         if (getScene() == null) {
             sceneProperty().addListener((ob, older, newer) -> {
@@ -592,13 +587,13 @@ public class Writer extends BorderPane {
             });
         }
     }
-    
+
     private void loadFiles(List<File> fil) {
         fil.stream().forEach((f) -> {
             loadFile(f, null);
         });
     }
-    
+
     private void loadFile(File f, Program prog, Project parent) {
         if (prog == null) {
             if (f.isDirectory()) {
@@ -671,11 +666,11 @@ public class Writer extends BorderPane {
             }
         }
     }
-    
+
     private void loadFile(File f, Project parent) {
         loadFile(f, null, parent);
     }
-    
+
     public final void openPreviousProjects() {
         Path f = Paths.get(".cache" + File.separator + "previous03.txt");
         ArrayList<String> al = new ArrayList<>();
@@ -688,7 +683,7 @@ public class Writer extends BorderPane {
         });
         openPreviousTabs();
     }
-    
+
     private void openPreviousTabs() {
         Path f = Paths.get(".cache" + File.separator + "open03.txt");
         ArrayList<String> al = new ArrayList<>();
@@ -721,11 +716,11 @@ public class Writer extends BorderPane {
                 tabPane.getSelectionModel().select(ed);
             } else {
                 loadFile(sti.getFile().toFile(), sti, sti.getProject());
-                
+
             }
         });
     }
-    
+
     private boolean alert() {
         if (getScene() == null) {
             return true;
@@ -747,14 +742,14 @@ public class Writer extends BorderPane {
         }
         return false;
     }
-    
+
     private void resize(MenuBar bar, String style) {
         bar.getMenus().stream().forEach((m) -> {
             m.setStyle(style);
         });
         tree.setStyle(style);
     }
-    
+
     public boolean processCheck() {
         int size = ProcessPool.getPool().size();
         if (size == 0) {
@@ -777,50 +772,43 @@ public class Writer extends BorderPane {
             return false;
         }
     }
-    
-    public final void clean() {
-        if (getCurrentProject() != null) {
-            ProcessItem cleanAndBuild = getCurrentProject().cleanAndBuild();
-            addConsoleWindow(cleanAndBuild);
-        }
-    }
-    
+
     public final void undo() {
         if (getSelectedEditor() != null) {
             getSelectedEditor().undo();
         }
     }
-    
+
     public final void redo() {
         if (getSelectedEditor() != null) {
             getSelectedEditor().redo();
         }
     }
-    
+
     public final void cut() {
         if (getSelectedEditor() != null) {
             getSelectedEditor().cut();
         }
     }
-    
+
     public final void copy() {
         if (getSelectedEditor() != null) {
             getSelectedEditor().copy();
         }
     }
-    
+
     public final void paste() {
         if (getSelectedEditor() != null) {
             getSelectedEditor().paste();
         }
     }
-    
+
     public final void selectAll() {
         if (getSelectedEditor() != null) {
             getSelectedEditor().selectAll();
         }
     }
-    
+
     public final void saveAll() {
         for (Tab b : tabPane.getTabs()) {
             if (b instanceof Editor) {
@@ -829,13 +817,13 @@ public class Writer extends BorderPane {
             }
         }
     }
-    
+
     private void save() {
         if (getSelectedEditor() != null) {
             getSelectedEditor().save();
         }
     }
-    
+
     private void print() {
         if (getSelectedTab() != null) {
             ObservableSet<Printer> allP = Printer.getAllPrinters();
@@ -878,14 +866,14 @@ public class Writer extends BorderPane {
             }
         }
     }
-    
+
     private void openFile() {
         FileChooser fc = new FileChooser();
         fc.setTitle("Open File");
         List<File> multi = fc.showOpenMultipleDialog(getScene().getWindow());
         loadFiles(multi);
     }
-    
+
     public final void openProject() {
         DirectoryChooser dc = new DirectoryChooser();
         dc.setInitialDirectory(new File(Dependencies.workplace_location));
@@ -897,7 +885,7 @@ public class Writer extends BorderPane {
             }
         }
     }
-    
+
     public final void newFile() {
         if (getCurrentProject() != null) {
             Optional<FileDescription> show = new FileWizard(getScene().getWindow(), getCurrentProject()).showAndWait();
@@ -909,16 +897,22 @@ public class Writer extends BorderPane {
                             FileWizard.getTemplateCode(show.get().getDescription(),
                                     show.get().getName()),
                             getCurrentProject());
+                    getCurrentProject().addScript(sc);
+                    loadFile(sc.getFile().toFile(), sc, sc.getProject());
                 } else {
+                    System.out.println("java");
                     sc = new Program(Program.JAVA,
                             show.get().getName(),
                             Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separator + Program.getFilePath(show.get().getName()) + ".java"),
                             FileWizard.getTemplateCode(show.get().getDescription(),
                                     show.get().getName()),
                             getCurrentProject());
+                    getCurrentProject().addScript(sc);
+                    Editor ed;
+                    tabPane.getTabs().add(ed = new Editor(sc, sc.getProject()));
+                    tabPane.getSelectionModel().select(ed);
                 }
-                getCurrentProject().addScript(sc);
-                loadFile(sc.getFile().toFile(), sc, sc.getProject());
+
             }
         } else {
             Alert al = new Alert(Alert.AlertType.ERROR);
@@ -929,7 +923,7 @@ public class Writer extends BorderPane {
             al.showAndWait();
         }
     }
-    
+
     public final void newProject() {
         Project pro = ProjectWizard.createProject(getScene().getWindow());
         if (pro != null) {
@@ -944,41 +938,70 @@ public class Writer extends BorderPane {
             ProjectTree.getTree().addProject(pro);
         }
     }
-    
+
+    public final void clean() {
+        if (getCurrentProject() != null) {
+            getCurrentProject().clean();
+            build.fire();
+        }
+    }
+
     public final void run() {
+        saveAll();
         if (getCurrentProject() != null) {
-            ProcessItem run1 = getCurrentProject().run();
-            addConsoleWindow(run1);
+            ProcessItem pro = new ProcessItem(null, null, new Console(getCurrentProject()));
+            addConsoleWindow(pro);
+            Task<Void> tk = new Task<Void>() {
+
+                @Override
+                protected Void call() throws Exception {
+                    getCurrentProject().run(pro);
+                    return null;
+                }
+
+            };
+            (new Thread(tk)).start();
         }
     }
-    
+
     public final void build() {
+        saveAll();
         if (getCurrentProject() != null) {
-            ProcessItem builder = getCurrentProject().build();
-            addConsoleWindow(builder);
+            ProcessItem pro = new ProcessItem(null, null, new Console(getCurrentProject()));
+            addConsoleWindow(pro);
+            Task<Void> tk = new Task<Void>() {
+
+                @Override
+                protected Void call() throws Exception {
+                    getCurrentProject().build(pro);
+                    return null;
+                }
+
+            };
+            (new Thread(tk)).start();
         }
     }
-    
+
     public final void closeProject() {
         if (getCurrentProject() != null) {
             closeProject(getCurrentProject());
         }
     }
-    
+
     private void closeProject(Project pro) {
         ProjectTree.getTree().removeProject(pro);
     }
-    
+
     public final void closeAllProjects() {
         for (Project p : ProjectTree.getTree().getProjects()) {
             closeProject(p);
         }
     }
-    
+
     public final void executable() {
         //
     }
-    
+
     public final void zip() {
         String out = getCurrentProject().getDist().toAbsolutePath().toString()
                 + File.separator + getCurrentProject().getProjectName() + ".zip";
@@ -993,23 +1016,31 @@ public class Writer extends BorderPane {
         ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
         al.showAndWait();
     }
-    
+
     public final void projectProperties() {
-        //
+        if (getCurrentProject() != null) {
+            property(getCurrentProject());
+        }
     }
-    
+
+    private void property(Project prop) {
+        if (getCurrentProject() != null) {
+            new ProjectProperties(prop, getScene().getWindow()).showAndWait();
+        }
+    }
+
     public final void javaPlatforms() {
         Dependencies.platform(getScene().getWindow());
     }
-    
+
     public final void directory() {
         Dependencies.workplace(getScene().getWindow());
     }
-    
+
     public boolean canSave() {
         return tabPane.getTabs().stream().filter((b) -> (b instanceof Editor)).map((b) -> (Editor) b).anyMatch((ed) -> (ed.canSave()));
     }
-    
+
     public void saveOpenProjectsInformation() {
         saveOpenTabsInformation();
         Path p = Paths.get(".cache");
@@ -1030,7 +1061,7 @@ public class Writer extends BorderPane {
         } catch (IOException ex) {
         }
     }
-    
+
     private void saveOpenTabsInformation() {
         Path p = Paths.get(".cache");
         if (!Files.exists(p)) {
@@ -1052,7 +1083,7 @@ public class Writer extends BorderPane {
         } catch (IOException e) {
         }
     }
-    
+
     private Editor getSelectedEditor() {
         if (getSelectedTab() == null) {
             return null;
@@ -1061,7 +1092,7 @@ public class Writer extends BorderPane {
         }
         return null;
     }
-    
+
     private EnvironmentTab getSelectedTab() {
         if (tabPane.getSelectionModel().getSelectedItem() != null) {
             if (tabPane.getSelectionModel().getSelectedItem() instanceof EnvironmentTab) {
@@ -1070,15 +1101,74 @@ public class Writer extends BorderPane {
         }
         return null;
     }
-    
+
     private void addConsoleWindow(ProcessItem c) {
         ConsoleWindow con;
         console.getTabs().add(con = new ConsoleWindow(c));
         console.getSelectionModel().select(con);
     }
-    
-    public final void evaluate(KeyEvent ke) {
-        
+
+    private void evaluate(KeyEvent kc) {
+        if (kc.isControlDown()) {
+            if (kc.isShiftDown()) {
+                if (kc.isAltDown()) {
+                    if (kc.getCode() == KeyCode.P) {
+                        print.fire();
+                    }
+                    if (kc.getCode() == KeyCode.C) {
+                        closeAll.fire();
+                    }
+                } else {
+                    if (kc.getCode() == KeyCode.N) {
+                        nProject.fire();
+                    }
+                    if (kc.getCode() == KeyCode.O) {
+                        oProject.fire();
+                    }
+                    if (kc.getCode() == KeyCode.S) {
+                        saveAll.fire();
+                    }
+                    if (kc.getCode() == KeyCode.C) {
+                        cProject.fire();
+                    }
+                }
+            } else {
+                if (kc.getCode() == KeyCode.N) {
+                    nFile.fire();
+                }
+                if (kc.getCode() == KeyCode.Z) {
+                    undo.fire();
+                }
+                if (kc.getCode() == KeyCode.Y) {
+                    redo.fire();
+                }
+                if (kc.getCode() == KeyCode.X) {
+                    cut.fire();
+                }
+                if (kc.getCode() == KeyCode.C) {
+                    copy.fire();
+                }
+                if (kc.getCode() == KeyCode.V) {
+                    paste.fire();
+                }
+                if (kc.getCode() == KeyCode.S) {
+                    save.fire();
+                }
+                if (kc.getCode() == KeyCode.O) {
+                    oFile.fire();
+                }
+                if (kc.getCode() == KeyCode.J) {
+                    jar.fire();
+                }
+                if (kc.getCode() == KeyCode.D) {
+                    zip.fire();
+                }
+                if (kc.getCode() == KeyCode.A) {
+                    selectAll.fire();
+                }
+            }
+        } else {
+        }
     }
-    
+
 }

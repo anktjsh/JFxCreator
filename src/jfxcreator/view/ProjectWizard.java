@@ -72,6 +72,7 @@ public class ProjectWizard {
         box.getChildren().addAll(new Label("New Project"),
                 projectName = new TextField(getDefaultProjectName()),
                 projectPath = new TextField(),
+                new Label("Create Main Class"),
                 mainClassName = new TextField(),
                 hb = new HBox(5,
                         cancel = new Button("Cancel"),
@@ -85,6 +86,9 @@ public class ProjectWizard {
         });
         cancel.setOnAction((e) -> {
             cancel();
+        });
+        mainClassName.setOnAction((e) -> {
+            confirm.fire();
         });
         confirm.setOnAction((e) -> {
             if (projectName.getText().length() > 0) {

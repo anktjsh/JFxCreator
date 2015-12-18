@@ -53,7 +53,8 @@ public class EnvironmentLoader extends Preloader {
         BorderPane.setAlignment(c.getCenter(), Pos.CENTER);
         BorderPane.setAlignment(p.getCenter(), Pos.CENTER);
         BorderPane.setAlignment(c.getTop(), Pos.CENTER);
-        return new Scene(p, 500, 350);
+        Scene sc = new Scene(p, 500, 350);
+        return sc;
     }
 
     @Override

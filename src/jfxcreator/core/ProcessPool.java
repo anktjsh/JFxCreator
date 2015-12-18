@@ -8,6 +8,8 @@ package jfxcreator.core;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
 /**
  *
@@ -35,7 +37,7 @@ public class ProcessPool {
         ped.addProcessListener((Process process) -> {
             for (int x = items.size() - 1; x >= 0; x--) {
                 if (items.get(x).getProcess().equals(process)) {
-                    pi.getConsole().log("Process Terminated : " + items.get(x).getName());
+                    //pi.getConsole().log("\nProcess Terminated : " + items.get(x).getName()+"\n");
                     items.remove(x);
                     break;
                 }
@@ -62,30 +64,50 @@ public class ProcessPool {
 
     public static class ProcessItem {
 
-        private final String name;
-        private final Process proc;
-        private final Console console;
+        private final ObjectProperty<String> nameProperty;
+        private final ObjectProperty<Process> processProperty;
+        private final ObjectProperty<Console> consoleProperty;
 
         public ProcessItem(String name, Process proc, Console con) {
-            this.name = name;
-            this.proc = proc;
-            console = con;
+            nameProperty = new SimpleObjectProperty<>(name);
+            processProperty = new SimpleObjectProperty<>(proc);
+            consoleProperty = new SimpleObjectProperty<>(con);
+        }
+        
+        public ObjectProperty<Console> consoleProperty() {
+            return consoleProperty;
+        }
+        
+        public ObjectProperty<Process> processProperty() {
+            return processProperty;
+        }
+        
+        public ObjectProperty<String> nameProperty() {
+            return nameProperty;
         }
 
         public String getName() {
-            return name;
+            return nameProperty.get();
         }
 
         public Process getProcess() {
-            return proc;
+            return processProperty.get();
         }
 
         public Console getConsole() {
-            return console;
+            return consoleProperty.get();
+        }
+        
+        public void setProcess(Process con) {
+            processProperty.set(con);
+        }
+        
+        public void setName(String str) {
+            nameProperty.set(str);
         }
 
         public ProcessItem merge(ProcessItem pti) {
-            console.merge(pti.getConsole());
+            getConsole().merge(pti.getConsole());
             return pti;
         }
 
@@ -120,7 +142,7 @@ public class ProcessPool {
             } catch (IllegalThreadStateException eg) {
             }
             try {
-                process.getConsole().log("Waiting for Process to conclude");
+                //process.getConsole().log("\nWaiting for Process to conclude\n");
                 process.getProcess().waitFor();
                 listeners.stream().forEach((listener) -> {
                     listener.processFinished(process.getProcess());

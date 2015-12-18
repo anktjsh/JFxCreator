@@ -5,10 +5,11 @@
  */
 package jfxcreator.core;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.InputStreamReader;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
@@ -27,11 +28,11 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import jfxcreator.core.ProcessPool.ProcessItem;
+import jfxcreator.view.Dependencies;
 import jfxcreator.view.ProjectProperties;
 
 /**
@@ -40,7 +41,6 @@ import jfxcreator.view.ProjectProperties;
  */
 public class Project {
 
-    private final ProjectProperties prop;
     private final Path rootDirectory;
     private final String projectName;
     private final Path source, libs, dist, build;
@@ -104,7 +104,6 @@ public class Project {
         } else {
             readConfig();
         }
-        prop = new ProjectProperties(this);
     }
 
     public Path getConfig() {
@@ -114,7 +113,7 @@ public class Project {
     public static Project loadProject(Path pro, boolean isNew) {
         Path config = Paths.get(pro.toAbsolutePath().toString() + File.separator + "settings.config");
         if (Files.exists(config)) {
-            String main = null;
+            String main;
             try {
                 main = getMainClassFromConfig(config);
             } catch (IOException ex) {
@@ -375,7 +374,7 @@ public class Project {
     }
 
     private void readConfig() {
-//
+        
     }
 
     public String serialize() {
@@ -448,6 +447,10 @@ public class Project {
     public String getMainClassName() {
         return mainClassName;
     }
+    
+    public void setMainClassName(String main) {
+        mainClassName = main;
+    }
 
     public Path getRootDirectory() {
         return rootDirectory;
@@ -484,53 +487,6 @@ public class Project {
         saveConfig();
     }
 
-    public ProcessItem build() {
-        ProcessItem con = compile();
-        String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            return con.merge(windowsBuild());
-        } else {
-            return con.merge(macBuild());
-        }
-    }
-
-    public ProcessItem compile() {
-        String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            return windowsCompile();
-        } else {
-            return macCompile();
-        }
-    }
-
-    public ProcessItem windowsCompile() {
-        String JAVA_HOME;
-        JAVA_HOME = "C:\\Program Files\\Java\\jdk1.8.0_45\\bin";
-        ProcessBuilder pb = new ProcessBuilder("cmd");
-        String one = "javac"
-                + getFileList() + " -d "
-                + build.toAbsolutePath().toString();
-        System.out.println(one);
-        pb.environment().put("PATH", JAVA_HOME);
-        pb.directory(rootDirectory.toFile());
-        pb.redirectErrorStream(true);
-        Console con = new Console();
-        ProcessItem pro;
-        try {
-            Process start = pb.start();
-            ProcessPool.getPool().addItem(pro = new ProcessItem("Compile Files for Project " + getProjectName(), start, con));
-            (new Thread(new Reader(start.getInputStream(), con))).start();
-            try (PrintStream writer = new PrintStream(start.getOutputStream())) {
-                writer.println(one);
-                writer.flush();
-            }
-            int waitFor = start.waitFor();
-        } catch (IOException | InterruptedException e) {
-            pro = null;
-        }
-        return pro;
-    }
-
     private String getFileList() {
         StringBuilder sb = new StringBuilder();
         for (Program p : programs) {
@@ -539,66 +495,110 @@ public class Project {
         return sb.toString();
     }
 
-    public ProcessItem macCompile() {
-        return null;//
+    public void compile(ProcessItem pro) {
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")) {
+            windowsCompile(pro);
+        } else {
+            macCompile(pro);
+        }
     }
 
-    public ProcessItem macBuild() {
-        return null;//
+    private void windowsCompile(ProcessItem pro) {
+        String JAVA_HOME = Dependencies.local_version;
+        String one = "\"" + JAVA_HOME + File.separator + "javac\""
+                + getFileList() + " -d "
+                + build.toAbsolutePath().toString();
+        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
+        pb.directory(rootDirectory.toFile());
+        pb.redirectErrorStream(true);
+        try {
+            Process start = pb.start();
+            pro.setName("Compile Files for Project " + getProjectName());
+            pro.setProcess(start);
+            ProcessPool.getPool().addItem(pro);
+            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            int waitFor = start.waitFor();
+        } catch (IOException | InterruptedException e) {
+        }
     }
 
-    public ProcessItem windowsBuild() {
-        String JAVA_HOME;
-        JAVA_HOME = "C:\\Program Files\\Java\\jdk1.8.0_45\\bin";
-        ProcessBuilder pb = new ProcessBuilder("cmd");
-        String one = "javapackager -createjar -appclass " + getMainClassName()
+    private void macCompile(ProcessItem pro) {
+
+    }
+
+    public void build(ProcessItem pro) {
+        compile(pro);
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")) {
+            windowsBuild(pro);
+        } else {
+            macBuild(pro);
+        }
+    }
+
+    private void windowsBuild(ProcessItem pro) {
+        String JAVA_HOME = Dependencies.local_version;
+        String one = "\"" + JAVA_HOME + File.separator + "javapackager\"" + " -createjar -appclass " + getMainClassName()
                 + " -srcdir " + build.toAbsolutePath().toString() + " -outdir "
                 + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar";
-        System.out.println(one);
+        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
+        pb.directory(rootDirectory.toFile());
+        pb.redirectErrorStream(true);
+        try {
+            Process start = pb.start();
+            pro.setName("Build Jar File for Project " + getProjectName());
+            pro.setProcess(start);
+            ProcessPool.getPool().addItem(pro);
+            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            int waitFor = start.waitFor();
+        } catch (IOException | InterruptedException e) {
+        }
+    }
+
+    private void macBuild(ProcessItem pro) {
+
+    }
+
+    public void run(ProcessItem pro) {
+        build(pro);
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")) {
+            windowsRun(pro);
+        } else {
+            macRun(pro);
+        }
+    }
+
+    private void windowsRun(ProcessItem pro) {
+        String JAVA_HOME = Dependencies.local_version;
+        String one = "\"" + JAVA_HOME + File.separator + "java\"" + " -jar " + dist.getFileName().toString() + File.separator + getProjectName() + ".jar";
+        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.environment().put("PATH", JAVA_HOME);
         pb.directory(rootDirectory.toFile());
         pb.redirectErrorStream(true);
-        Console con = new Console();
-        ProcessItem pro;
         try {
             Process start = pb.start();
-            ProcessPool.getPool().addItem(pro = new ProcessItem("Build Jar File for Project " + getProjectName(), start, con));
-            (new Thread(new Reader(start.getInputStream(), con))).start();
-            try (PrintStream writer = new PrintStream(start.getOutputStream())) {
-                writer.println(one);
-                writer.flush();
-            }
+            pro.setName("Launching Jar File for Project " + getProjectName());
+            pro.setProcess(start);
+            ProcessPool.getPool().addItem(pro);
+            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
         } catch (IOException | InterruptedException e) {
-            pro = null;
         }
-        return pro;
+    }
+
+    private void macRun(ProcessItem pro) {
+
     }
 
     public void clean() {
         almostDeepDelete(build.toFile());
+        almostDeepDelete(dist.toFile());
     }
 
-    public ProcessItem cleanAndBuild() {
-        clean();
-        return build();
-    }
+    public void stop(ProcessItem pro) {
 
-    public ProcessItem run() {
-        String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            return windowsRun();
-        } else {
-            return macRun();
-        }
-    }
-
-    private ProcessItem windowsRun() {
-        return null;//
-    }
-
-    private ProcessItem macRun() {
-        return null;//
     }
 
     private void almostDeepDelete(File p) {
@@ -632,34 +632,6 @@ public class Project {
         }
     }
 
-    private void deepCopy(Path start, Path end, boolean isDirectory) {
-        if (!Files.exists(end)) {
-            if (isDirectory) {
-                try {
-                    Files.createDirectories(end);
-                } catch (IOException ex) {
-                }
-            }
-        }
-        if (Files.isDirectory(start) || !start.getFileName().toString().contains(".")) {
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(start)) {
-                for (Path f : stream) {
-                    if (Files.isDirectory(f) || !f.getFileName().toString().contains(".")) {
-                        deepCopy(f, Paths.get(end.toAbsolutePath().toString() + File.separator + f.getFileName().toString()), true);
-                    } else {
-                        deepCopy(f, Paths.get(end.toAbsolutePath().toString() + File.separator + f.getFileName().toString()), false);
-                    }
-                }
-            } catch (IOException | DirectoryIteratorException x) {
-            }
-        } else {
-            try {
-                Files.copy(start, end);
-            } catch (IOException ex) {
-            }
-        }
-    }
-
     public interface ProjectListener {
 
         public void fileAdded(Project pro, Program add);
@@ -679,9 +651,15 @@ public class Project {
 
         @Override
         public void run() {
-            Scanner in = new Scanner(strea);
-            while (in.hasNextLine()) {
-                console.log(in.nextLine());
+            InputStreamReader isr = new InputStreamReader(strea);
+            BufferedReader br = new BufferedReader(isr);
+            int value = 0;
+            try {
+                while ((value = br.read()) != -1) {
+                    char c = (char) value;
+                    console.log(c);
+                }
+            } catch (IOException ex) {
             }
         }
     }

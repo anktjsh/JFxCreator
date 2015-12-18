@@ -5,6 +5,7 @@
  */
 package jfxcreator.core;
 
+import java.util.Arrays;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -15,32 +16,39 @@ import javafx.collections.ObservableList;
  */
 public class Console {
 
-    private final ObservableList<String> list;
+    private final ObservableList<Character> list;
+    private final Project proje;
 
-    public Console() {
+    public Console(Project project) {
+        proje = project;
         list = FXCollections.observableArrayList();
     }
 
-    public ObservableList<String> getList() {
+    public Project getProject() {
+        return proje;
+    }
+
+    public ObservableList<Character> getList() {
         return list;
     }
 
     public void log(String st) {
-        list.add(st);
+        for (char c : st.toCharArray()) {
+            log(c);
+        }
+    }
+
+    public void log(char c) {
+        list.add(c);
     }
 
     public void merge(Console col) {
         col.getList().addAll(0, getList());
-        getList().addListener(new ListChangeListener<String>() {
-
-            @Override
-            public void onChanged(ListChangeListener.Change<? extends String> c) {
-                c.next();
-                if (c.wasAdded()) {
-                    col.getList().addAll(c.getAddedSubList());
-                }
+        getList().addListener((ListChangeListener.Change<? extends Character> c) -> {
+            c.next();
+            if (c.wasAdded()) {
+                col.getList().addAll(c.getAddedSubList());
             }
-
         });
     }
 }

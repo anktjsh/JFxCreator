@@ -5,10 +5,19 @@
  */
 package jfxcreator.core;
 
+import jfxcreator.view.Editor;
+import org.fxmisc.richtext.CodeArea;
+
 /**
  *
  * @author Aniket
  */
 public class Highlighter {
 
+    public static void highlight(CodeArea area, Editor ed) {
+        if (ed.getScript().getType() == Program.JAVA) {
+            JavaKeywordsAsync as = new JavaKeywordsAsync(area);
+            as.apply();
+        }
+    }
 }

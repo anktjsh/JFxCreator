@@ -5,8 +5,6 @@
  */
 package jfxcreator.view;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -28,7 +26,6 @@ public class Viewer extends EnvironmentTab {
             try {
                 ico = SwingFXUtils.toFXImage(ICODecoder.read(scr.getFile().toFile()).get(0), null);
             } catch (Exception ex) {
-                Logger.getLogger(Viewer.class.getName()).log(Level.SEVERE, null, ex);
             }
             if (ico != null) {
                 getCenter().setCenter(new ScrollPane(new ImageView(ico)));

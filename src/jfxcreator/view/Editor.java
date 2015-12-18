@@ -24,6 +24,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import jfxcreator.JFxCreator;
+import jfxcreator.core.Highlighter;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 import org.fxmisc.richtext.CodeArea;
@@ -107,6 +108,7 @@ public class Editor extends EnvironmentTab {
 //        } else {
 //            area.setParagraphGraphicFactory(LineNumberFactory.get(area));
 //        }
+        Highlighter.highlight(area, this);
         area.setParagraphGraphicFactory(LineNumberFactory.get(area));
         area.setOnKeyPressed((e) -> {
             if (e.getCode() == KeyCode.ENTER) {
