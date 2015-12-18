@@ -519,6 +519,7 @@ public class Project {
             ProcessPool.getPool().addItem(pro);
             (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
+            System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
         }
     }
@@ -552,6 +553,7 @@ public class Project {
             ProcessPool.getPool().addItem(pro);
             (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
+            System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
         }
     }
@@ -584,6 +586,7 @@ public class Project {
             ProcessPool.getPool().addItem(pro);
             (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
+            System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
         }
     }

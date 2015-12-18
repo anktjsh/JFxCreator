@@ -19,6 +19,8 @@ import javafx.scene.image.Image;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import jfxcreator.core.ProjectTree;
 import jfxcreator.view.Dependencies;
 import jfxcreator.view.Writer;
@@ -103,6 +105,15 @@ public class JFxCreator extends Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+        }
         launch(args);
     }
 

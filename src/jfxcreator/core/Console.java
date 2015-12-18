@@ -5,10 +5,12 @@
  */
 package jfxcreator.core;
 
-import java.util.Arrays;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import jfxcreator.view.ConsoleWindow;
 
 /**
  *
@@ -18,10 +20,20 @@ public class Console {
 
     private final ObservableList<Character> list;
     private final Project proje;
+    private final ObjectProperty<ConsoleWindow> window;
 
     public Console(Project project) {
         proje = project;
         list = FXCollections.observableArrayList();
+        window = new SimpleObjectProperty();
+    }
+    
+    public void setConsoleWindow(ConsoleWindow cs) {
+        window.set(cs);
+    }
+    
+    public ConsoleWindow getConsoleWindow( ){
+        return window.get();
     }
 
     public Project getProject() {
@@ -38,8 +50,14 @@ public class Console {
         }
     }
 
-    public void log(char c) {
+    public synchronized void log(char c) {
         list.add(c);
+    }
+    
+    public void complete() {
+        if (window!=null) {
+            window.get().complete();
+        }
     }
 
     public void merge(Console col) {

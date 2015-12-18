@@ -34,10 +34,10 @@ public class ProcessPool {
     public void addItem(ProcessItem pi) {
         items.add(pi);
         ProcessExitDetector ped = new ProcessExitDetector(pi);
-        ped.addProcessListener((Process process) -> {
+        ped.addProcessListener((process) -> {
             for (int x = items.size() - 1; x >= 0; x--) {
                 if (items.get(x).getProcess().equals(process)) {
-                    //pi.getConsole().log("\nProcess Terminated : " + items.get(x).getName()+"\n");
+                    pi.getConsole().complete();
                     items.remove(x);
                     break;
                 }
