@@ -37,7 +37,7 @@ public class ProcessPool {
         ped.addProcessListener((process) -> {
             for (int x = items.size() - 1; x >= 0; x--) {
                 if (items.get(x).getProcess().equals(process)) {
-                    pi.getConsole().complete();
+                    pi.getConsole().complete(pi.getName());
                     items.remove(x);
                     break;
                 }
@@ -73,15 +73,15 @@ public class ProcessPool {
             processProperty = new SimpleObjectProperty<>(proc);
             consoleProperty = new SimpleObjectProperty<>(con);
         }
-        
+
         public ObjectProperty<Console> consoleProperty() {
             return consoleProperty;
         }
-        
+
         public ObjectProperty<Process> processProperty() {
             return processProperty;
         }
-        
+
         public ObjectProperty<String> nameProperty() {
             return nameProperty;
         }
@@ -97,11 +97,11 @@ public class ProcessPool {
         public Console getConsole() {
             return consoleProperty.get();
         }
-        
+
         public void setProcess(Process con) {
             processProperty.set(con);
         }
-        
+
         public void setName(String str) {
             nameProperty.set(str);
         }

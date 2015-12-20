@@ -19,20 +19,26 @@ import net.sf.image4j.codec.ico.ICODecoder;
  */
 public class Viewer extends EnvironmentTab {
 
+    private Image image;
+
     public Viewer(Program scr, Project pro) {
         super(scr, pro);
         if (scr.getFile().toAbsolutePath().toString().endsWith(".ico")) {
-            Image ico = null;
+            image = null;
             try {
-                ico = SwingFXUtils.toFXImage(ICODecoder.read(scr.getFile().toFile()).get(0), null);
+                image = SwingFXUtils.toFXImage(ICODecoder.read(scr.getFile().toFile()).get(0), null);
             } catch (Exception ex) {
             }
-            if (ico != null) {
-                getCenter().setCenter(new ScrollPane(new ImageView(ico)));
+            if (image != null) {
+                getCenter().setCenter(new ScrollPane(new ImageView(image)));
             }
         } else {
-            getCenter().setCenter(new ScrollPane(new ImageView(scr.getFile().toUri().toString())));
+            getCenter().setCenter(new ScrollPane(new ImageView(image = new Image(scr.getFile().toUri().toString()))));
         }
+    }
+
+    public final Image getImage() {
+        return image;
     }
 
 }

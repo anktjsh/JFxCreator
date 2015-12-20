@@ -132,9 +132,9 @@ public class ConsoleWindow extends Tab {
         });
     }
 
-    public void complete() {
+    public void complete(String process) {
         SwingUtilities.invokeLater(() -> {
-            jArea.append("\nProcess Complete\n");
+            jArea.append("\n" + process + " Complete\n");
             length = jArea.getText().length();
         });
     }

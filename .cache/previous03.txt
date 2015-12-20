@@ -1,1 +1,1 @@
-Project : C:\Users\Aniket\Documents\JFxCreatorProjects\JavaProject1 : lol.hello.World
+Project : /Users/swatijoshi/Documents/JFxCreatorProjects/JavaProject1 : one.two.HelloWorld

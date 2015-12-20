@@ -51,6 +51,7 @@ import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import jfxcreator.JFxCreator;
 import static jfxcreator.JFxCreator.icon;
@@ -1015,6 +1016,10 @@ public class Writer extends BorderPane {
         al.setHeaderText("Zip File has been created and placed in Directory : " + getCurrentProject().getDist().toAbsolutePath().toString());
         ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
         al.showAndWait();
+    }
+
+    public final void fatJar() {
+        //
     }
 
     public final void projectProperties() {

@@ -13,6 +13,7 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
@@ -38,7 +39,7 @@ public class JFxCreator extends Application {
     public void start(Stage env) {
         host = getHostServices();
         Writer script;
-        env.setScene(new Scene(script = new Writer(), Screen.getPrimary().getVisualBounds().getWidth(), Screen.getPrimary().getVisualBounds().getHeight()));
+        env.setScene(new Scene(script = new Writer()));
         env.getScene().getStylesheets().add(getClass().getResource("java-keywords.css").toExternalForm());
         env.setOnCloseRequest((e) -> {
             if (!script.processCheck()) {
@@ -75,6 +76,10 @@ public class JFxCreator extends Application {
             }
         });
         env.setMaximized(true);
+        String OS = System.getProperty("os.name").toLowerCase();
+        if (OS.contains("mac")) {
+            env.setFullScreen(true);
+        }
         env.getIcons().add(icon);
         env.show();
         setMenuBar(script);
@@ -85,11 +90,9 @@ public class JFxCreator extends Application {
         String OS = System.getProperty("os.name").toLowerCase();
         if (OS.contains("mac")) {
             MenuToolkit tk = MenuToolkit.toolkit();
-            MenuBar menuBar = new MenuBar();
-            menuBar.getMenus().add(tk.createDefaultApplicationMenu("JFxCreator"));
-            tk.setGlobalMenuBar(menuBar);
-            MenuItem about = new MenuItem("Close JFxCreator");
-            about.setOnAction((event) -> {
+            Menu def = tk.createDefaultApplicationMenu("JFxCreator");
+            tk.setApplicationMenu(def);
+            def.getItems().get(def.getItems().size() - 1).setOnAction((e) -> {
                 stage.getScene().getWindow().fireEvent(
                         new WindowEvent(
                                 stage.getScene().getWindow(),
@@ -97,7 +100,6 @@ public class JFxCreator extends Application {
                         )
                 );
             });
-            menuBar.getMenus().get(0).getItems().add(0, about);
         }
     }
 

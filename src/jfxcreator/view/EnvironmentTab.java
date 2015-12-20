@@ -5,7 +5,14 @@
  */
 package jfxcreator.view;
 
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.event.Event;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
@@ -26,6 +33,61 @@ public class EnvironmentTab extends Tab {
         content = new BorderPane();
         setContent(content);
         script = sc;
+        setContextMenu(new ContextMenu());
+        getContextMenu().getItems().addAll(new MenuItem("Close"),
+                new MenuItem("Close All"),
+                new MenuItem("Copy File"),
+                new MenuItem("Copy File Path"),
+                new MenuItem("File Details"));
+        getContextMenu().getItems().get(0).setOnAction((e) -> {
+            close();
+        });
+        getContextMenu().getItems().get(1).setOnAction((e) -> {
+            if (getTabPane() != null) {
+                for (Tab b : getTabPane().getTabs()) {
+                    if (b instanceof EnvironmentTab) {
+                        ((EnvironmentTab) b).close();
+                    }
+                }
+            }
+        });
+        getContextMenu().getItems().get(2).setOnAction((e) -> {
+            Clipboard cb = Clipboard.getSystemClipboard();
+            ClipboardContent cc = new ClipboardContent();
+            cc.putString(sc.getFile().toAbsolutePath().toString());
+            cc.putUrl(sc.getFile().toUri().toString());
+            cc.putFiles(FXCollections.observableArrayList(sc.getFile().toFile()));
+            if (this instanceof Viewer) {
+                cc.putImage(((Viewer) this).getImage());
+            }
+        });
+        getContextMenu().getItems().get(3).setOnAction((e) -> {
+            Clipboard cb = Clipboard.getSystemClipboard();
+            ClipboardContent cc = new ClipboardContent();
+            cc.putString(sc.getFile().toAbsolutePath().toString());
+            cc.putUrl(sc.getFile().toUri().toString());
+            cb.setContent(cc);
+        });
+        getContextMenu().getItems().get(4).setOnAction((e) -> {
+
+        });
+
+    }
+
+    public final void close() {
+        if (Platform.isFxApplicationThread()) {
+            Event.fireEvent(this, new Event(Tab.TAB_CLOSE_REQUEST_EVENT));
+            if (getTabPane() != null) {
+                getTabPane().getTabs().remove(this);
+            }
+        } else {
+            Platform.runLater(() -> {
+                Event.fireEvent(this, new Event(Tab.TAB_CLOSE_REQUEST_EVENT));
+                if (getTabPane() != null) {
+                    getTabPane().getTabs().remove(this);
+                }
+            });
+        }
     }
 
     public BorderPane getCenter() {

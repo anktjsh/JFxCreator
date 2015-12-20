@@ -27,7 +27,10 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -48,6 +51,7 @@ public class Project {
     private final ArrayList<Program> programs;
     private final ObservableList<ProjectListener> listeners;
     private final Task<Void> task;
+    private final ObservableList<String> allLibs;
     private String mainClassName;
 
     public Project(Path src, String mcn, boolean isNew) {
@@ -88,6 +92,8 @@ public class Project {
             } catch (IOException ex) {
             }
         }
+
+        allLibs = FXCollections.observableArrayList();
 
         programs = new ArrayList<>();
         listeners = FXCollections.observableArrayList();
@@ -365,16 +371,51 @@ public class Project {
         });
     }
 
+    public List<String> getAllLibs() {
+        return allLibs;
+    }
+
+    public void setAllLibs(List<String> all) {
+        for (File f : libs.toFile().listFiles()) {
+            f.delete();
+        }
+        for (String s : all) {
+            Path p = Paths.get(s);
+            try {
+                Files.copy(p, Paths.get(libs.toAbsolutePath().toString() + File.separator + p.getFileName().toString()));
+            } catch (IOException ex) {
+            }
+        }
+        allLibs.clear();
+        allLibs.addAll(all);
+        saveConfig();
+    }
+
     private void saveConfig() {
         try {
             Files.write(config,
-                    FXCollections.observableArrayList(mainClassName));
+                    FXCollections.observableArrayList(mainClassName,
+                            "Libs : " + allLibs));
         } catch (IOException e) {
         }
     }
 
     private void readConfig() {
-        
+        ArrayList<String> al = new ArrayList<>();
+        try {
+            al.addAll(Files.readAllLines(config));
+        } catch (IOException ex) {
+        }
+        if (al.size() >= 2) {
+            String spl[] = al.get(1).split(" : ");
+            System.out.println(spl[0]);
+            System.out.println(spl[1]);
+            String liberator = spl[1].substring(1, spl[1].length() - 1);
+            allLibs.addAll(Arrays.asList(liberator.split(", ")));
+            if (allLibs.size() == 1) {
+                allLibs.clear();
+            }
+        }
     }
 
     public String serialize() {
@@ -447,7 +488,7 @@ public class Project {
     public String getMainClassName() {
         return mainClassName;
     }
-    
+
     public void setMainClassName(String main) {
         mainClassName = main;
     }
@@ -477,7 +518,7 @@ public class Project {
     }
 
     public void delete() {
-        //
+        deepDelete(rootDirectory);
     }
 
     public void close() {
@@ -485,6 +526,10 @@ public class Project {
             task.cancel();
         }
         saveConfig();
+    }
+
+    public void fatJar() {
+        //
     }
 
     private String getFileList() {
@@ -525,7 +570,22 @@ public class Project {
     }
 
     private void macCompile(ProcessItem pro) {
+        String JAVA_HOME = Dependencies.local_version;
+        String one = JAVA_HOME + File.separator + "javac" + getFileList()
+                + " -d " + build.toAbsolutePath().toString();
+        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
+        pb.directory(rootDirectory.toFile());
+        pb.redirectErrorStream(true);
+        try {
+            Process start = pb.start();
+            pro.setName("Compile Files for Project " + getProjectName());
+            pro.setProcess(start);
+            ProcessPool.getPool().addItem(pro);
+            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            System.out.println(start.waitFor());
+        } catch (IOException | InterruptedException e) {
 
+        }
     }
 
     public void build(ProcessItem pro) {
@@ -559,7 +619,23 @@ public class Project {
     }
 
     private void macBuild(ProcessItem pro) {
-
+        String JAVA_HOME = Dependencies.local_version;
+        String one = JAVA_HOME + File.separator + "javapackager" + " -createjar -appclass " + getMainClassName()
+                + " -srcdir " + build.toAbsolutePath().toString() + " -outdir "
+                + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar";
+        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
+        pb.directory(rootDirectory.toFile());
+        pb.redirectErrorStream(true);
+        try {
+            Process start = pb.start();
+            pro.setName("Build Jar File for Project " + getProjectName());
+            pro.setProcess(start);
+            ProcessPool.getPool().addItem(pro);
+            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            int waitFor = start.waitFor();
+            System.out.println(waitFor);
+        } catch (IOException | InterruptedException e) {
+        }
     }
 
     public void run(ProcessItem pro) {
@@ -592,7 +668,22 @@ public class Project {
     }
 
     private void macRun(ProcessItem pro) {
-
+        String JAVA_HOME = Dependencies.local_version;
+        String one = JAVA_HOME + File.separator + "java" + " -jar " + dist.getFileName().toString() + File.separator + getProjectName() + ".jar";
+        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
+        pb.environment().put("PATH", JAVA_HOME);
+        pb.directory(rootDirectory.toFile());
+        pb.redirectErrorStream(true);
+        try {
+            Process start = pb.start();
+            pro.setName("Launching Jar File for Project " + getProjectName());
+            pro.setProcess(start);
+            ProcessPool.getPool().addItem(pro);
+            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            int waitFor = start.waitFor();
+            System.out.println(waitFor);
+        } catch (IOException | InterruptedException e) {
+        }
     }
 
     public void clean() {

@@ -17,6 +17,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -50,7 +51,7 @@ public class ProjectWizard {
     }
 
     private final Stage stage;
-    private final TextField projectPath, projectName, mainClassName;
+    private final TextField projectPath, projectName, packageName, mainClassName;
     private final Button confirm, cancel;
     private final VBox box;
 
@@ -72,7 +73,9 @@ public class ProjectWizard {
         box.getChildren().addAll(new Label("New Project"),
                 projectName = new TextField(getDefaultProjectName()),
                 projectPath = new TextField(),
-                new Label("Create Main Class"),
+                new Label("Main Class Package Name"),
+                packageName = new TextField(),
+                new Label("Main Class Name"),
                 mainClassName = new TextField(),
                 hb = new HBox(5,
                         cancel = new Button("Cancel"),
@@ -94,8 +97,26 @@ public class ProjectWizard {
             if (projectName.getText().length() > 0) {
                 if (verify(projectName.getText())) {
                     if (!mainClassName.getText().isEmpty()) {
-                        confirmed = true;
-                        stage.close();
+                        if (!mainClassName.getText().contains(".")) {
+                            if (valid(packageName.getText())) {
+                                confirmed = true;
+                                stage.close();
+                            } else {
+                                Alert al = new Alert(AlertType.ERROR);
+                                al.setTitle("Package Name");
+                                al.setHeaderText("Package name is not valid!");
+                                al.initOwner(stage);
+                                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+                                al.showAndWait();
+                            }
+                        } else {
+                            Alert al = new Alert(AlertType.ERROR);
+                            al.setTitle("Main-Class Name");
+                            al.setHeaderText("Main Class cannot contain character \".\"");
+                            al.initOwner(stage);
+                            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+                            al.showAndWait();
+                        }
                     } else {
                         Alert al = new Alert(Alert.AlertType.ERROR);
                         al.setTitle("Error");
@@ -126,6 +147,23 @@ public class ProjectWizard {
         });
     }
 
+    private boolean valid(String packageName) {
+        for (char c : packageName.toCharArray()) {
+            if (!Character.isAlphabetic((int) c) && !(c == '.')) {
+                return false;
+            }
+        }
+        if (packageName.charAt(0) == '.' || packageName.charAt(packageName.length() - 1) == '.') {
+            return false;
+        }
+        for (int x = 0; x < packageName.length() - 1; x++) {
+            if (packageName.charAt(x) == '.' && packageName.charAt(x + 1) == '.') {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void cancel() {
         confirmed = false;
         stage.close();
@@ -141,7 +179,9 @@ public class ProjectWizard {
     public List<String> showAndWait() {
         stage.showAndWait();
         if (confirmed) {
-            return FXCollections.observableArrayList(projectPath.getText(), mainClassName.getText());
+            return FXCollections.observableArrayList(projectPath.getText(),
+                    (packageName.getText().isEmpty() ? "" : (packageName.getText()
+                            + ".")) + mainClassName.getText());
         }
         return new ArrayList<>();
     }

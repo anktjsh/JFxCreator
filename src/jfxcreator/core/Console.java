@@ -27,12 +27,12 @@ public class Console {
         list = FXCollections.observableArrayList();
         window = new SimpleObjectProperty();
     }
-    
+
     public void setConsoleWindow(ConsoleWindow cs) {
         window.set(cs);
     }
-    
-    public ConsoleWindow getConsoleWindow( ){
+
+    public ConsoleWindow getConsoleWindow() {
         return window.get();
     }
 
@@ -53,10 +53,10 @@ public class Console {
     public synchronized void log(char c) {
         list.add(c);
     }
-    
-    public void complete() {
-        if (window!=null) {
-            window.get().complete();
+
+    public void complete(String s) {
+        if (window != null) {
+            window.get().complete(s);
         }
     }
 

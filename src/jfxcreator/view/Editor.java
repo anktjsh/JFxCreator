@@ -8,15 +8,12 @@ package jfxcreator.view;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import javafx.application.Platform;
-import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
@@ -50,6 +47,7 @@ public class Editor extends EnvironmentTab {
         Writer.wrapText.addListener((ob, older, neweer) -> {
             area.setWrapText(neweer);
         });
+
         getCenter().setCenter(area);
         readFromScript();
         setOnCloseRequest((e) -> {
@@ -335,18 +333,6 @@ public class Editor extends EnvironmentTab {
 
     public void selectAll() {
         area.selectAll();
-    }
-
-    public void close() {
-        if (Platform.isFxApplicationThread()) {
-            Event.fireEvent(this, new Event(Tab.TAB_CLOSE_REQUEST_EVENT));
-            getTabPane().getTabs().remove(this);
-        } else {
-            Platform.runLater(() -> {
-                Event.fireEvent(this, new Event(Tab.TAB_CLOSE_REQUEST_EVENT));
-                getTabPane().getTabs().remove(this);
-            });
-        }
     }
 
 }

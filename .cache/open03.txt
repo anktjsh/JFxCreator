@@ -1,2 +1,1 @@
-C:\Users\Aniket\Documents\JFxCreatorProjects\JavaProject1\src\lol\hello\World.java
-C:\Users\Aniket\Documents\JFxCreatorProjects\JavaProject1\src\one\two\Hello.java
+/Users/swatijoshi/Documents/JFxCreatorProjects/JavaProject1/src/one/two/HelloWorld.java
