@@ -14,12 +14,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import jfxcreator.core.ProjectTree;
@@ -32,6 +28,8 @@ import jfxcreator.view.Writer;
  */
 public class JFxCreator extends Application {
 
+    public static final String OS = System.getProperty("os.name").toLowerCase();
+    public static final String stylesheet = JFxCreator.class.getResource(OS.contains("win") ? "" : "mac_os.css").toExternalForm();
     public static final Image icon = new Image(JFxCreator.class.getResourceAsStream("icon.png"));
     public static HostServices host;
 
@@ -76,9 +74,9 @@ public class JFxCreator extends Application {
             }
         });
         env.setMaximized(true);
-        String OS = System.getProperty("os.name").toLowerCase();
         if (OS.contains("mac")) {
             env.setFullScreen(true);
+            env.getScene().getStylesheets().add(stylesheet);
         }
         env.getIcons().add(icon);
         env.show();
@@ -86,19 +84,36 @@ public class JFxCreator extends Application {
         Dependencies.load(env);
     }
 
-    private void setMenuBar(Writer stage) {
-        String OS = System.getProperty("os.name").toLowerCase();
+    private void setMenuBar(Writer script) {
         if (OS.contains("mac")) {
             MenuToolkit tk = MenuToolkit.toolkit();
             Menu def = tk.createDefaultApplicationMenu("JFxCreator");
             tk.setApplicationMenu(def);
-            def.getItems().get(def.getItems().size() - 1).setOnAction((e) -> {
-                stage.getScene().getWindow().fireEvent(
-                        new WindowEvent(
-                                stage.getScene().getWindow(),
-                                WindowEvent.WINDOW_CLOSE_REQUEST
-                        )
-                );
+            def.getItems().get(3).setOnAction((E) -> {
+                if (!script.processCheck()) {
+                    E.consume();
+                    return;
+                }
+                if (script.canSave()) {
+                    Alert al = new Alert(Alert.AlertType.CONFIRMATION);
+                    al.setHeaderText("Would you like to save before closing?");
+                    al.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL, ButtonType.NO);
+                    ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+                    al.initOwner(script.getScene().getWindow());
+                    Optional<ButtonType> show = al.showAndWait();
+                    if (show.isPresent()) {
+                        if (show.get() == ButtonType.OK) {
+                            script.saveAll();
+                        } else if (show.get() == ButtonType.CANCEL) {
+                            E.consume();
+                            return;
+                        }
+                    }
+                }
+                script.saveOpenProjectsInformation();
+                ProjectTree.getTree().close();
+                Platform.exit();
+                System.exit(0);
             });
         }
     }

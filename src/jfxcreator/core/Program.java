@@ -41,7 +41,7 @@ public class Program {
     }
 
     public Program(int t, Path p, List<String> cod, Project pro) {
-        this(t, p.getFileName().toString().substring(0, p.getFileName().toString().lastIndexOf(".java")), p, cod, pro);
+        this(t, p.getFileName().toString().substring(0, p.getFileName().toString().lastIndexOf(".")), p, cod, pro);
     }
 
     public String getClassName() {

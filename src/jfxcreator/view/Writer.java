@@ -13,6 +13,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -76,17 +79,17 @@ public class Writer extends BorderPane {
 
     private final TabPane tabPane;
     private final MenuBar bar;
-    private final Menu file, edit, launch, view, deploy, settings, help;
+    private final Menu file, edit, launch, deploy, settings, help;
     private final MenuItem nFile, nProject, print, oFile, close, property, oProject, cProject, closeAll, save, saveAll, fullsc,
             undo, redo, cut, copy, paste, selectAll,
             build, clean, run,
             jar, zip, dNative,
-            jPlatforms, pDirectory,
+            jPlatforms, pDirectory,view, 
             about;
-    private final CustomMenuItem modifyFontSize, wrapping;
+//    private final CustomMenuItem modifyFontSize, wrapping;
     private final TreeView<String> tree;
     private final BorderPane top;
-    private final ComboBox<String> fontSizes;
+//    private final ComboBox<String> fontSizes;
     private final BorderPane bottom;
     private final TabPane console;
 
@@ -98,11 +101,10 @@ public class Writer extends BorderPane {
         file = new Menu("File");
         edit = new Menu("Edit");
         launch = new Menu("Launch");
-        view = new Menu("View");
         deploy = new Menu("Deploy");
         settings = new Menu("Settings");
         help = new Menu("Help");
-        bar.getMenus().addAll(file, edit, launch, view, deploy, settings, help);
+        bar.getMenus().addAll(file, edit, launch, deploy, settings, help);
         file.getItems().addAll(nFile = new MenuItem("New File"),
                 nProject = new MenuItem("New Project"),
                 oFile = new MenuItem("Open File"),
@@ -124,30 +126,16 @@ public class Writer extends BorderPane {
         launch.getItems().addAll(build = new MenuItem("Build"),
                 clean = new MenuItem("Clean and Build"),
                 run = new MenuItem("Run"));
-        CheckBox wrap;
-        HBox hb;
-        view.getItems().addAll(
-                modifyFontSize = new CustomMenuItem(hb = new HBox(5, new Text("Modify Font Size"), fontSizes = new ComboBox<>())),
-                wrapping = new CustomMenuItem(wrap = new CheckBox("Wrap Text"), false));
-        modifyFontSize.setHideOnClick(false);
-        wrap.setOnAction((e) -> {
-            wrapText.set(wrap.isSelected());
-        });
-        hb.setAlignment(Pos.CENTER);
-        fontSizes.setValue("" + fontSize.get().getSize());
-        for (int x = 10; x <= 50; x++) {
-            fontSizes.getItems().add("" + x);
-        }
-        fontSizes.setOnAction((e) -> {
-            fontSize.set(new Font(Integer.parseInt(fontSizes.getValue())));
-        });
+
+        
+
         deploy.getItems().addAll(jar = new MenuItem("Deploy Jar"),
                 zip = new MenuItem("Deploy Zip"),
                 dNative = new MenuItem("Native Executable"));
         settings.getItems().addAll(jPlatforms = new MenuItem("Java Platforms"),
-                pDirectory = new MenuItem("Workplace Directory"));
+                pDirectory = new MenuItem("Workplace Directory"), 
+                view = new MenuItem("View"));
         help.getItems().add(about = new MenuItem("About"));
-
         nFile.setOnAction((e) -> {
             newFile();
         });
@@ -218,7 +206,7 @@ public class Writer extends BorderPane {
             run();
         });
         jar.setOnAction((e) -> {
-            clean.fire();
+            fatJar();
         });
         zip.setOnAction((e) -> {
             zip();
@@ -231,6 +219,24 @@ public class Writer extends BorderPane {
         });
         pDirectory.setOnAction((e) -> {
             directory();
+        });
+        view.setOnAction((E) -> {
+//            CheckBox wrap;
+//        HBox hb;
+//        modifyFontSize = new CustomMenuItem(hb = new HBox(5, new Text("Modify Font Size"), fontSizes = new ComboBox<>()));
+//        wrapping = new CustomMenuItem(wrap = new CheckBox("Wrap Text"), false);
+//        modifyFontSize.setHideOnClick(false);
+//        wrap.setOnAction((e) -> {
+//            wrapText.set(wrap.isSelected());
+//        });
+//        hb.setAlignment(Pos.CENTER);
+//        fontSizes.setValue("" + fontSize.get().getSize());
+//        for (int x = 10; x <= 50; x++) {
+//            fontSizes.getItems().add("" + x);
+//        }
+//        fontSizes.setOnAction((e) -> {
+//            fontSize.set(new Font(Integer.parseInt(fontSizes.getValue())));
+//        });
         });
         about.setOnAction((e) -> {
             Alert al = new Alert(Alert.AlertType.INFORMATION);
@@ -882,7 +888,9 @@ public class Writer extends BorderPane {
         if (show != null) {
             Project pro = Project.loadProject(show.toPath(), false);
             if (pro != null) {
-                ProjectTree.getTree().addProject(pro);
+                if (!ProjectTree.getTree().getProjects().contains(pro)) {
+                    ProjectTree.getTree().addProject(pro);
+                }
             }
         }
     }
@@ -965,6 +973,35 @@ public class Writer extends BorderPane {
         }
     }
 
+    public final void fatJar() {
+        if (getCurrentProject() != null) {
+
+            getCurrentProject().clean();
+            saveAll();
+            ProcessItem pro = new ProcessItem(null, null, new Console(getCurrentProject()));
+            addConsoleWindow(pro);
+            Task<Void> tk = new Task<Void>() {
+
+                @Override
+                protected Void call() throws Exception {
+                    getCurrentProject().fatJar(pro);
+                    Platform.runLater(() -> {
+                        Alert al = new Alert(AlertType.INFORMATION);
+                        al.setHeaderText("Created Jar");
+                        al.setContentText("bundle.jar placed in " + getCurrentProject().getDist().toAbsolutePath().toString());
+                        ((Stage)al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
+                        al.initOwner(Writer.this.getScene().getWindow());
+                        al.showAndWait();
+                    });
+                    return null;
+                }
+
+            };
+            (new Thread(tk)).start();
+
+        }
+    }
+
     public final void build() {
         saveAll();
         if (getCurrentProject() != null) {
@@ -1016,10 +1053,6 @@ public class Writer extends BorderPane {
         al.setHeaderText("Zip File has been created and placed in Directory : " + getCurrentProject().getDist().toAbsolutePath().toString());
         ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
         al.showAndWait();
-    }
-
-    public final void fatJar() {
-        //
     }
 
     public final void projectProperties() {

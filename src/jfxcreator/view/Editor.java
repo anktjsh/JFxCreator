@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -19,6 +20,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import jfxcreator.JFxCreator;
 import jfxcreator.core.Highlighter;
@@ -26,6 +29,7 @@ import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
+import org.fxmisc.richtext.PopupAlignment;
 
 /**
  *
@@ -34,6 +38,7 @@ import org.fxmisc.richtext.LineNumberFactory;
 public class Editor extends EnvironmentTab {
 
     private final CodeArea area;
+    private final Popup popup;
 
     public Editor(Program sc, Project pro) {
         super(sc, pro);
@@ -46,6 +51,17 @@ public class Editor extends EnvironmentTab {
         });
         Writer.wrapText.addListener((ob, older, neweer) -> {
             area.setWrapText(neweer);
+        });
+
+        popup = new Popup();
+        System.out.println(popup.getContent().size());
+        area.setPopupWindow(popup);
+        area.setPopupAlignment(PopupAlignment.CARET_CENTER);
+        area.setPopupAnchorOffset(new Point2D(4, 0));
+        area.setOnMouseClicked((e) -> {
+            if (popup.isShowing()) {
+                popup.hide();
+            }
         });
 
         getCenter().setCenter(area);
@@ -109,159 +125,169 @@ public class Editor extends EnvironmentTab {
         Highlighter.highlight(area, this);
         area.setParagraphGraphicFactory(LineNumberFactory.get(area));
         area.setOnKeyPressed((e) -> {
-            if (e.getCode() == KeyCode.ENTER) {
-                area.deleteText(area.getSelection());
-                int n = area.getCaretPosition();
-                if (n != 0) {
+            if (e.getCode() == KeyCode.SPACE && e.isControlDown()) {
+                if (popup.isShowing()) {
+                    popup.hide();
+                }
+//                popup.show(getTabPane().getScene().getWindow());
+            } else {
+                if (popup.isShowing()) {
+                    popup.hide();
+                }
+                if (e.getCode() == KeyCode.ENTER) {
+                    area.deleteText(area.getSelection());
+                    int n = area.getCaretPosition();
+                    if (n != 0) {
+                        String spl[] = area.getText().split("\n");
+                        int count = 0;
+                        for (String spl1 : spl) {
+                            count += spl1.length() + 1;
+                            if (n <= count) {
+                                String tabs = "\n" + getTabText(spl1);
+                                area.insertText(n, tabs);
+                                area.positionCaret(n + tabs.length());
+                                e.consume();
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (e.getCode() == KeyCode.TAB) {
+                    int n = area.getCaretPosition();
                     String spl[] = area.getText().split("\n");
                     int count = 0;
                     for (String spl1 : spl) {
                         count += spl1.length() + 1;
                         if (n <= count) {
-                            String tabs = "\n" + getTabText(spl1);
-                            area.insertText(n, tabs);
-                            area.positionCaret(n + tabs.length());
+                            String b = area.getText().substring(n);
+                            area.insertText(n, "    ");
+                            area.positionCaret(n + 4);
                             e.consume();
                             break;
                         }
                     }
                 }
-            }
-            if (e.getCode() == KeyCode.TAB) {
-                int n = area.getCaretPosition();
-                String spl[] = area.getText().split("\n");
-                int count = 0;
-                for (String spl1 : spl) {
-                    count += spl1.length() + 1;
-                    if (n <= count) {
-                        String b = area.getText().substring(n);
-                        area.insertText(n, "    ");
-                        area.positionCaret(n + 4);
-                        e.consume();
-                        break;
-                    }
+                if (e.isControlDown() && e.getCode() == KeyCode.F) {
+                    HBox box = new HBox(15);
+                    BorderPane main = new BorderPane(box);
+                    box.setPadding(new Insets(5, 10, 5, 10));
+                    box.setStyle("-fx-background-fill:gray;");
+                    TextField fi;
+                    Button prev, next;
+                    box.getChildren().addAll(fi = new TextField(),
+                            prev = new Button("Previous"),
+                            next = new Button("Next"));
+                    fi.setOnAction((ea) -> {
+                        if (area.getSelection().getLength() == 0) {
+                            String a = fi.getText();
+                            int index = area.getText().indexOf(a);
+                            if (index != -1) {
+                                area.selectRange(index, index + a.length());
+                            }
+                        } else {
+                            next.fire();
+                        }
+                    });
+                    prev.setOnAction((efd) -> {
+                        int start = area.getSelection().getStart();
+                        String a = area.getText().substring(0, start);
+                        int index = a.lastIndexOf(fi.getText());
+                        if (index != -1) {
+                            area.selectRange(index, index + fi.getText().length());
+                        }
+                    });
+                    next.setOnAction((sdfsdfsd) -> {
+                        int end = area.getSelection().getEnd();
+                        String a = area.getText().substring(end);
+                        int index = a.indexOf(fi.getText());
+                        index += end;
+                        if (index != -1) {
+                            area.selectRange(index, index + fi.getText().length());
+                        }
+                    });
+                    Button close;
+                    main.setRight(close = new Button("X"));
+                    BorderPane.setMargin(main.getRight(), new Insets(5, 10, 5, 10));
+                    getCenter().setBottom(main);
+                    fi.requestFocus();
+                    close.setOnAction((se) -> {
+                        getCenter().setBottom(null);
+                    });
                 }
-            }
-            if (e.isControlDown() && e.getCode() == KeyCode.F) {
-                HBox box = new HBox(15);
-                BorderPane main = new BorderPane(box);
-                box.setPadding(new Insets(5, 10, 5, 10));
-                box.setStyle("-fx-background-fill:gray;");
-                TextField fi;
-                Button prev, next;
-                box.getChildren().addAll(fi = new TextField(),
-                        prev = new Button("Previous"),
-                        next = new Button("Next"));
-                fi.setOnAction((ea) -> {
-                    if (area.getSelection().getLength() == 0) {
-                        String a = fi.getText();
-                        int index = area.getText().indexOf(a);
-                        if (index != -1) {
-                            area.selectRange(index, index + a.length());
+                if (e.isControlDown() && e.getCode() == KeyCode.H) {
+                    VBox total = new VBox();
+                    total.setStyle("-fx-background-fill:gray;");
+                    BorderPane main = new BorderPane(total);
+                    HBox top = new HBox(15);
+                    HBox bottom = new HBox(5);
+                    top.setStyle("-fx-background-fill:gray;");
+                    bottom.setStyle("-fx-background-fill:gray;");
+                    total.getChildren().addAll(top, bottom);
+                    bottom.setPadding(new Insets(5, 10, 5, 10));
+                    top.setPadding(new Insets(5, 10, 5, 10));
+                    TextField fi, replace;
+                    Button prev, next, rep, reAll, close;
+                    top.getChildren().addAll(fi = new TextField(),
+                            prev = new Button("Previous"),
+                            next = new Button("Next"));
+                    bottom.getChildren().addAll(replace = new TextField(),
+                            rep = new Button("Replace"),
+                            reAll = new Button("Replace All"));
+                    fi.setOnAction((ea) -> {
+                        if (area.getSelection().getLength() == 0) {
+                            String a = fi.getText();
+                            int index = area.getText().indexOf(a);
+                            if (index != -1) {
+                                area.selectRange(index, index + a.length());
+                            }
+                        } else {
+                            next.fire();
                         }
-                    } else {
-                        next.fire();
-                    }
-                });
-                prev.setOnAction((efd) -> {
-                    int start = area.getSelection().getStart();
-                    String a = area.getText().substring(0, start);
-                    int index = a.lastIndexOf(fi.getText());
-                    if (index != -1) {
-                        area.selectRange(index, index + fi.getText().length());
-                    }
-                });
-                next.setOnAction((sdfsdfsd) -> {
-                    int end = area.getSelection().getEnd();
-                    String a = area.getText().substring(end);
-                    int index = a.indexOf(fi.getText());
-                    index += end;
-                    if (index != -1) {
-                        area.selectRange(index, index + fi.getText().length());
-                    }
-                });
-                Button close;
-                main.setRight(close = new Button("X"));
-                BorderPane.setMargin(main.getRight(), new Insets(5, 10, 5, 10));
-                getCenter().setBottom(main);
-                fi.requestFocus();
-                close.setOnAction((se) -> {
-                    getCenter().setBottom(null);
-                });
-            }
-            if (e.isControlDown() && e.getCode() == KeyCode.H) {
-                VBox total = new VBox();
-                total.setStyle("-fx-background-fill:gray;");
-                BorderPane main = new BorderPane(total);
-                HBox top = new HBox(15);
-                HBox bottom = new HBox(5);
-                top.setStyle("-fx-background-fill:gray;");
-                bottom.setStyle("-fx-background-fill:gray;");
-                total.getChildren().addAll(top, bottom);
-                bottom.setPadding(new Insets(5, 10, 5, 10));
-                top.setPadding(new Insets(5, 10, 5, 10));
-                TextField fi, replace;
-                Button prev, next, rep, reAll, close;
-                top.getChildren().addAll(fi = new TextField(),
-                        prev = new Button("Previous"),
-                        next = new Button("Next"));
-                bottom.getChildren().addAll(replace = new TextField(),
-                        rep = new Button("Replace"),
-                        reAll = new Button("Replace All"));
-                fi.setOnAction((ea) -> {
-                    if (area.getSelection().getLength() == 0) {
-                        String a = fi.getText();
-                        int index = area.getText().indexOf(a);
+                    });
+                    replace.setOnAction((es) -> {
+                        rep.fire();
+                    });
+                    prev.setOnAction((efd) -> {
+                        int start = area.getSelection().getStart();
+                        String a = area.getText().substring(0, start);
+                        int index = a.lastIndexOf(fi.getText());
                         if (index != -1) {
-                            area.selectRange(index, index + a.length());
+                            area.selectRange(index, index + fi.getText().length());
                         }
-                    } else {
-                        next.fire();
-                    }
-                });
-                replace.setOnAction((es) -> {
-                    rep.fire();
-                });
-                prev.setOnAction((efd) -> {
-                    int start = area.getSelection().getStart();
-                    String a = area.getText().substring(0, start);
-                    int index = a.lastIndexOf(fi.getText());
-                    if (index != -1) {
-                        area.selectRange(index, index + fi.getText().length());
-                    }
-                });
-                next.setOnAction((sdfsdfsd) -> {
-                    int end = area.getSelection().getEnd();
-                    String a = area.getText().substring(end);
-                    int index = a.indexOf(fi.getText());
-                    index += end;
-                    if (index != -1) {
-                        area.selectRange(index, index + fi.getText().length());
-                    }
-                });
-                rep.setOnAction((sdfsdfsd) -> {
-                    String a = fi.getText();
-                    String b = replace.getText();
-                    if (area.getText().contains(a)) {
-                        int index = area.getText().indexOf(a);
-                        area.replaceText(index, index + a.length(), b);
-                    }
-                });
-                reAll.setOnAction((efsf) -> {
-                    String a = fi.getText();
-                    String b = replace.getText();
-                    while (area.getText().contains(a)) {
-                        int index = area.getText().indexOf(a);
-                        area.replaceText(index, index + a.length(), b);
-                    }
-                });
-                main.setRight(close = new Button("X"));
-                BorderPane.setMargin(main.getRight(), new Insets(5, 10, 5, 10));
-                getCenter().setBottom(main);
-                fi.requestFocus();
-                close.setOnAction((se) -> {
-                    getCenter().setBottom(null);
-                });
+                    });
+                    next.setOnAction((sdfsdfsd) -> {
+                        int end = area.getSelection().getEnd();
+                        String a = area.getText().substring(end);
+                        int index = a.indexOf(fi.getText());
+                        index += end;
+                        if (index != -1) {
+                            area.selectRange(index, index + fi.getText().length());
+                        }
+                    });
+                    rep.setOnAction((sdfsdfsd) -> {
+                        String a = fi.getText();
+                        String b = replace.getText();
+                        if (area.getText().contains(a)) {
+                            int index = area.getText().indexOf(a);
+                            area.replaceText(index, index + a.length(), b);
+                        }
+                    });
+                    reAll.setOnAction((efsf) -> {
+                        String a = fi.getText();
+                        String b = replace.getText();
+                        while (area.getText().contains(a)) {
+                            int index = area.getText().indexOf(a);
+                            area.replaceText(index, index + a.length(), b);
+                        }
+                    });
+                    main.setRight(close = new Button("X"));
+                    BorderPane.setMargin(main.getRight(), new Insets(5, 10, 5, 10));
+                    getCenter().setBottom(main);
+                    fi.requestFocus();
+                    close.setOnAction((se) -> {
+                        getCenter().setBottom(null);
+                    });
+                }
             }
         });
     }

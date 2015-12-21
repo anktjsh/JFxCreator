@@ -1,1 +1,1 @@
-Project : /Users/swatijoshi/Documents/JFxCreatorProjects/JavaProject1 : one.two.HelloWorld
+Project : /Users/swatijoshi/Documents/JFxCreatorProjects/JavaProject1 : hello.World.JelloWorld

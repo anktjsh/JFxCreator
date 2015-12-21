@@ -21,7 +21,6 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Tab;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javax.swing.JPanel;
@@ -83,7 +82,7 @@ public class ConsoleWindow extends Tab {
         caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         node.setContent(main);
         setContent(center = new BorderPane(node));
-        center.setPrefHeight(300);
+        center.setPrefHeight(250);
 
         appendAll(console.getConsole().getList());
 

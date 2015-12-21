@@ -23,9 +23,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import static jfxcreator.JFxCreator.icon;
+import static jfxcreator.JFxCreator.stylesheet;
 import jfxcreator.core.Project;
 
 /**
@@ -60,6 +62,7 @@ public class ProjectWizard {
         stage.setTitle("New Project");
         stage.setMinHeight(400);
         stage.setMinWidth(600);
+        stage.initModality(Modality.APPLICATION_MODAL);
         stage.getIcons().add(icon);
         stage.initOwner(w);
         stage.setResizable(false);
@@ -68,6 +71,7 @@ public class ProjectWizard {
             cancel();
         });
         stage.setScene(new Scene(box = new VBox(10)));
+        stage.getScene().getStylesheets().add(stylesheet);
         box.setPadding(new Insets(5, 10, 5, 10));
         HBox hb;
         box.getChildren().addAll(new Label("New Project"),

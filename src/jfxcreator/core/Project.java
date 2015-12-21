@@ -5,8 +5,11 @@
  */
 package jfxcreator.core;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -29,21 +32,20 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import jfxcreator.core.ProcessPool.ProcessItem;
 import jfxcreator.view.Dependencies;
-import jfxcreator.view.ProjectProperties;
 
 /**
  *
  * @author Aniket
  */
 public class Project {
-
+    
     private final Path rootDirectory;
     private final String projectName;
     private final Path source, libs, dist, build;
@@ -53,7 +55,7 @@ public class Project {
     private final Task<Void> task;
     private final ObservableList<String> allLibs;
     private String mainClassName;
-
+    
     public Project(Path src, String mcn, boolean isNew) {
         rootDirectory = src;
         if (!Files.exists(rootDirectory)) {
@@ -92,9 +94,9 @@ public class Project {
             } catch (IOException ex) {
             }
         }
-
+        
         allLibs = FXCollections.observableArrayList();
-
+        
         programs = new ArrayList<>();
         listeners = FXCollections.observableArrayList();
         if (isNew) {
@@ -102,7 +104,7 @@ public class Project {
         } else {
             addExistingPrograms();
         }
-
+        
         (new Thread(task = new FileWatcher())).start();
         config = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "settings.config");
         if (!Files.exists(config)) {
@@ -111,11 +113,11 @@ public class Project {
             readConfig();
         }
     }
-
+    
     public Path getConfig() {
         return config;
     }
-
+    
     public static Project loadProject(Path pro, boolean isNew) {
         Path config = Paths.get(pro.toAbsolutePath().toString() + File.separator + "settings.config");
         if (Files.exists(config)) {
@@ -132,7 +134,7 @@ public class Project {
         }
         return null;
     }
-
+    
     public static String getMainClassFromConfig(Path pa) throws IOException {
         List<String> al = Files.readAllLines(pa);
         if (al.isEmpty()) {
@@ -141,9 +143,9 @@ public class Project {
             return al.get(0);
         }
     }
-
+    
     private class FileWatcher extends Task<Void> {
-
+        
         private void registerAll(final Path start, WatchService watcher) throws IOException {
             Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
                 @Override
@@ -154,16 +156,16 @@ public class Project {
                 }
             });
         }
-
+        
         @Override
         protected Void call() throws Exception {
-
+            
             for (;;) {
                 try {
                     if (isCancelled()) {
                         break;
                     }
-
+                    
                     WatchService watch = FileSystems.getDefault().newWatchService();
                     Path dir = source;
                     registerAll(dir, watch);
@@ -179,7 +181,7 @@ public class Project {
                         WatchEvent<Path> ev = (WatchEvent<Path>) event;
                         Path filename = ev.context();
                         Path child = dir.resolve(filename);
-
+                        
                         if (Files.isDirectory(child) || !child.getFileName().toString().contains(".")) {
                             if (kind == ENTRY_DELETE) {
                                 deleteInside(child);
@@ -227,7 +229,7 @@ public class Project {
                             }
                             checkSources();
                         }
-
+                        
                     }
                     boolean valid = key.reset();
                     if (!valid) {
@@ -242,7 +244,7 @@ public class Project {
             return null;
         }
     }
-
+    
     private void checkSources() {
         ArrayList<Path> al = new ArrayList<>();
         getAllSources(al, source);
@@ -269,7 +271,7 @@ public class Project {
             addScriptsToList(p);
         });
     }
-
+    
     private ArrayList<Path> getAllSources(ArrayList<Path> al, Path p) {
         if (Files.isDirectory(p) || !p.getFileName().toString().contains(".")) {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
@@ -284,7 +286,7 @@ public class Project {
             return al;
         }
     }
-
+    
     private void reloadScript(Path child, Program scr) {
         ArrayList<String> al = new ArrayList<>();
         try {
@@ -297,7 +299,7 @@ public class Project {
             addScript(scr);
         }
     }
-
+    
     private void deleteInside(Path dir) {
         if (Files.isDirectory(dir) || !dir.getFileName().toString().contains(".")) {
             for (int x = programs.size() - 1; x >= 0; x--) {
@@ -317,7 +319,7 @@ public class Project {
             }
         }
     }
-
+    
     private void checkInside(Path dir) {
         if (Files.isDirectory(dir) || !dir.getFileName().toString().contains(".")) {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
@@ -336,10 +338,10 @@ public class Project {
             if (!already) {
                 addScriptsToList(dir);
             }
-
+            
         }
     }
-
+    
     private void addScriptsToList(Path f) {
         if (!Files.isDirectory(f) || f.getFileName().toString().contains(".")) {
             if (f.getFileName().toString().endsWith(".java")) {
@@ -356,25 +358,25 @@ public class Project {
             }
         }
     }
-
+    
     public void addScript(Program scr) {
         programs.add(scr);
         listeners.stream().forEach((pl) -> {
             pl.fileAdded(this, scr);
         });
     }
-
+    
     public void removeScript(Program scr) {
         programs.remove(scr);
         listeners.stream().forEach((pl) -> {
             pl.fileRemoved(this, scr);
         });
     }
-
+    
     public List<String> getAllLibs() {
         return allLibs;
     }
-
+    
     public void setAllLibs(List<String> all) {
         for (File f : libs.toFile().listFiles()) {
             f.delete();
@@ -390,7 +392,7 @@ public class Project {
         allLibs.addAll(all);
         saveConfig();
     }
-
+    
     private void saveConfig() {
         try {
             Files.write(config,
@@ -399,7 +401,7 @@ public class Project {
         } catch (IOException e) {
         }
     }
-
+    
     private void readConfig() {
         ArrayList<String> al = new ArrayList<>();
         try {
@@ -408,20 +410,20 @@ public class Project {
         }
         if (al.size() >= 2) {
             String spl[] = al.get(1).split(" : ");
-            System.out.println(spl[0]);
-            System.out.println(spl[1]);
+//            System.out.println(spl[0]);
+//            System.out.println(spl[1]);
             String liberator = spl[1].substring(1, spl[1].length() - 1);
             allLibs.addAll(Arrays.asList(liberator.split(", ")));
-            if (allLibs.size() == 1) {
+            if (allLibs.size() == 1 && allLibs.get(0).isEmpty()) {
                 allLibs.clear();
             }
         }
     }
-
+    
     public String serialize() {
         return "Project : " + getRootDirectory().toAbsolutePath().toString() + " : " + getMainClassName();
     }
-
+    
     private void initializeProject() {
         Program pro = new Program(Program.JAVA,
                 Paths.get(source.toAbsolutePath() + Program.getFilePath(mainClassName) + ".java"),
@@ -429,7 +431,7 @@ public class Project {
                 this);
         addScript(pro);
     }
-
+    
     private List<String> getInitialCode(String className) {
         if (className.contains(".")) {
             String pack = className.substring(0, className.lastIndexOf('.'));
@@ -439,7 +441,7 @@ public class Project {
             return getInitialCode(null, className);
         }
     }
-
+    
     private List<String> getInitialCode(String packageName, String className) {
         if (packageName != null) {
             String list = "\n"
@@ -467,11 +469,11 @@ public class Project {
             return FXCollections.observableArrayList(list.split("\n"));
         }
     }
-
+    
     public ArrayList<Program> getPrograms() {
         return programs;
     }
-
+    
     private void addExistingPrograms() {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(source)) {
             for (Path file : stream) {
@@ -480,58 +482,150 @@ public class Project {
         } catch (IOException | DirectoryIteratorException x) {
         }
     }
-
+    
     public void addProjectListener(ProjectListener pl) {
         listeners.add(pl);
     }
-
+    
     public String getMainClassName() {
         return mainClassName;
     }
-
+    
     public void setMainClassName(String main) {
         mainClassName = main;
     }
-
+    
     public Path getRootDirectory() {
         return rootDirectory;
     }
-
+    
     public String getProjectName() {
         return projectName;
     }
-
+    
     public Path getSource() {
         return source;
     }
-
+    
     public Path getBuild() {
         return build;
     }
-
+    
     public Path getLibs() {
         return libs;
     }
-
+    
     public Path getDist() {
         return dist;
     }
-
+    
     public void delete() {
         deepDelete(rootDirectory);
     }
-
+    
     public void close() {
         if (task.isRunning()) {
             task.cancel();
         }
         saveConfig();
     }
-
-    public void fatJar() {
-        //
+    
+    public void fatJar(ProcessItem pro) throws IOException {
+        build(pro);
+        Path fat = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "bundle" + File.separator + getProjectName() + ".jar");
+        if (!Files.exists(fat.getParent())) {
+            try {
+                Files.createDirectories(fat.getParent());
+            } catch (IOException ex) {
+            }
+        }
+        almostDeepDelete(new File(fat.getParent().toAbsolutePath().toString()));
+        String input = dist.toAbsolutePath().toString() + File.separator + getProjectName() + ".jar";
+        try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(input))) {
+            ZipEntry entry = zipIn.getNextEntry();
+            while (entry != null) {
+                String filePath = fat.getParent().toAbsolutePath().toString() + File.separator + entry.getName();
+                if (!entry.isDirectory()) {
+                    extractToFile(zipIn, filePath);
+                } else {
+                    File dir = new File(filePath);
+                    dir.mkdir();
+                }
+                
+                entry = zipIn.getNextEntry();
+            }
+        }
+        
+        for (String init : getAllLibs()) {
+            try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(init))) {
+                ZipEntry entry = zipIn.getNextEntry();
+                while (entry != null) {
+                    String filePath = fat.getParent().toAbsolutePath().toString() + File.separator + entry.getName();
+                    if (!entry.isDirectory()) {
+                        extractToFile(zipIn, filePath);
+                    } else {
+                        File dir = new File(filePath);
+                        dir.mkdir();
+                    }
+                    entry = zipIn.getNextEntry();
+                }
+            }
+            
+        }
+        File manifest = new File(rootDirectory.toAbsolutePath().toString() + File.separator + "bundle" + File.separator + "META-INF" + File.separator
+                + "MANIFEST.MF");
+        if (manifest.exists()) {
+            manifest.delete();
+        }
+        buildFat(pro);
+        deepDelete(fat.getParent());
     }
-
+    
+    private void buildFat(ProcessItem pro) {
+        String OS = System.getProperty("os.name").toLowerCase();
+        if (OS.contains("win")) {
+            windowsFat(pro);
+        } else {
+            macFat(pro);
+        }
+    }
+    
+    private void windowsFat(ProcessItem pro) {
+        
+    }
+    
+    private void macFat(ProcessItem pro) {
+        String JAVA_HOME = Dependencies.local_version;
+        ProcessBuilder pb = new ProcessBuilder(JAVA_HOME + File.separator + "javapackager",
+                "-createjar",
+                "-appClass", getMainClassName(),
+                "-srcdir", "bundle",
+                "-outdir", "dist",
+                "-outfile", "bundle.jar", "-v");
+        pb.directory(rootDirectory.toFile());
+        pb.redirectErrorStream(true);
+        try {
+            Process start = pb.start();
+            pro.setName("Combining All Existing Jars for Project " + getProjectName());
+            pro.setProcess(start);
+            ProcessPool.getPool().addItem(pro);
+            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            int waitFor = start.waitFor();
+            System.out.println(waitFor);
+        } catch (IOException | InterruptedException e) {
+        }
+    }
+    
+    private void extractToFile(ZipInputStream sipIn, String filePath) throws IOException {
+        try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath))) {
+            byte[] bytesIn = new byte[4096];
+            int read = 0;
+            while ((read = sipIn.read(bytesIn)) != -1) {
+                bos.write(bytesIn, 0, read);
+            }
+        }
+    }
+    
     private String getFileList() {
         StringBuilder sb = new StringBuilder();
         for (Program p : programs) {
@@ -539,7 +633,18 @@ public class Project {
         }
         return sb.toString();
     }
-
+    
+    private String getLibsList() {
+        StringBuilder sb = new StringBuilder();
+        File f = new File(rootDirectory.toAbsolutePath().toString() + File.separator + "libs");
+        for (File file : f.listFiles()) {
+            if (file.getName().endsWith(".jar")) {
+                sb.append(" ").append(file.getAbsolutePath());
+            }
+        }
+        return sb.toString();
+    }
+    
     public void compile(ProcessItem pro) {
         String os = System.getProperty("os.name").toLowerCase();
         if (os.contains("win")) {
@@ -548,12 +653,13 @@ public class Project {
             macCompile(pro);
         }
     }
-
+    
     private void windowsCompile(ProcessItem pro) {
         String JAVA_HOME = Dependencies.local_version;
         String one = "\"" + JAVA_HOME + File.separator + "javac\""
                 + getFileList() + " -d "
-                + build.toAbsolutePath().toString();
+                + build.toAbsolutePath().toString()
+                + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.directory(rootDirectory.toFile());
         pb.redirectErrorStream(true);
@@ -568,11 +674,14 @@ public class Project {
         } catch (IOException | InterruptedException e) {
         }
     }
-
+    
     private void macCompile(ProcessItem pro) {
         String JAVA_HOME = Dependencies.local_version;
-        String one = JAVA_HOME + File.separator + "javac" + getFileList()
-                + " -d " + build.toAbsolutePath().toString();
+        String one = JAVA_HOME + File.separator + "javac"
+                + getFileList()
+                + " -d "
+                + build.toAbsolutePath().toString()
+                + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.directory(rootDirectory.toFile());
         pb.redirectErrorStream(true);
@@ -584,10 +693,10 @@ public class Project {
             (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
             System.out.println(start.waitFor());
         } catch (IOException | InterruptedException e) {
-
+            
         }
     }
-
+    
     public void build(ProcessItem pro) {
         compile(pro);
         String os = System.getProperty("os.name").toLowerCase();
@@ -597,12 +706,12 @@ public class Project {
             macBuild(pro);
         }
     }
-
+    
     private void windowsBuild(ProcessItem pro) {
         String JAVA_HOME = Dependencies.local_version;
         String one = "\"" + JAVA_HOME + File.separator + "javapackager\"" + " -createjar -appclass " + getMainClassName()
                 + " -srcdir " + build.toAbsolutePath().toString() + " -outdir "
-                + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar";
+                + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar" + " -classpath" + getLibsList();
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.directory(rootDirectory.toFile());
         pb.redirectErrorStream(true);
@@ -617,12 +726,12 @@ public class Project {
         } catch (IOException | InterruptedException e) {
         }
     }
-
+    
     private void macBuild(ProcessItem pro) {
         String JAVA_HOME = Dependencies.local_version;
         String one = JAVA_HOME + File.separator + "javapackager" + " -createjar -appclass " + getMainClassName()
                 + " -srcdir " + build.toAbsolutePath().toString() + " -outdir "
-                + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar";
+                + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar" + " -classpath" + getLibsList();
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.directory(rootDirectory.toFile());
         pb.redirectErrorStream(true);
@@ -637,7 +746,7 @@ public class Project {
         } catch (IOException | InterruptedException e) {
         }
     }
-
+    
     public void run(ProcessItem pro) {
         build(pro);
         String os = System.getProperty("os.name").toLowerCase();
@@ -647,10 +756,13 @@ public class Project {
             macRun(pro);
         }
     }
-
+    
     private void windowsRun(ProcessItem pro) {
         String JAVA_HOME = Dependencies.local_version;
-        String one = "\"" + JAVA_HOME + File.separator + "java\"" + " -jar " + dist.getFileName().toString() + File.separator + getProjectName() + ".jar";
+        String one = "\"" + JAVA_HOME
+                + File.separator + "java\"" + " -jar " + dist.getFileName().toString()
+                + File.separator + getProjectName() + ".jar"
+                + " -classpath" + getLibsList();
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.environment().put("PATH", JAVA_HOME);
         pb.directory(rootDirectory.toFile());
@@ -666,10 +778,13 @@ public class Project {
         } catch (IOException | InterruptedException e) {
         }
     }
-
+    
     private void macRun(ProcessItem pro) {
         String JAVA_HOME = Dependencies.local_version;
-        String one = JAVA_HOME + File.separator + "java" + " -jar " + dist.getFileName().toString() + File.separator + getProjectName() + ".jar";
+        String one = JAVA_HOME
+                + File.separator + "java" + " -jar " + dist.getFileName().toString()
+                + File.separator + getProjectName() + ".jar"
+                + " -classpath" + getLibsList();
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.environment().put("PATH", JAVA_HOME);
         pb.directory(rootDirectory.toFile());
@@ -685,16 +800,16 @@ public class Project {
         } catch (IOException | InterruptedException e) {
         }
     }
-
+    
     public void clean() {
         almostDeepDelete(build.toFile());
         almostDeepDelete(dist.toFile());
     }
-
+    
     public void stop(ProcessItem pro) {
-
+        
     }
-
+    
     private void almostDeepDelete(File p) {
         if (p.isDirectory()) {
             for (File f : p.listFiles()) {
@@ -702,7 +817,7 @@ public class Project {
             }
         }
     }
-
+    
     private void deepDelete(Path fe) {
         if (!Files.exists(fe)) {
             return;
@@ -725,29 +840,29 @@ public class Project {
             }
         }
     }
-
+    
     public interface ProjectListener {
-
+        
         public void fileAdded(Project pro, Program add);
-
+        
         public void fileRemoved(Project pro, Program scr);
     }
-
+    
     public static class Reader implements Runnable {
-
+        
         private final InputStream strea;
         private final Console console;
-
+        
         public Reader(InputStream is, Console so) {
             strea = is;
             console = so;
         }
-
+        
         @Override
         public void run() {
             InputStreamReader isr = new InputStreamReader(strea);
             BufferedReader br = new BufferedReader(isr);
-            int value = 0;
+            int value;
             try {
                 while ((value = br.read()) != -1) {
                     char c = (char) value;
@@ -757,7 +872,7 @@ public class Project {
             }
         }
     }
-
+    
     public static Project unserialize(String s) {
         try {
             String[] split = s.split(" : ");
@@ -766,12 +881,22 @@ public class Project {
             return null;
         }
     }
-
+    
     public static Project unserialize(Path f) {
         return loadProject(f, false);
     }
-
+    
     public void addListener(ProjectListener al) {
         listeners.add(al);
+    }
+    
+    public boolean equals(Object obj) {
+        if (obj instanceof Project) {
+            Project pro = (Project) obj;
+            if (pro.getRootDirectory().equals(getRootDirectory())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

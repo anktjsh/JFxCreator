@@ -21,8 +21,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import static jfxcreator.JFxCreator.stylesheet;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 
@@ -45,6 +47,7 @@ public class ProjectProperties {
         this.project = project;
         stage = new Stage();
         stage.initOwner(w);
+        stage.initModality(Modality.APPLICATION_MODAL);
 //        stage.setWidth(400);
 //        stage.setHeight(400);
         stage.setTitle("Project Properties");
@@ -63,6 +66,7 @@ public class ProjectProperties {
                 mai = new HBox(10,
                         cancel = new Button("Cancel"),
                         confirm = new Button("Confirm")))));
+        stage.getScene().getStylesheets().add(stylesheet);
         box.setPadding(new Insets(5, 10, 5, 10));
         mai.setAlignment(Pos.CENTER_RIGHT);
         libs.setAlignment(Pos.CENTER);

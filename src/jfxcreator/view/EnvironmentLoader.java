@@ -20,6 +20,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import jfxcreator.JFxCreator;
+import static jfxcreator.JFxCreator.stylesheet;
 
 /**
  * Simple Preloader Using the ProgressBar Control
@@ -54,6 +55,7 @@ public class EnvironmentLoader extends Preloader {
         BorderPane.setAlignment(p.getCenter(), Pos.CENTER);
         BorderPane.setAlignment(c.getTop(), Pos.CENTER);
         Scene sc = new Scene(p, 500, 350);
+        sc.getStylesheets().add(stylesheet);
         return sc;
     }
 
