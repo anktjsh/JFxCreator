@@ -6,6 +6,8 @@
 package jfxcreator.view;
 
 import javafx.scene.control.TreeItem;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import jfxcreator.core.Project;
 
 /**
@@ -14,11 +16,22 @@ import jfxcreator.core.Project;
  */
 public class ProjectTreeItem extends TreeItem<String> {
 
+    private static final Image proj = new Image(LibraryTreeItem.class.getResourceAsStream("tree/project.PNG"), 25, 25, true, true);
+    private static final Image folder = new Image(LibraryTreeItem.class.getResourceAsStream("tree/folder.PNG"), 25, 25, true, true);
     private final Project project;
+    private TreeItem<String> src, libs;
 
-    public ProjectTreeItem(Project pro) {
+    public ProjectTreeItem(Project pro, boolean b) {
         super(pro.getRootDirectory().getFileName().toString());
         project = pro;
+        setGraphic(new ImageView(proj));
+        if (b) {
+            src = new TreeItem<>("Source Packages");
+            src.setGraphic(new ImageView(folder));
+            libs = new TreeItem<>("Libraries");
+            libs.setGraphic(new ImageView(folder));
+            getChildren().addAll(src, libs);
+        }
     }
 
     public Project getProject() {

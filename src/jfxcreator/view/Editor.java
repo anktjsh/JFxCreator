@@ -8,22 +8,28 @@ package jfxcreator.view;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.IntFunction;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import jfxcreator.JFxCreator;
+import jfxcreator.analyze.Analyzer;
 import jfxcreator.core.Highlighter;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
@@ -39,11 +45,14 @@ public class Editor extends EnvironmentTab {
 
     private final CodeArea area;
     private final Popup popup;
+    private final ListView<String> options;
+    private final ObservableList<Integer> errorLines;
 
     public Editor(Program sc, Project pro) {
         super(sc, pro);
         area = new CodeArea();
         area.setContextMenu(new ContextMenu());
+        errorLines = FXCollections.observableArrayList();
         bindMouseListeners();
         area.setFont(Writer.fontSize.get());
         Writer.fontSize.addListener((ob, older, newer) -> {
@@ -54,7 +63,18 @@ public class Editor extends EnvironmentTab {
         });
 
         popup = new Popup();
-        System.out.println(popup.getContent().size());
+        popup.setHideOnEscape(true);
+        popup.getContent().add(options = new ListView<>());
+        options.setOnKeyPressed((e) -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                area.insertText(area.getCaretPosition(), options.getSelectionModel().getSelectedItem());
+            }
+        });
+        options.setOnMouseClicked((e) -> {
+            if (e.getClickCount() == 2) {
+                area.insertText(area.getCaretPosition(), options.getSelectionModel().getSelectedItem());
+            }
+        });
         area.setPopupWindow(popup);
         area.setPopupAlignment(PopupAlignment.CARET_CENTER);
         area.setPopupAnchorOffset(new Point2D(4, 0));
@@ -115,21 +135,33 @@ public class Editor extends EnvironmentTab {
     }
 
     private void bindMouseListeners() {
-//        if (getScript().getType() == Script.JAVASCRIPT) {
-//            new JavaScriptHighlighter(area, this);
-//        } else if (getScript().getType() == Script.HTML) {
-//            new HtmlHighlighter(area, this);
-//        } else {
-//            area.setParagraphGraphicFactory(LineNumberFactory.get(area));
-//        }
         Highlighter.highlight(area, this);
-        area.setParagraphGraphicFactory(LineNumberFactory.get(area));
+        IntFunction<Node> numberFactory = LineNumberFactory.get(area);
+        IntFunction<Node> arrowFactory = new ArrowFactory(errorLines);
+        IntFunction<Node> graphicFctory = line ->{
+            HBox hbox = new HBox(numberFactory.apply(line), arrowFactory.apply(line));
+            hbox.setAlignment(Pos.CENTER_LEFT);
+            return hbox;
+        };
+        area.setParagraphGraphicFactory(graphicFctory);
         area.setOnKeyPressed((e) -> {
-            if (e.getCode() == KeyCode.SPACE && e.isControlDown()) {
+            if (e.getCode() == KeyCode.SPACE && (e.isControlDown() || e.getCode() == KeyCode.COMMAND)) {
                 if (popup.isShowing()) {
                     popup.hide();
                 }
-//                popup.show(getTabPane().getScene().getWindow());
+                options.getItems().clear();
+                if (area.getText().substring(area.getCaretPosition() - 1, area.getCaretPosition()).isEmpty()) {
+                    options.getItems().addAll(Analyzer.analyze(getScript().getClassName(), getCodeArea().getText(), area.getCaretPosition(), null));
+                } else {
+                    int open = area.getText().substring(0, area.getCaretPosition()).lastIndexOf(' ');
+                    String search = area.getText().substring(open+1, area.getCaretPosition());
+                    options.getItems().addAll(Analyzer.analyze(getScript().getClassName(), getCodeArea().getText(), area.getCaretPosition(), search));
+                }
+                if (options.getItems().size() > 0) {
+                    options.getSelectionModel().select(options.getItems().get(0));
+                }
+                popup.show(getTabPane().getScene().getWindow());
+                popup.getContent().get(0).requestFocus();
             } else {
                 if (popup.isShowing()) {
                     popup.hide();
@@ -167,7 +199,7 @@ public class Editor extends EnvironmentTab {
                         }
                     }
                 }
-                if (e.isControlDown() && e.getCode() == KeyCode.F) {
+                if ((e.isControlDown() || e.getCode() == KeyCode.COMMAND) && e.getCode() == KeyCode.F) {
                     HBox box = new HBox(15);
                     BorderPane main = new BorderPane(box);
                     box.setPadding(new Insets(5, 10, 5, 10));
@@ -214,7 +246,7 @@ public class Editor extends EnvironmentTab {
                         getCenter().setBottom(null);
                     });
                 }
-                if (e.isControlDown() && e.getCode() == KeyCode.H) {
+                if ((e.isControlDown() || e.getCode() == KeyCode.COMMAND) && e.getCode() == KeyCode.H) {
                     VBox total = new VBox();
                     total.setStyle("-fx-background-fill:gray;");
                     BorderPane main = new BorderPane(total);
@@ -325,14 +357,14 @@ public class Editor extends EnvironmentTab {
         return area;
     }
 
-    public void save() {
+    public final void save() {
         List<String> asList = Arrays.asList(area.getText().split("\n"));
         if (getScript().canSave(asList)) {
             getScript().save(asList);
         }
     }
 
-    public boolean canSave() {
+    public final boolean canSave() {
         List<String> asList = Arrays.asList(area.getText().split("\n"));
         return getScript().canSave(asList);
     }

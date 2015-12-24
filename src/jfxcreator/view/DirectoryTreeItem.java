@@ -6,6 +6,8 @@
 package jfxcreator.view;
 
 import java.nio.file.Path;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import jfxcreator.core.Project;
 
 /**
@@ -14,10 +16,12 @@ import jfxcreator.core.Project;
  */
 public class DirectoryTreeItem extends ProjectTreeItem {
 
+    private static final Image parcel = new Image(LibraryTreeItem.class.getResourceAsStream("tree/parcel.PNG"), 40, 40, true, true);
     private final Path path;
 
     public DirectoryTreeItem(Project pro, Path dir) {
-        super(pro);
+        super(pro, false);
+        setGraphic(new ImageView(parcel));
         path = dir;
         setValue(dir.getFileName().toString());
     }

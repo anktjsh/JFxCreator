@@ -13,14 +13,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.concurrent.Task;
@@ -28,14 +27,15 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.print.Printer;
 import javafx.print.PrinterJob;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -49,15 +49,17 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import jfxcreator.JFxCreator;
 import static jfxcreator.JFxCreator.icon;
+import static jfxcreator.JFxCreator.stylesheet;
 import jfxcreator.core.Console;
 import jfxcreator.core.ProcessPool;
 import jfxcreator.core.ProcessPool.ProcessItem;
@@ -84,12 +86,10 @@ public class Writer extends BorderPane {
             undo, redo, cut, copy, paste, selectAll,
             build, clean, run,
             jar, zip, dNative,
-            jPlatforms, pDirectory,view, 
+            jPlatforms, pDirectory, view,
             about;
-//    private final CustomMenuItem modifyFontSize, wrapping;
     private final TreeView<String> tree;
     private final BorderPane top;
-//    private final ComboBox<String> fontSizes;
     private final BorderPane bottom;
     private final TabPane console;
 
@@ -127,13 +127,11 @@ public class Writer extends BorderPane {
                 clean = new MenuItem("Clean and Build"),
                 run = new MenuItem("Run"));
 
-        
-
         deploy.getItems().addAll(jar = new MenuItem("Deploy Jar"),
                 zip = new MenuItem("Deploy Zip"),
                 dNative = new MenuItem("Native Executable"));
         settings.getItems().addAll(jPlatforms = new MenuItem("Java Platforms"),
-                pDirectory = new MenuItem("Workplace Directory"), 
+                pDirectory = new MenuItem("Workplace Directory"),
                 view = new MenuItem("View"));
         help.getItems().add(about = new MenuItem("About"));
         nFile.setOnAction((e) -> {
@@ -221,22 +219,41 @@ public class Writer extends BorderPane {
             directory();
         });
         view.setOnAction((E) -> {
-//            CheckBox wrap;
-//        HBox hb;
-//        modifyFontSize = new CustomMenuItem(hb = new HBox(5, new Text("Modify Font Size"), fontSizes = new ComboBox<>()));
-//        wrapping = new CustomMenuItem(wrap = new CheckBox("Wrap Text"), false);
-//        modifyFontSize.setHideOnClick(false);
-//        wrap.setOnAction((e) -> {
-//            wrapText.set(wrap.isSelected());
-//        });
-//        hb.setAlignment(Pos.CENTER);
-//        fontSizes.setValue("" + fontSize.get().getSize());
-//        for (int x = 10; x <= 50; x++) {
-//            fontSizes.getItems().add("" + x);
-//        }
-//        fontSizes.setOnAction((e) -> {
-//            fontSize.set(new Font(Integer.parseInt(fontSizes.getValue())));
-//        });
+            Stage st = new Stage();
+            st.initModality(Modality.APPLICATION_MODAL);
+            st.setResizable(false);
+            st.initOwner(getScene().getWindow());
+            st.setWidth(450);
+            st.setHeight(300);
+            st.setTitle("View");
+            VBox box;
+            st.setScene(new Scene(box = new VBox(10)));
+            st.getScene().getStylesheets().add(stylesheet);
+            box.setAlignment(Pos.CENTER);
+            box.setPadding(new Insets(5, 10, 5, 10));
+            CheckBox wrap;
+            HBox hb;
+            ComboBox<String> fontSizes;
+            box.getChildren().add(hb = new HBox(5, new Text("Modify Font Size"), fontSizes = new ComboBox<>()));
+            box.getChildren().add(wrap = new CheckBox("Wrap Text"));
+            Button close;
+            box.getChildren().add(close = new Button("Close"));
+            wrap.setSelected(wrapText.get());
+            wrap.setOnAction((e) -> {
+                wrapText.set(wrap.isSelected());
+            });
+            hb.setAlignment(Pos.CENTER);
+            fontSizes.setValue("" + fontSize.get().getSize());
+            for (int x = 10; x <= 50; x++) {
+                fontSizes.getItems().add("" + x);
+            }
+            fontSizes.setOnAction((e) -> {
+                fontSize.set(new Font(Integer.parseInt(fontSizes.getValue())));
+            });
+            close.setOnAction((e) -> {
+                st.close();
+            });
+            st.showAndWait();
         });
         about.setOnAction((e) -> {
             Alert al = new Alert(Alert.AlertType.INFORMATION);
@@ -258,7 +275,7 @@ public class Writer extends BorderPane {
             public void projectAdded(Project added) {
                 if (!projectContains(tree.getRoot().getChildren(), added)) {
                     ProjectTreeItem item;
-                    tree.getRoot().getChildren().add(item = new ProjectTreeItem(added));
+                    tree.getRoot().getChildren().add(item = new ProjectTreeItem(added, true));
                     item.setExpanded(true);
                     added.addListener((new Project.ProjectListener() {
 
@@ -285,12 +302,23 @@ public class Writer extends BorderPane {
                     added.getPrograms().stream().forEach((s) -> {
                         addScriptTreeItem(item, new ProgramTreeItem(s));
                     });
+                    for (String s : added.getAllLibs()) {
+                        item.getChildren().get(1).getChildren().add(new LibraryTreeItem(s));
+                    }
+                    added.setLibraryListener((List<String> filePaths) -> {
+                        item.getChildren().get(1).getChildren().clear();
+                        for (String s : filePaths) {
+                            item.getChildren().get(1).getChildren().add(new LibraryTreeItem(s));
+                        }
+                    });
+                    added.getCurrentCompiler().outputProperty().addListener((ob, older, newer) -> {
+                        System.out.println(newer);
+                    });
                 }
             }
 
             @Override
             public void projectRemoved(Project pro) {
-
                 for (TreeItem<String> tre : tree.getRoot().getChildren()) {
                     if (tre instanceof ProjectTreeItem) {
                         ProjectTreeItem pri = (ProjectTreeItem) tre;
@@ -311,6 +339,7 @@ public class Writer extends BorderPane {
                         }
                     }
                 }
+                pro.setLibraryListener(null);
             }
         });
 
@@ -354,7 +383,7 @@ public class Writer extends BorderPane {
             } else if (newer instanceof ProgramTreeItem) {
                 currentProject.set(((ProgramTreeItem) newer).getScript().getProject());
             } else {
-                currentProject.set(null);
+//                currentProject.set(null);
             }
         });
         tree.setContextMenu(new ContextMenu());
@@ -456,7 +485,7 @@ public class Writer extends BorderPane {
             } else if (newer instanceof Viewer) {
                 currentProject.set(((Viewer) newer).getScript().getProject());
             } else {
-                currentProject.set(null);
+//                currentProject.set(null);
             }
         });
         openPreviousProjects();
@@ -466,10 +495,17 @@ public class Writer extends BorderPane {
         });
         bottom = new BorderPane();
         console = new TabPane();
+        console.getTabs().addListener((ListChangeListener.Change<? extends Tab> c) -> {
+            c.next();
+            if (c.getList().size() == 0) {
+                bottom.setPrefHeight(0);
+            } else {
+                bottom.setPrefHeight(300);
+            }
+        });
         setBottom(bottom);
         bottom.setCenter(console);
         bottom.setPadding(new Insets(5, 10, 5, 10));
-
     }
 
     private void findScriptTreeItem(ProjectTreeItem pro, Program scr) {
@@ -518,7 +554,11 @@ public class Writer extends BorderPane {
                 DirectoryTreeItem dti = getDirectoryItem(pti, a.getFileName().toString());
                 if (dti == null) {
                     dti = new DirectoryTreeItem(pti.getProject(), a);
-                    pti.getChildren().add(dti);
+                    if (pti instanceof DirectoryTreeItem) {
+                        pti.getChildren().add(dti);
+                    } else {
+                        pti.getChildren().get(0).getChildren().add(dti);
+                    }
                 }
                 left = left.substring(left.indexOf(File.separator) + 1);
                 pti = dti;
@@ -528,20 +568,33 @@ public class Writer extends BorderPane {
                 last.getChildren().add(sti);
             }
         } else {
-            pti.getChildren().add(sti);
+            pti.getChildren().get(0).getChildren().add(sti);
         }
     }
 
     private DirectoryTreeItem getDirectoryItem(ProjectTreeItem pro, String name) {
-        for (TreeItem<String> tri : pro.getChildren()) {
-            if (tri instanceof DirectoryTreeItem) {
-                if (tri.getValue().equals(name)) {
-                    return (DirectoryTreeItem) tri;
-                } else {
-                    return getDirectoryItem((DirectoryTreeItem) tri, name);
+        if (pro instanceof DirectoryTreeItem) {
+            for (TreeItem<String> tri : pro.getChildren()) {
+                if (tri instanceof DirectoryTreeItem) {
+                    if (tri.getValue().equals(name)) {
+                        return (DirectoryTreeItem) tri;
+                    } else {
+                        return getDirectoryItem((DirectoryTreeItem) tri, name);
+                    }
+                }
+            }
+        } else {
+            for (TreeItem<String> tri : pro.getChildren().get(0).getChildren()) {
+                if (tri instanceof DirectoryTreeItem) {
+                    if (tri.getValue().equals(name)) {
+                        return (DirectoryTreeItem) tri;
+                    } else {
+                        return getDirectoryItem((DirectoryTreeItem) tri, name);
+                    }
                 }
             }
         }
+
         return null;
     }
 
@@ -975,7 +1028,6 @@ public class Writer extends BorderPane {
 
     public final void fatJar() {
         if (getCurrentProject() != null) {
-
             getCurrentProject().clean();
             saveAll();
             ProcessItem pro = new ProcessItem(null, null, new Console(getCurrentProject()));
@@ -989,7 +1041,7 @@ public class Writer extends BorderPane {
                         Alert al = new Alert(AlertType.INFORMATION);
                         al.setHeaderText("Created Jar");
                         al.setContentText("bundle.jar placed in " + getCurrentProject().getDist().toAbsolutePath().toString());
-                        ((Stage)al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
+                        ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
                         al.initOwner(Writer.this.getScene().getWindow());
                         al.showAndWait();
                     });
@@ -1037,7 +1089,51 @@ public class Writer extends BorderPane {
     }
 
     public final void executable() {
-        //
+        if (getCurrentProject() != null) {
+            boolean b = verifyDependencies();
+            if (b) {
+                ProcessItem pro = new ProcessItem(null, null, new Console(getCurrentProject()));
+                addConsoleWindow(pro);
+                Task<Void> tk = new Task<Void>() {
+
+                    @Override
+                    protected Void call() throws Exception {
+                        getCurrentProject().nativeExecutable(pro);
+                        return null;
+                    }
+
+                };
+                (new Thread(tk)).start();
+            } else {
+                Stage sta = new Stage();
+                sta.setTitle("Inno Setup");
+                sta.initOwner(getScene().getWindow());
+                sta.getIcons().add(JFxCreator.icon);
+                sta.initModality(Modality.APPLICATION_MODAL);
+                sta.setScene(new Scene(new NativeInformation()));
+                sta.showingProperty().addListener((ob, older, newer) -> {
+                    if (newer) {
+                        Alert al = new Alert(AlertType.ERROR);
+                        al.initOwner(sta);
+                        ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
+                        al.setTitle("Native Deploy");
+                        al.setHeaderText("Inno Setup Environment Variable has not been set!");
+                        al.setContentText("Follow these steps to install it correctly");
+                        al.showAndWait();
+                    }
+                });
+                sta.showAndWait();
+            }
+        }
+    }
+
+    private boolean verifyDependencies() {
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")) {
+            String env = System.getenv("PATH");
+            return env.contains("Inno Setup 5");
+        }
+        return true;
     }
 
     public final void zip() {
@@ -1146,8 +1242,19 @@ public class Writer extends BorderPane {
         console.getSelectionModel().select(con);
     }
 
+    public final void setCurrentProject() {
+        if (tabPane.getSelectionModel().getSelectedItem() != null) {
+            Tab b = tabPane.getSelectionModel().getSelectedItem();
+            if (b instanceof Editor) {
+                currentProject.set(((Editor) b).getProject());
+            } else if (b instanceof Viewer) {
+                currentProject.set(((Viewer) b).getProject());
+            }
+        }
+    }
+
     private void evaluate(KeyEvent kc) {
-        if (kc.isControlDown()) {
+        if (kc.isControlDown() || kc.getCode() == KeyCode.COMMAND) {
             if (kc.isShiftDown()) {
                 if (kc.isAltDown()) {
                     if (kc.getCode() == KeyCode.P) {

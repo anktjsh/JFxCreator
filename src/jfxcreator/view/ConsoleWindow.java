@@ -21,13 +21,16 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.text.DefaultCaret;
+import jfxcreator.JFxCreator;
 import jfxcreator.core.ProcessPool.ProcessItem;
 import jfxcreator.core.Project;
 
@@ -82,7 +85,6 @@ public class ConsoleWindow extends Tab {
         caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         node.setContent(main);
         setContent(center = new BorderPane(node));
-        center.setPrefHeight(250);
 
         appendAll(console.getConsole().getList());
 
@@ -101,14 +103,24 @@ public class ConsoleWindow extends Tab {
         bottom.setLeft(cancel = new Button("Cancel Process"));
 
         cancel.setOnAction((e) -> {
-            try {
-                console.getProcess().getOutputStream().close();
-            } catch (IOException ex) {
+            Alert al = new Alert(AlertType.CONFIRMATION);
+            al.setTitle("End Process");
+            al.setHeaderText("Are you sure you want to end the process?");
+            al.initOwner(getTabPane().getScene().getWindow());
+            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
+            Optional<ButtonType> show = al.showAndWait();
+            if (show.isPresent()) {
+                if (show.get() == ButtonType.OK) {
+                    try {
+                        console.getProcess().getOutputStream().close();
+                    } catch (IOException ex) {
+                    }
+                    if (console.getProcess().isAlive()) {
+                        console.getProcess().destroyForcibly();
+                    }
+                    cancel.setDisable(true);
+                }
             }
-            if (console.getProcess().isAlive()) {
-                console.getProcess().destroyForcibly();
-            }
-            cancel.setDisable(true);
         });
 
         setOnCloseRequest((e) -> {
@@ -187,53 +199,53 @@ public class ConsoleWindow extends Tab {
         }
         if (ke.getKeyCode() == KeyEvent.VK_F) {
             if (ke.isControlDown()) {
-//                
-//                HBox box = new HBox(15);
-//                BorderPane main = new BorderPane(box);
-//                box.setPadding(new Insets(5, 10, 5, 10));
-//                box.setStyle("-fx-background-fill:gray;");
-//                TextField fi;
-//                Button prev, next;
-//                box.getChildren().addAll(fi = new TextField(),
-//                        prev = new Button("Previous"),
-//                        next = new Button("Next"));
-//                fi.setOnAction((ea) -> {
-//                    if (jArea.getSelection().getLength() == 0) {
-//                        String a = fi.getText();
-//                        int index = jArea.getText().indexOf(a);
-//                        if (index != -1) {
-//                            jArea.selectRange(index, index + a.length());
-//                        }
-//                    } else {
-//                        next.fire();
-//                    }
-//                });
-//                prev.setOnAction((efd) -> {
-//                    int start = jArea.getSelection().getStart();
-//                    String a = jArea.getText().substring(0, start);
-//                    int index = a.lastIndexOf(fi.getText());
-//                    if (index != -1) {
-//                        jArea.selectRange(index, index + fi.getText().length());
-//                    }
-//                });
-//                next.setOnAction((sdfsdfsd) -> {
-//                    int end = jArea.getSelection().getEnd();
-//                    String a = jArea.getText().substring(end);
-//                    int index = a.indexOf(fi.getText());
-//                    index += end;
-//                    if (index != -1) {
-//                        jArea.selectRange(index, index + fi.getText().length());
-//                    }
-//                });
-//                Button close;
-//                main.setRight(close = new Button("X"));
-//                BorderPane.setMargin(main.getRight(), new Insets(5, 10, 5, 10));
-//                getCenter().setBottom(main);
-//                fi.requestFocus();
-//                close.setOnAction((se) -> {
-//                    getCenter().setBottom(null);
-//                });
-//                        
+                HBox box = new HBox(15);
+                BorderPane main = new BorderPane(box);
+                box.setPadding(new Insets(5, 10, 5, 10));
+                box.setStyle("-fx-background-fill:gray;");
+                TextField fi;
+                Button prev, next;
+                box.getChildren().addAll(fi = new TextField(),
+                        prev = new Button("Previous"),
+                        next = new Button("Next"));
+                fi.setOnAction((ea) -> {
+                    if (jArea.getSelectedText() == null || jArea.getSelectedText().length() == 0) {
+                        String a = fi.getText();
+                        int index = jArea.getText().indexOf(a);
+                        if (index != -1) {
+                            jArea.select(index, index + a.length());
+                        }
+                    } else {
+                        next.fire();
+                    }
+                });
+                prev.setOnAction((efd) -> {
+                    int start = jArea.getSelectionStart();
+                    String a = jArea.getText().substring(0, start);
+                    int index = a.lastIndexOf(fi.getText());
+                    if (index != -1) {
+                        jArea.select(index, index + fi.getText().length());
+                    }
+                });
+                next.setOnAction((sdfsdfsd) -> {
+                    int end = jArea.getSelectionEnd();
+                    String a = jArea.getText().substring(end);
+                    int index = a.indexOf(fi.getText());
+                    index += end;
+                    if (index != -1) {
+                        jArea.select(index, index + fi.getText().length());
+                    }
+                });
+                Button close;
+                main.setRight(close = new Button("X"));
+                BorderPane.setMargin(main.getRight(), new Insets(5, 10, 5, 10));
+                Platform.runLater(() -> {
+                    bottom.setTop(main);
+                    fi.requestFocus();
+                    close.setOnAction((se) -> {
+                        bottom.setTop(null);
+                    });
+                });
             }
         }
     }

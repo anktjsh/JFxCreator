@@ -6,6 +6,8 @@
 package jfxcreator.view;
 
 import javafx.scene.control.TreeItem;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import jfxcreator.core.Program;
 
 /**
@@ -14,10 +16,12 @@ import jfxcreator.core.Program;
  */
 public class ProgramTreeItem extends TreeItem<String> {
 
+    private static final Image file = new Image(ProgramTreeItem.class.getResourceAsStream("tree/file.PNG"), 25, 25, true, true);
     private final Program script;
 
     public ProgramTreeItem(Program pro) {
         setValue(pro.getFile().getFileName().toString());
+        setGraphic(new ImageView(file));
         script = pro;
     }
 

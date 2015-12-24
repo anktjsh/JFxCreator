@@ -6,10 +6,18 @@
 package jfxcreator;
 
 import de.codecentric.centerdevice.MenuToolkit;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.Optional;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.application.Platform;
+import javafx.event.Event;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -29,7 +37,8 @@ import jfxcreator.view.Writer;
 public class JFxCreator extends Application {
 
     public static final String OS = System.getProperty("os.name").toLowerCase();
-    public static final String stylesheet = JFxCreator.class.getResource(OS.contains("win") ? "" : "mac_os.css").toExternalForm();
+    public static final String stylesheet = JFxCreator.class.getResource(OS.contains("win")
+            ? (OS.contains("7") ? "win7.css" : "JMetroLightTheme.css") : "mac_os.css").toExternalForm();
     public static final Image icon = new Image(JFxCreator.class.getResourceAsStream("icon.png"));
     public static HostServices host;
 
@@ -37,33 +46,13 @@ public class JFxCreator extends Application {
     public void start(Stage env) {
         host = getHostServices();
         Writer script;
+        if (OS.contains("win")&&OS.contains("10")){
+            
+        }
         env.setScene(new Scene(script = new Writer()));
         env.getScene().getStylesheets().add(getClass().getResource("java-keywords.css").toExternalForm());
         env.setOnCloseRequest((e) -> {
-            if (!script.processCheck()) {
-                e.consume();
-                return;
-            }
-            if (script.canSave()) {
-                Alert al = new Alert(Alert.AlertType.CONFIRMATION);
-                al.setHeaderText("Would you like to save before closing?");
-                al.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL, ButtonType.NO);
-                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-                al.initOwner(env);
-                Optional<ButtonType> show = al.showAndWait();
-                if (show.isPresent()) {
-                    if (show.get() == ButtonType.OK) {
-                        script.saveAll();
-                    } else if (show.get() == ButtonType.CANCEL) {
-                        e.consume();
-                        return;
-                    }
-                }
-            }
-            script.saveOpenProjectsInformation();
-            ProjectTree.getTree().close();
-            Platform.exit();
-            System.exit(0);
+            close(script, e);
         });
         env.setTitle("JFxCreator");
         Writer.currentProject.addListener((ob, older, newer) -> {
@@ -76,9 +65,14 @@ public class JFxCreator extends Application {
         env.setMaximized(true);
         if (OS.contains("mac")) {
             env.setFullScreen(true);
-            env.getScene().getStylesheets().add(stylesheet);
         }
+        env.getScene().getStylesheets().add(stylesheet);
         env.getIcons().add(icon);
+        env.showingProperty().addListener((ob, older, newer) -> {
+            if (newer) {
+                script.setCurrentProject();
+            }
+        });
         env.show();
         setMenuBar(script);
         Dependencies.load(env);
@@ -90,32 +84,36 @@ public class JFxCreator extends Application {
             Menu def = tk.createDefaultApplicationMenu("JFxCreator");
             tk.setApplicationMenu(def);
             def.getItems().get(3).setOnAction((E) -> {
-                if (!script.processCheck()) {
+                close(script, E);
+            });
+        }
+    }
+
+    private void close(Writer script, Event E) {
+        if (!script.processCheck()) {
+            E.consume();
+            return;
+        }
+        if (script.canSave()) {
+            Alert al = new Alert(Alert.AlertType.CONFIRMATION);
+            al.setHeaderText("Would you like to save before closing?");
+            al.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL, ButtonType.NO);
+            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+            al.initOwner(script.getScene().getWindow());
+            Optional<ButtonType> show = al.showAndWait();
+            if (show.isPresent()) {
+                if (show.get() == ButtonType.OK) {
+                    script.saveAll();
+                } else if (show.get() == ButtonType.CANCEL) {
                     E.consume();
                     return;
                 }
-                if (script.canSave()) {
-                    Alert al = new Alert(Alert.AlertType.CONFIRMATION);
-                    al.setHeaderText("Would you like to save before closing?");
-                    al.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL, ButtonType.NO);
-                    ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-                    al.initOwner(script.getScene().getWindow());
-                    Optional<ButtonType> show = al.showAndWait();
-                    if (show.isPresent()) {
-                        if (show.get() == ButtonType.OK) {
-                            script.saveAll();
-                        } else if (show.get() == ButtonType.CANCEL) {
-                            E.consume();
-                            return;
-                        }
-                    }
-                }
-                script.saveOpenProjectsInformation();
-                ProjectTree.getTree().close();
-                Platform.exit();
-                System.exit(0);
-            });
+            }
         }
+        script.saveOpenProjectsInformation();
+        ProjectTree.getTree().close();
+        Platform.exit();
+        System.exit(0);
     }
 
     /**
@@ -131,6 +129,44 @@ public class JFxCreator extends Application {
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
         }
+        /*
+         String compress= "/Volumes/LEXAR/Library/CEF/cef-win64.jar";
+         String folderPath = "/Volumes/LEXAR/Library/CEF/";
+         int BUFFER = 2048;
+         System.out.println(System.currentTimeMillis());
+         try{
+         String uncompress;
+         BufferedOutputStream dest = null;
+         FileInputStream fis = new FileInputStream(compress);
+         ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fis));
+         ZipEntry entry;
+         while((entry= zis.getNextEntry())!=null) {
+         uncompress = folderPath + entry.getName();
+         System.out.println("Extracting entry");
+         if (entry.isDirectory()) {
+         File f = new File(uncompress);
+         f.mkdir();
+         } else {
+         int count;
+         byte[] data =new byte[BUFFER];
+                
+         FileOutputStream fos = new FileOutputStream(new File(uncompress));
+         dest = new BufferedOutputStream(fos, BUFFER);
+         while((count=zis.read(data, 0, BUFFER))!=-1) {
+         dest.write(data, 0, count);
+         }
+         dest.flush();
+         dest.close();
+         }
+                
+         }
+         zis.close();
+         }catch(Exception e) {
+         e.printStackTrace();
+         }
+         System.out.println(System.currentTimeMillis());
+         */
+//        System.exit(0);
         launch(args);
     }
 
