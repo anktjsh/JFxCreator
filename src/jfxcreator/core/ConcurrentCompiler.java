@@ -18,32 +18,33 @@ import javafx.collections.ListChangeListener;
  *
  * @author swatijoshi
  */
-public class ConcurrentCompiler implements Runnable{
+public class ConcurrentCompiler implements Runnable {
+
     private final Project currentProject;
     private boolean running;
     private final Console con;
     private String temp;
     private final StringProperty output = new SimpleStringProperty();
-    
+
     public StringProperty outputProperty() {
         return output;
     }
-    
+
     public ConcurrentCompiler(Project pro) {
         currentProject = pro;
         con = new Console(currentProject);
-        Runtime.getRuntime().addShutdownHook(new Thread(()->{
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             cancel();
         }));
     }
-    
+
     private void compile() {
         temp = "";
         con.getList().addListener((ListChangeListener.Change<? extends Character> c) -> {
             c.next();
             if (c.wasAdded()) {
                 for (Character ca : c.getAddedSubList()) {
-                    temp +=ca;
+                    temp += ca;
                 }
             }
         });
@@ -53,11 +54,11 @@ public class ConcurrentCompiler implements Runnable{
         }
         output.set(temp);
     }
-    
+
     public void cancel() {
-        running= false;
+        running = false;
     }
-    
+
     private boolean reset() {
 //        return !currentProject.isModified();
         return true;
@@ -66,31 +67,31 @@ public class ConcurrentCompiler implements Runnable{
     @Override
     public void run() {
         running = false;
-        while(running){
+        while (running) {
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException ex) {
             }
-            if (reset()){
+            if (reset()) {
                 continue;
             }
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException ex) {
             }
-            if (reset()){
+            if (reset()) {
                 continue;
             }
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException ex) {
             }
-            if (reset()){
+            if (reset()) {
                 continue;
             }
             compile();
         }
         compile();
     }
-    
+
 }

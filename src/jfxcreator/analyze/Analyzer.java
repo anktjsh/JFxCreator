@@ -36,12 +36,14 @@ public class Analyzer {
         ret.addAll(clazz.getImports());
         return ret;
     }
-    
+
     public static class Option {
+
         private final String caption;
         private final String realText;
-        public Option(String a, String b){
-            caption =a;
+
+        public Option(String a, String b) {
+            caption = a;
             realText = b;
         }
     }

@@ -5,15 +5,9 @@
  */
 package jfxcreator;
 
+import com.herudi.CleanWindowFX;
 import de.codecentric.centerdevice.MenuToolkit;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.Optional;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.application.Platform;
@@ -46,36 +40,59 @@ public class JFxCreator extends Application {
     public void start(Stage env) {
         host = getHostServices();
         Writer script;
-        if (OS.contains("win")&&OS.contains("10")){
-            
-        }
-        env.setScene(new Scene(script = new Writer()));
-        env.getScene().getStylesheets().add(getClass().getResource("java-keywords.css").toExternalForm());
-        env.setOnCloseRequest((e) -> {
-            close(script, e);
-        });
-        env.setTitle("JFxCreator");
-        Writer.currentProject.addListener((ob, older, newer) -> {
-            if (newer != null) {
-                env.setTitle("JFxCreator - " + newer.getProjectName());
-            } else {
-                env.setTitle("JFxCreator");
+        if (OS.contains("win") && OS.contains("10")) {
+            CleanWindowFX clean = new CleanWindowFX();
+            clean.setScene(script = new Writer());
+            script.getStylesheets().add(getClass().getResource("java-keywords.css").toExternalForm());
+            env.setOnCloseRequest((e) -> {
+                close(script, e);
+            });
+            clean.setTitle("JFxCreator");
+            Writer.currentProject.addListener((ob, older, newer) -> {
+                if (newer != null) {
+                    clean.setTitle("JFxCreator - " + newer.getProjectName());
+                } else {
+                    clean.setTitle("JFxCreator");
+                }
+            });
+            clean.setMaximized(true);
+            clean.setIcon(icon);
+            env.showingProperty().addListener((ob, older, newer) -> {
+                if (newer) {
+                    script.setCurrentProject();
+                }
+            });
+            clean.show(env);
+            Dependencies.load(env);
+        } else {
+            env.setScene(new Scene(script = new Writer()));
+            env.getScene().getStylesheets().add(getClass().getResource("java-keywords.css").toExternalForm());
+            env.setOnCloseRequest((e) -> {
+                close(script, e);
+            });
+            env.setTitle("JFxCreator");
+            Writer.currentProject.addListener((ob, older, newer) -> {
+                if (newer != null) {
+                    env.setTitle("JFxCreator - " + newer.getProjectName());
+                } else {
+                    env.setTitle("JFxCreator");
+                }
+            });
+            env.setMaximized(true);
+            if (OS.contains("mac")) {
+                env.setFullScreen(true);
             }
-        });
-        env.setMaximized(true);
-        if (OS.contains("mac")) {
-            env.setFullScreen(true);
+            env.getScene().getStylesheets().add(stylesheet);
+            env.getIcons().add(icon);
+            env.showingProperty().addListener((ob, older, newer) -> {
+                if (newer) {
+                    script.setCurrentProject();
+                }
+            });
+            env.show();
+            setMenuBar(script);
+            Dependencies.load(env);
         }
-        env.getScene().getStylesheets().add(stylesheet);
-        env.getIcons().add(icon);
-        env.showingProperty().addListener((ob, older, newer) -> {
-            if (newer) {
-                script.setCurrentProject();
-            }
-        });
-        env.show();
-        setMenuBar(script);
-        Dependencies.load(env);
     }
 
     private void setMenuBar(Writer script) {
@@ -129,44 +146,6 @@ public class JFxCreator extends Application {
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
         }
-        /*
-         String compress= "/Volumes/LEXAR/Library/CEF/cef-win64.jar";
-         String folderPath = "/Volumes/LEXAR/Library/CEF/";
-         int BUFFER = 2048;
-         System.out.println(System.currentTimeMillis());
-         try{
-         String uncompress;
-         BufferedOutputStream dest = null;
-         FileInputStream fis = new FileInputStream(compress);
-         ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fis));
-         ZipEntry entry;
-         while((entry= zis.getNextEntry())!=null) {
-         uncompress = folderPath + entry.getName();
-         System.out.println("Extracting entry");
-         if (entry.isDirectory()) {
-         File f = new File(uncompress);
-         f.mkdir();
-         } else {
-         int count;
-         byte[] data =new byte[BUFFER];
-                
-         FileOutputStream fos = new FileOutputStream(new File(uncompress));
-         dest = new BufferedOutputStream(fos, BUFFER);
-         while((count=zis.read(data, 0, BUFFER))!=-1) {
-         dest.write(data, 0, count);
-         }
-         dest.flush();
-         dest.close();
-         }
-                
-         }
-         zis.close();
-         }catch(Exception e) {
-         e.printStackTrace();
-         }
-         System.out.println(System.currentTimeMillis());
-         */
-//        System.exit(0);
         launch(args);
     }
 

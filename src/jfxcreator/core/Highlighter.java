@@ -18,6 +18,15 @@ public class Highlighter {
         if (ed.getScript().getType() == Program.JAVA) {
             JavaKeywordsAsync as = new JavaKeywordsAsync(area);
             as.apply();
+        } else {
+            String name = ed.getScript().getFile().getFileName().toString();
+            if (name.contains(".")) {
+                String extension = name.substring(name.indexOf('.') + 1);
+                if (extension.endsWith("ml")) {
+                    TagHighlighter th = new TagHighlighter(area, ed);
+                    th.apply();
+                }
+            }
         }
     }
 }

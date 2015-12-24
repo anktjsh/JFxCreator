@@ -1,2 +1,1 @@
-Project : /Users/swatijoshi/Documents/JFxCreatorProjects/JavaProject1 : hello.World.JelloWorld
 Project : /Users/swatijoshi/Documents/JFxCreatorProjects/JavaProject2 : com.example.aniket.AniketTester

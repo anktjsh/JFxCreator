@@ -77,7 +77,7 @@ public class ProjectWizard {
         box.getChildren().addAll(new Label("New Project"),
                 projectName = new TextField(getDefaultProjectName()),
                 projectPath = new TextField(),
-                new Label("Main Class Package Name"),
+                new Label("Package Name"),
                 packageName = new TextField(),
                 new Label("Main Class Name"),
                 mainClassName = new TextField(),

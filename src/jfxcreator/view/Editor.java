@@ -26,6 +26,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import jfxcreator.JFxCreator;
@@ -85,6 +86,15 @@ public class Editor extends EnvironmentTab {
         });
 
         getCenter().setCenter(area);
+        HBox hb = new HBox(15);
+        hb.setAlignment(Pos.CENTER_RIGHT);
+        hb.setPadding(new Insets(5, 10, 5, 10));
+        getCenter().setBottom(hb);
+        Text caret;
+        hb.getChildren().add(caret = new Text(""));
+        area.caretPositionProperty().addListener((ob, older, newer) -> {
+            caret.setText(getRow(area.getCaretPosition()) + ":" + area.getCaretColumn());
+        });
         readFromScript();
         setOnCloseRequest((e) -> {
             if (canSave()) {
@@ -138,7 +148,7 @@ public class Editor extends EnvironmentTab {
         Highlighter.highlight(area, this);
         IntFunction<Node> numberFactory = LineNumberFactory.get(area);
         IntFunction<Node> arrowFactory = new ArrowFactory(errorLines);
-        IntFunction<Node> graphicFctory = line ->{
+        IntFunction<Node> graphicFctory = line -> {
             HBox hbox = new HBox(numberFactory.apply(line), arrowFactory.apply(line));
             hbox.setAlignment(Pos.CENTER_LEFT);
             return hbox;
@@ -154,7 +164,7 @@ public class Editor extends EnvironmentTab {
                     options.getItems().addAll(Analyzer.analyze(getScript().getClassName(), getCodeArea().getText(), area.getCaretPosition(), null));
                 } else {
                     int open = area.getText().substring(0, area.getCaretPosition()).lastIndexOf(' ');
-                    String search = area.getText().substring(open+1, area.getCaretPosition());
+                    String search = area.getText().substring(open + 1, area.getCaretPosition());
                     options.getItems().addAll(Analyzer.analyze(getScript().getClassName(), getCodeArea().getText(), area.getCaretPosition(), search));
                 }
                 if (options.getItems().size() > 0) {
@@ -322,6 +332,18 @@ public class Editor extends EnvironmentTab {
                 }
             }
         });
+    }
+
+    private int getRow(int caret) {
+        String spl[] = area.getText().split("\n");
+        int count = 0;
+        for (int x = 0; x < spl.length; x++) {
+            count += spl[x].length() + 1;
+            if (caret <= count) {
+                return x + 1;
+            }
+        }
+        return -1;
     }
 
     private String getTabText(String s) {

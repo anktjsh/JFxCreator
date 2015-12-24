@@ -5,6 +5,7 @@
  */
 package jfxcreator.core;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -117,7 +118,7 @@ public class Project {
         }
         compiler = new ConcurrentCompiler(this);
     }
-    
+
     public ConcurrentCompiler getCurrentCompiler() {
         return compiler;
     }
@@ -203,7 +204,7 @@ public class Project {
                         WatchEvent<Path> ev = (WatchEvent<Path>) event;
                         Path filename = ev.context();
                         Path child = dir.resolve(filename);
-
+                        System.out.println(child.toAbsolutePath().toString());
                         if (Files.isDirectory(child) || !child.getFileName().toString().contains(".")) {
                             if (kind == ENTRY_DELETE) {
                                 deleteInside(child);
@@ -554,6 +555,42 @@ public class Project {
         saveConfig();
     }
 
+    private void uncompress(String compress, String folderPath) {
+        int BUFFER = 2048;
+        System.out.println(System.currentTimeMillis());
+        try {
+            String uncompress;
+            BufferedOutputStream dest;
+            FileInputStream fis = new FileInputStream(compress);
+            try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fis))) {
+                ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    uncompress = folderPath + entry.getName();
+                    System.out.println("Extracting entry");
+                    if (entry.isDirectory()) {
+                        File f = new File(uncompress);
+                        f.mkdir();
+                    } else {
+                        int count;
+                        byte[] data = new byte[BUFFER];
+
+                        FileOutputStream fos = new FileOutputStream(new File(uncompress));
+                        dest = new BufferedOutputStream(fos, BUFFER);
+                        while ((count = zis.read(data, 0, BUFFER)) != -1) {
+                            dest.write(data, 0, count);
+                        }
+                        dest.flush();
+                        dest.close();
+                    }
+
+                }
+            }
+        } catch (IOException ex) {
+        }
+        System.out.println(System.currentTimeMillis());
+
+    }
+
     public void fatJar(ProcessItem pro) throws IOException {
         build(pro);
         Path fat = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "bundle" + File.separator + getProjectName() + ".jar");
@@ -653,7 +690,8 @@ public class Project {
         programs.stream().forEach((p) -> {
             sb.append(" ").append(p.getFile().toAbsolutePath().toString().endsWith(".java") ? p.getFile().toAbsolutePath().toString() : "");
         });
-        return sb.toString();
+        String s = sb.toString();
+        return s.replaceAll("  ", " ");
     }
 
     private String getLibsList() {
@@ -666,7 +704,7 @@ public class Project {
         }
         return sb.toString();
     }
-    
+
     public void concurrentCompiling(Console con) {
         String os = System.getProperty("os.name").toLowerCase();
         if (os.contains("win")) {
@@ -675,7 +713,7 @@ public class Project {
             macConcurrentCompile(con);
         }
     }
-    
+
     private void windowsConcurrentCompile(Console pro) {
         String JAVA_HOME = Dependencies.local_version;
         String one = "\"" + JAVA_HOME + File.separator + "javac\""
@@ -709,7 +747,6 @@ public class Project {
             (new Thread(new Reader(start.getInputStream(), pro))).start();
             System.out.println(start.waitFor());
         } catch (IOException | InterruptedException e) {
-
         }
     }
 

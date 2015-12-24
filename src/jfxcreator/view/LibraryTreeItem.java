@@ -15,6 +15,7 @@ import java.util.zip.ZipFile;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import jfxcreator.core.Project;
 
 /**
  *
@@ -24,9 +25,11 @@ public class LibraryTreeItem extends TreeItem<String> {
 
     private static final Image lib = new Image(LibraryTreeItem.class.getResourceAsStream("tree/library.PNG"), 25, 25, true, true);
     private final String path;
+    private final Project project;
 
-    public LibraryTreeItem(String a) {
+    public LibraryTreeItem(Project pro, String a) {
         path = a;
+        project = pro;
         File f = new File(path);
         setValue(f.getName());
         setGraphic(new ImageView(lib));
@@ -45,6 +48,10 @@ public class LibraryTreeItem extends TreeItem<String> {
             }
         } catch (Exception e) {
         }
+    }
+
+    public Project getProject() {
+        return project;
     }
 
     private void add(String s) {

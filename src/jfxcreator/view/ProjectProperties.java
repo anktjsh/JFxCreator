@@ -48,8 +48,7 @@ public class ProjectProperties {
         stage = new Stage();
         stage.initOwner(w);
         stage.initModality(Modality.APPLICATION_MODAL);
-//        stage.setWidth(400);
-//        stage.setHeight(400);
+        stage.setWidth(600);
         stage.setTitle("Project Properties");
         stage.getIcons().add(jfxcreator.JFxCreator.icon);
         stage.setResizable(false);
@@ -73,7 +72,7 @@ public class ProjectProperties {
         one.setAlignment(Pos.CENTER);
         box.setAlignment(Pos.CENTER);
         mainClass.setEditable(false);
-
+        mainClass.setPrefWidth(200);
         for (String s : project.getAllLibs()) {
             libsView.getItems().add(s);
         }

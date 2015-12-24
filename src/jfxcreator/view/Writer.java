@@ -236,8 +236,8 @@ public class Writer extends BorderPane {
             ComboBox<String> fontSizes;
             box.getChildren().add(hb = new HBox(5, new Text("Modify Font Size"), fontSizes = new ComboBox<>()));
             box.getChildren().add(wrap = new CheckBox("Wrap Text"));
-            Button close;
-            box.getChildren().add(close = new Button("Close"));
+            Button hide;
+            box.getChildren().add(hide = new Button("Close"));
             wrap.setSelected(wrapText.get());
             wrap.setOnAction((e) -> {
                 wrapText.set(wrap.isSelected());
@@ -250,7 +250,7 @@ public class Writer extends BorderPane {
             fontSizes.setOnAction((e) -> {
                 fontSize.set(new Font(Integer.parseInt(fontSizes.getValue())));
             });
-            close.setOnAction((e) -> {
+            hide.setOnAction((e) -> {
                 st.close();
             });
             st.showAndWait();
@@ -281,7 +281,7 @@ public class Writer extends BorderPane {
 
                         @Override
                         public void fileAdded(Project pro, Program add) {
-                            if (!scriptContains(item.getChildren(), add)) {
+                            if (!scriptContains(item.getChildren().get(0).getChildren(), add)) {
                                 addScriptTreeItem(item, new ProgramTreeItem(add));
                             }
                         }
@@ -303,12 +303,12 @@ public class Writer extends BorderPane {
                         addScriptTreeItem(item, new ProgramTreeItem(s));
                     });
                     for (String s : added.getAllLibs()) {
-                        item.getChildren().get(1).getChildren().add(new LibraryTreeItem(s));
+                        item.getChildren().get(1).getChildren().add(new LibraryTreeItem(added, s));
                     }
                     added.setLibraryListener((List<String> filePaths) -> {
                         item.getChildren().get(1).getChildren().clear();
                         for (String s : filePaths) {
-                            item.getChildren().get(1).getChildren().add(new LibraryTreeItem(s));
+                            item.getChildren().get(1).getChildren().add(new LibraryTreeItem(added, s));
                         }
                     });
                     added.getCurrentCompiler().outputProperty().addListener((ob, older, newer) -> {
@@ -382,6 +382,8 @@ public class Writer extends BorderPane {
                 currentProject.set(((ProjectTreeItem) newer).getProject());
             } else if (newer instanceof ProgramTreeItem) {
                 currentProject.set(((ProgramTreeItem) newer).getScript().getProject());
+            } else if (newer instanceof LibraryTreeItem) {
+                currentProject.set(((LibraryTreeItem) newer).getProject());
             } else {
 //                currentProject.set(null);
             }
@@ -441,10 +443,13 @@ public class Writer extends BorderPane {
                 });
             } else if (select instanceof DirectoryTreeItem) {
                 tree.getContextMenu().getItems().clear();
+            } else if (select instanceof LibraryTreeItem) {
+                tree.getContextMenu().getItems().clear();
             } else if (select instanceof ProjectTreeItem) {
-                MenuItem clsepse, delete, prop, details;
+                MenuItem clsepse, delete, reload, prop, details;
                 tree.getContextMenu().getItems().setAll(clsepse = new MenuItem("Close Project"),
                         delete = new MenuItem("Delete Project"),
+                        reload = new MenuItem("Reload Project"),
                         details = new MenuItem("Project Details"),
                         prop = new MenuItem("Properties")
                 );
@@ -465,6 +470,9 @@ public class Writer extends BorderPane {
                         }
                     }
                 });
+                reload.setOnAction((E) -> {
+                    reload(((ProjectTreeItem) select).getProject());
+                });
                 prop.setOnAction((efd) -> {
                     property(((ProjectTreeItem) select).getProject());
                 });
@@ -474,6 +482,7 @@ public class Writer extends BorderPane {
             } else {
                 tree.getContextMenu().getItems().clear();
             }
+            resizeMenuItems(tree.getContextMenu().getItems(), "-fx-font-size:" + fontSize.get().getSize());
         });
         resize(bar, "-fx-font-size:15");
         fontSize.addListener((ob, older, newer) -> {
@@ -508,13 +517,18 @@ public class Writer extends BorderPane {
         bottom.setPadding(new Insets(5, 10, 5, 10));
     }
 
+    private void reload(Project pro) {
+        closeProject(pro);
+        ProjectTree.getTree().addProject(pro);
+    }
+
     private void findScriptTreeItem(ProjectTreeItem pro, Program scr) {
-        for (int x = pro.getChildren().size() - 1; x >= 0; x--) {
-            TreeItem<String> al = pro.getChildren().get(x);
+        for (int x = pro.getChildren().get(0).getChildren().size() - 1; x >= 0; x--) {
+            TreeItem<String> al = pro.getChildren().get(0).getChildren().get(x);
             if (al instanceof ProgramTreeItem) {
                 ProgramTreeItem sti = (ProgramTreeItem) al;
                 if (sti.getScript().equals(scr)) {
-                    pro.getChildren().remove(sti);
+                    pro.getChildren().get(0).getChildren().remove(sti);
                 }
             } else if (al instanceof DirectoryTreeItem) {
                 DirectoryTreeItem dir = (DirectoryTreeItem) al;
@@ -804,7 +818,18 @@ public class Writer extends BorderPane {
     }
 
     private void resize(MenuBar bar, String style) {
-        bar.getMenus().stream().forEach((m) -> {
+        resizeMenus(bar.getMenus(), style);
+    }
+
+    private void resizeMenus(ObservableList<Menu> me, String style) {
+        me.stream().forEach((m) -> {
+            m.setStyle(style);
+        });
+        tree.setStyle(style);
+    }
+
+    private void resizeMenuItems(ObservableList<MenuItem> me, String style) {
+        me.stream().forEach((m) -> {
             m.setStyle(style);
         });
         tree.setStyle(style);
@@ -954,15 +979,15 @@ public class Writer extends BorderPane {
             if (show.isPresent()) {
                 Program sc;
                 if (show.get().getDescription().contains("Other")) {
+                    String extension = show.get().getName().substring(show.get().getName().lastIndexOf('.'));
                     sc = new Program(Program.RESOURCE,
-                            Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separatorChar + Program.getFilePath(show.get().getName())),
+                            Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separatorChar + Program.getFilePath(show.get().getName().substring(0, show.get().getName().lastIndexOf('.'))) + "." + extension),
                             FileWizard.getTemplateCode(show.get().getDescription(),
                                     show.get().getName()),
                             getCurrentProject());
                     getCurrentProject().addScript(sc);
                     loadFile(sc.getFile().toFile(), sc, sc.getProject());
                 } else {
-                    System.out.println("java");
                     sc = new Program(Program.JAVA,
                             show.get().getName(),
                             Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separator + Program.getFilePath(show.get().getName()) + ".java"),
