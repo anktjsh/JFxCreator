@@ -74,8 +74,8 @@ public class EnvironmentTab extends Tab {
             }
         });
         getContextMenu().getItems().get(4).setOnAction((e) -> {
-            if (script!=null) {
-                Details.getDetails((Stage)getTabPane().getScene().getWindow(), script.getFile());
+            if (script != null) {
+                Details.getDetails((Stage) getTabPane().getScene().getWindow(), script.getFile());
             }
         });
 

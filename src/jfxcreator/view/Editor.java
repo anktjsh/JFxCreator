@@ -31,6 +31,7 @@ import javafx.stage.Popup;
 import javafx.stage.Stage;
 import jfxcreator.JFxCreator;
 import jfxcreator.analyze.Analyzer;
+import jfxcreator.analyze.Analyzer.Option;
 import jfxcreator.core.Highlighter;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
@@ -45,10 +46,10 @@ import org.fxmisc.richtext.PopupAlignment;
 public class Editor extends EnvironmentTab {
 
     private final CodeArea area;
-    
+
     private final Popup popup;
-    private final ListView<String> options;
-    
+    private final ListView<Option> options;
+
     private final ObservableList<Integer> errorLines;
 
     public Editor(Program sc, Project pro) {
@@ -70,12 +71,12 @@ public class Editor extends EnvironmentTab {
         popup.getContent().add(options = new ListView<>());
         options.setOnKeyPressed((e) -> {
             if (e.getCode() == KeyCode.ENTER) {
-                area.insertText(area.getCaretPosition(), options.getSelectionModel().getSelectedItem());
+                area.insertText(area.getCaretPosition(), options.getSelectionModel().getSelectedItem().getRealText());
             }
         });
         options.setOnMouseClicked((e) -> {
             if (e.getClickCount() == 2) {
-                area.insertText(area.getCaretPosition(), options.getSelectionModel().getSelectedItem());
+                area.insertText(area.getCaretPosition(), options.getSelectionModel().getSelectedItem().getRealText());
             }
         });
         area.setPopupWindow(popup);

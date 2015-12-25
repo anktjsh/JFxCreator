@@ -153,16 +153,10 @@ public class Project {
         }
     }
 
-    /**
-     * @return the ll
-     */
     public LibraryListener getLibraryListener() {
         return ll;
     }
 
-    /**
-     * @param ll the ll to set
-     */
     public void setLibraryListener(LibraryListener ll) {
         this.ll = ll;
     }
@@ -188,7 +182,6 @@ public class Project {
                     if (isCancelled()) {
                         break;
                     }
-
                     WatchService watch = FileSystems.getDefault().newWatchService();
                     Path dir = source;
                     registerAll(dir, watch);
@@ -205,54 +198,19 @@ public class Project {
                         Path filename = ev.context();
                         Path child = dir.resolve(filename);
                         System.out.println(child.toAbsolutePath().toString());
-                        if (Files.isDirectory(child) || !child.getFileName().toString().contains(".")) {
-                            if (kind == ENTRY_DELETE) {
-                                deleteInside(child);
-                            } else {
-                                registerAll(child, watch);
-                                checkInside(child);
-                            }
-                            continue;
-                        }
-                        if (kind == ENTRY_CREATE) {
-                            boolean already = false;
-                            for (Program scr : programs) {
-                                if (scr.getFile().equals(child)) {
-                                    already = true;
-                                }
-                            }
-                            if (!already) {
-                                addScriptsToList(child);
-                            }
-                            checkSources();
-                        } else if (kind == ENTRY_MODIFY) {
-                            boolean already = false;
-                            Program scra = null;
-                            for (Program scr : programs) {
-                                if (scr.getFile().equals(child)) {
-                                    already = true;
-                                    scra = scr;
-                                }
-                            }
-                            if (!already) {
-                                addScriptsToList(child);
-                            } else {
-                                reloadScript(child, scra);
-                            }
-                            checkSources();
-                        } else if (kind == ENTRY_DELETE) {
-                            Program scra = null;
-                            for (Program scr : programs) {
-                                if (scr.getFile().equals(child)) {
-                                    scra = scr;
-                                }
-                            }
-                            if (scra != null) {
-                                removeScript(scra);
-                            }
-                            checkSources();
-                        }
+                        System.out.println(kind.name());
+                        if (Files.isDirectory(child)) {
+                            registerAll(child, watch);
+                        } else {
+                            if (kind == ENTRY_CREATE) {
 
+                            } else if (kind == ENTRY_MODIFY) {
+
+                            } else if (kind == ENTRY_DELETE) {
+
+                            }
+                        }
+                        checkAll();
                     }
                     boolean valid = key.reset();
                     if (!valid) {
@@ -268,125 +226,84 @@ public class Project {
         }
     }
 
-    private void checkSources() {
-        ArrayList<Path> al = new ArrayList<>();
-        getAllSources(al, source);
+    private void checkAll() {
         ArrayList<Program> remove = new ArrayList<>();
         ArrayList<Path> add = new ArrayList<>();
-        programs.stream().filter((scr) -> (!al.contains(scr.getFile()))).forEach((scr) -> {
-            remove.add(scr);
-        });
-        al.stream().forEach((P) -> {
-            Path found = null;
-            for (Program scr : programs) {
-                if (scr.getFile().equals(P)) {
-                    found = P;
-                }
+        addAllPaths(add, source.toFile());
+        for (Path p : add) {
+            System.out.println("All : " + p.toAbsolutePath().toString());
+        }
+        for (Program p : getPrograms()) {
+            if (!add.contains(p.getFile())) {
+                remove.add(p);
+            } else {
+                add.remove(p.getFile());
             }
-            if (found == null) {
-                add.add(P);
-            }
-        });
-        remove.stream().forEach((scr) -> {
-            removeScript(scr);
-        });
-        add.stream().forEach((p) -> {
-            addScriptsToList(p);
-        });
-    }
-
-    private ArrayList<Path> getAllSources(ArrayList<Path> al, Path p) {
-        if (Files.isDirectory(p) || !p.getFileName().toString().contains(".")) {
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
-                for (Path file : stream) {
-                    getAllSources(al, file);
-                }
-            } catch (IOException | DirectoryIteratorException x) {
-            }
-            return al;
-        } else {
-            al.add(p);
-            return al;
+        }
+        for (Program p : getPrograms()) {
+            System.out.println("program : " + p.getFile().toAbsolutePath().toString());
+        }
+        for (Program p : remove) {
+            System.out.println("Remove : " + p.getFile().toAbsolutePath().toString());
+            removeScript(p);
+            System.out.println("Removed");
+        }
+        for (Path p : add) {
+            System.out.println("Add : " + p.toAbsolutePath().toString());
+            addScriptsToList(p.toFile(), true);
+            System.out.println("Added");
         }
     }
 
-    private void reloadScript(Path child, Program scr) {
-        ArrayList<String> al = new ArrayList<>();
+    private void addAllPaths(ArrayList<Path> al, File p) {
+        if (p.isDirectory()) {
+            for (File f : p.listFiles()) {
+                addAllPaths(al, f);
+            }
+        } else {
+            al.add(p.toPath());
+        }
+    }
+
+    private void addScriptsToList(File f, boolean b) {
+        if (!f.isDirectory()) {
+            if (f.getName().endsWith(".java")) {
+                if (b) {
+                    addScript(new Program(Program.JAVA, f.toPath(), new ArrayList<>(), this));
+                } else {
+                    addProgram(new Program(Program.JAVA, f.toPath(), new ArrayList<>(), this));
+                }
+            } else {
+                if (b) {
+                    addScript(new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), this));
+                } else {
+                    addProgram(new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), this));
+                }
+            }
+        } else {
+            for (File fa : f.listFiles()) {
+                addScriptsToList(fa, b);
+            }
+        }
+    }
+
+    private boolean addProgram(Program pro) {
         try {
-            al.addAll(Files.readAllLines(child));
+            if (!Files.isHidden(pro.getFile())) {
+                programs.add(pro);
+                return true;
+            }
         } catch (IOException ex) {
         }
-        if (!al.equals(scr.getLastCode())) {
-            removeScript(scr);
-            scr.reload();
-            addScript(scr);
-        }
-    }
-
-    private void deleteInside(Path dir) {
-        if (Files.isDirectory(dir) || !dir.getFileName().toString().contains(".")) {
-            for (int x = programs.size() - 1; x >= 0; x--) {
-                if (programs.get(x).getFile().toAbsolutePath().toString().contains(dir.toAbsolutePath().toString())) {
-                    removeScript(programs.get(x));
-                }
-            }
-        } else {
-            Program scra = null;
-            for (Program scr : programs) {
-                if (scr.getFile().equals(dir)) {
-                    scra = scr;
-                }
-            }
-            if (scra != null) {
-                removeScript(scra);
-            }
-        }
-    }
-
-    private void checkInside(Path dir) {
-        if (Files.isDirectory(dir) || !dir.getFileName().toString().contains(".")) {
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-                for (Path file : stream) {
-                    checkInside(file);
-                }
-            } catch (IOException | DirectoryIteratorException x) {
-            }
-        } else {
-            boolean already = false;
-            for (Program scr : programs) {
-                if (scr.getFile().equals(dir)) {
-                    already = true;
-                }
-            }
-            if (!already) {
-                addScriptsToList(dir);
-            }
-
-        }
-    }
-
-    private void addScriptsToList(Path f) {
-        if (!Files.isDirectory(f) || f.getFileName().toString().contains(".")) {
-            if (f.getFileName().toString().endsWith(".java")) {
-                programs.add(new Program(Program.JAVA, f, new ArrayList<>(), this));
-            } else {
-                programs.add(new Program(Program.RESOURCE, f, new ArrayList<>(), this));
-            }
-        } else {
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(f)) {
-                for (Path fa : stream) {
-                    addScriptsToList(fa);
-                }
-            } catch (IOException | DirectoryIteratorException x) {
-            }
-        }
+        return false;
     }
 
     public void addScript(Program scr) {
-        programs.add(scr);
-        listeners.stream().forEach((pl) -> {
-            pl.fileAdded(this, scr);
-        });
+        if (addProgram(scr)) {
+            listeners.stream().forEach((pl) -> {
+                pl.fileAdded(this, scr);
+            });
+        }
     }
 
     public void removeScript(Program scr) {
@@ -435,8 +352,6 @@ public class Project {
         }
         if (al.size() >= 2) {
             String spl[] = al.get(1).split(" : ");
-//            System.out.println(spl[0]);
-//            System.out.println(spl[1]);
             String liberator = spl[1].substring(1, spl[1].length() - 1);
             allLibs.addAll(Arrays.asList(liberator.split(", ")));
             if (allLibs.size() == 1 && allLibs.get(0).isEmpty()) {
@@ -500,11 +415,8 @@ public class Project {
     }
 
     private void addExistingPrograms() {
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(source)) {
-            for (Path file : stream) {
-                addScriptsToList(file);
-            }
-        } catch (IOException | DirectoryIteratorException x) {
+        for (File f : source.toFile().listFiles()) {
+            addScriptsToList(f, false);
         }
     }
 
@@ -588,7 +500,50 @@ public class Project {
         } catch (IOException ex) {
         }
         System.out.println(System.currentTimeMillis());
+    }
 
+    public void runFile(ProcessItem item, Program program) {
+        String OS = System.getProperty("os.name").toLowerCase();
+        compile(item);
+        if (OS.contains("win")) {
+            windowsRunFile(item, program);
+        } else {
+            macRunFile(item, program);
+        }
+    }
+
+    private void windowsRunFile(ProcessItem item, Program program) {
+        String JAVA_HOME = Dependencies.local_version;
+        ProcessBuilder pb = new ProcessBuilder("\"" + JAVA_HOME + File.separator + "java\"", program.getClassName());
+        pb.directory(build.toFile());
+        pb.redirectErrorStream(true);
+        try {
+            Process start = pb.start();
+            item.setName("Launching File : " + program.getClassName());
+            item.setProcess(start);
+            ProcessPool.getPool().addItem(item);
+            (new Thread(new Reader(start.getInputStream(), item.getConsole()))).start();
+            int waitFor = start.waitFor();
+            System.out.println(waitFor);
+        } catch (IOException | InterruptedException e) {
+        }
+    }
+
+    private void macRunFile(ProcessItem item, Program program) {
+        String JAVA_HOME = Dependencies.local_version;
+        ProcessBuilder pb = new ProcessBuilder(JAVA_HOME + File.separator + "java", program.getClassName());
+        pb.directory(build.toFile());
+        pb.redirectErrorStream(true);
+        try {
+            Process start = pb.start();
+            item.setName("Launching File : " + program.getClassName());
+            item.setProcess(start);
+            ProcessPool.getPool().addItem(item);
+            (new Thread(new Reader(start.getInputStream(), item.getConsole()))).start();
+            int waitFor = start.waitFor();
+            System.out.println(waitFor);
+        } catch (IOException | InterruptedException e) {
+        }
     }
 
     public void fatJar(ProcessItem pro) throws IOException {
@@ -650,7 +605,25 @@ public class Project {
     }
 
     private void windowsFat(ProcessItem pro) {
-
+        String JAVA_HOME = Dependencies.local_version;
+        ProcessBuilder pb = new ProcessBuilder("\"" + JAVA_HOME + File.separator + "javapackager\"",
+                "-createjar",
+                "-appClass", getMainClassName(),
+                "-srcdir", "bundle",
+                "-outdir", "dist",
+                "-outfile", "bundle.jar", "-v");
+        pb.directory(rootDirectory.toFile());
+        pb.redirectErrorStream(true);
+        try {
+            Process start = pb.start();
+            pro.setName("Combining All Existing Jars for Project " + getProjectName());
+            pro.setProcess(start);
+            ProcessPool.getPool().addItem(pro);
+            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            int waitFor = start.waitFor();
+            System.out.println(waitFor);
+        } catch (IOException | InterruptedException e) {
+        }
     }
 
     private void macFat(ProcessItem pro) {
@@ -688,10 +661,11 @@ public class Project {
     private String getFileList() {
         StringBuilder sb = new StringBuilder();
         programs.stream().forEach((p) -> {
-            sb.append(" ").append(p.getFile().toAbsolutePath().toString().endsWith(".java") ? p.getFile().toAbsolutePath().toString() : "");
+            if (p.getFile().toAbsolutePath().toString().endsWith(".java")) {
+                sb.append(" ").append(p.getFile().toAbsolutePath().toString());
+            }
         });
-        String s = sb.toString();
-        return s.replaceAll("  ", " ");
+        return sb.toString();
     }
 
     private String getLibsList() {
@@ -705,51 +679,50 @@ public class Project {
         return sb.toString();
     }
 
-    public void concurrentCompiling(Console con) {
-        String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            windowsConcurrentCompile(con);
-        } else {
-            macConcurrentCompile(con);
-        }
-    }
+    /*public void concurrentCompiling(Console con) {
+     String os = System.getProperty("os.name").toLowerCase();
+     if (os.contains("win")) {
+     windowsConcurrentCompile(con);
+     } else {
+     macConcurrentCompile(con);
+     }
+     }
 
-    private void windowsConcurrentCompile(Console pro) {
-        String JAVA_HOME = Dependencies.local_version;
-        String one = "\"" + JAVA_HOME + File.separator + "javac\""
-                + getFileList() + " -d "
-                + build.toAbsolutePath().toString()
-                + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
-        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
-        pb.directory(rootDirectory.toFile());
-        pb.redirectErrorStream(true);
-        try {
-            Process start = pb.start();
-            (new Thread(new Reader(start.getInputStream(), pro))).start();
-            int waitFor = start.waitFor();
-            System.out.println(waitFor);
-        } catch (IOException | InterruptedException e) {
-        }
-    }
+     private void windowsConcurrentCompile(Console pro) {
+     String JAVA_HOME = Dependencies.local_version;
+     String one = "\"" + JAVA_HOME + File.separator + "javac\""
+     + getFileList() + " -d "
+     + build.toAbsolutePath().toString()
+     + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
+     ProcessBuilder pb = new ProcessBuilder(one.split(" "));
+     pb.directory(rootDirectory.toFile());
+     pb.redirectErrorStream(true);
+     try {
+     Process start = pb.start();
+     (new Thread(new Reader(start.getInputStream(), pro))).start();
+     int waitFor = start.waitFor();
+     System.out.println(waitFor);
+     } catch (IOException | InterruptedException e) {
+     }
+     }
 
-    private void macConcurrentCompile(Console pro) {
-        String JAVA_HOME = Dependencies.local_version;
-        String one = JAVA_HOME + File.separator + "javac"
-                + getFileList()
-                + " -d "
-                + build.toAbsolutePath().toString()
-                + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
-        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
-        pb.directory(rootDirectory.toFile());
-        pb.redirectErrorStream(true);
-        try {
-            Process start = pb.start();
-            (new Thread(new Reader(start.getInputStream(), pro))).start();
-            System.out.println(start.waitFor());
-        } catch (IOException | InterruptedException e) {
-        }
-    }
-
+     private void macConcurrentCompile(Console pro) {
+     String JAVA_HOME = Dependencies.local_version;
+     String one = JAVA_HOME + File.separator + "javac"
+     + getFileList()
+     + " -d "
+     + build.toAbsolutePath().toString()
+     + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
+     ProcessBuilder pb = new ProcessBuilder(one.split(" "));
+     pb.directory(rootDirectory.toFile());
+     pb.redirectErrorStream(true);
+     try {
+     Process start = pb.start();
+     (new Thread(new Reader(start.getInputStream(), pro))).start();
+     System.out.println(start.waitFor());
+     } catch (IOException | InterruptedException e) {
+     }
+     }*/
     public void compile(ProcessItem pro) {
         String os = System.getProperty("os.name").toLowerCase();
         if (os.contains("win")) {
@@ -787,6 +760,7 @@ public class Project {
                 + " -d "
                 + build.toAbsolutePath().toString()
                 + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
+        System.out.println(one);
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.directory(rootDirectory.toFile());
         pb.redirectErrorStream(true);

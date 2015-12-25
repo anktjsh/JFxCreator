@@ -86,7 +86,7 @@ public class Writer extends BorderPane {
     private final Menu file, edit, launch, deploy, settings, help;
     private final MenuItem nFile, nProject, print, oFile, close, property, oProject, cProject, closeAll, save, saveAll, fullsc,
             undo, redo, cut, copy, paste, selectAll,
-            build, clean, run,
+            build, clean, run, runF,
             jar, zip, dNative,
             jPlatforms, pDirectory, view,
             about;
@@ -127,7 +127,8 @@ public class Writer extends BorderPane {
                 selectAll = new MenuItem("Select All"));
         launch.getItems().addAll(build = new MenuItem("Build"),
                 clean = new MenuItem("Clean and Build"),
-                run = new MenuItem("Run"));
+                run = new MenuItem("Run"),
+                runF = new MenuItem("Run File"));
 
         deploy.getItems().addAll(jar = new MenuItem("Deploy Jar"),
                 zip = new MenuItem("Deploy Zip"),
@@ -204,6 +205,9 @@ public class Writer extends BorderPane {
         });
         run.setOnAction((e) -> {
             run();
+        });
+        runF.setOnAction((e) -> {
+            runFile();
         });
         jar.setOnAction((e) -> {
             fatJar();
@@ -378,7 +382,7 @@ public class Writer extends BorderPane {
                         if (!entry.isDirectory()) {
                             InputStream is = ((BinaryTreeItem) sel).getInputStream();
                             if (is != null) {
-                                ClassReader cr = new ClassReader(null,((BinaryTreeItem)sel).getProject(), entry.getName(), is);
+                                ClassReader cr = new ClassReader(null, ((BinaryTreeItem) sel).getProject(), entry.getName(), is);
                                 tabPane.getTabs().add(cr);
                                 tabPane.getSelectionModel().select(cr);
                             }
@@ -535,22 +539,39 @@ public class Writer extends BorderPane {
 
     private void reload(Project pro) {
         closeProject(pro);
-        ProjectTree.getTree().addProject(pro);
+        String main = pro.getMainClassName();
+        ProjectTree.getTree().addProject(new Project(pro.getRootDirectory(), main, false));
     }
 
     private void findScriptTreeItem(ProjectTreeItem pro, Program scr) {
-        for (int x = pro.getChildren().get(0).getChildren().size() - 1; x >= 0; x--) {
-            TreeItem<String> al = pro.getChildren().get(0).getChildren().get(x);
-            if (al instanceof ProgramTreeItem) {
-                ProgramTreeItem sti = (ProgramTreeItem) al;
-                if (sti.getScript().equals(scr)) {
-                    pro.getChildren().get(0).getChildren().remove(sti);
+        if (pro instanceof DirectoryTreeItem) {
+            for (int x = pro.getChildren().size() - 1; x >= 0; x--) {
+                TreeItem<String> al = pro.getChildren().get(x);
+                if (al instanceof ProgramTreeItem) {
+                    ProgramTreeItem sti = (ProgramTreeItem) al;
+                    if (sti.getScript().equals(scr)) {
+                        pro.getChildren().remove(sti);
+                    }
+                } else if (al instanceof DirectoryTreeItem) {
+                    DirectoryTreeItem dir = (DirectoryTreeItem) al;
+                    findScriptTreeItem(dir, scr);
                 }
-            } else if (al instanceof DirectoryTreeItem) {
-                DirectoryTreeItem dir = (DirectoryTreeItem) al;
-                findScriptTreeItem(dir, scr);
+            }
+        } else {
+            for (int x = pro.getChildren().get(0).getChildren().size() - 1; x >= 0; x--) {
+                TreeItem<String> al = pro.getChildren().get(0).getChildren().get(x);
+                if (al instanceof ProgramTreeItem) {
+                    ProgramTreeItem sti = (ProgramTreeItem) al;
+                    if (sti.getScript().equals(scr)) {
+                        pro.getChildren().get(0).getChildren().remove(sti);
+                    }
+                } else if (al instanceof DirectoryTreeItem) {
+                    DirectoryTreeItem dir = (DirectoryTreeItem) al;
+                    findScriptTreeItem(dir, scr);
+                }
             }
         }
+
     }
 
     private boolean projectContains(ObservableList<TreeItem<String>> tre, Project pr) {
@@ -1067,6 +1088,30 @@ public class Writer extends BorderPane {
         }
     }
 
+    public final void runFile() {
+        saveAll();
+        if (getSelectedEditor() != null) {
+            if (getSelectedEditor().getScript().getProject() != null) {
+                runFile(getSelectedEditor().getScript().getProject(), getSelectedEditor().getScript());
+            }
+        }
+    }
+
+    private void runFile(Project projec, Program pro) {
+        ProcessItem item = new ProcessItem(null, null, new Console(projec));
+        addConsoleWindow(item);
+        Task<Void> tk = new Task<Void>() {
+
+            @Override
+            protected Void call() throws Exception {
+                projec.runFile(item, pro);
+                return null;
+            }
+
+        };
+        (new Thread(tk)).start();
+    }
+
     public final void fatJar() {
         if (getCurrentProject() != null) {
             getCurrentProject().clean();
@@ -1133,6 +1178,7 @@ public class Writer extends BorderPane {
         if (getCurrentProject() != null) {
             boolean b = verifyDependencies();
             if (b) {
+                saveAll();
                 ProcessItem pro = new ProcessItem(null, null, new Console(getCurrentProject()));
                 addConsoleWindow(pro);
                 Task<Void> tk = new Task<Void>() {

@@ -14,7 +14,7 @@ import jfxcreator.analyze.Method.Parameter;
  */
 public class Analyzer {
 
-    public static ArrayList<String> analyze(String name, String code, int caret, String currentWord) {
+    public static ArrayList<Option> analyze(String name, String code, int caret, String currentWord) {
         Class clazz;
         if (name.contains(".")) {
             String a = name.substring(0, name.lastIndexOf('.'));
@@ -23,17 +23,20 @@ public class Analyzer {
         } else {
             clazz = Class.create(name, "", code);
         }
-        ArrayList<String> ret = new ArrayList<>();
+
+        ArrayList<Option> ret = new ArrayList<>();
         for (Method m : clazz.getMethods()) {
-            ret.add(m.getName());
+            ret.add(new Option("Method : " + m.getName(), m.getName()));
         }
         Method m = clazz.identify(caret);
         if (m != null) {
             for (Parameter p : m.getParameters()) {
-                ret.add(0, p.getName());
+                ret.add(0, new Option("Variable : " + p.getName(), p.getName()));
             }
         }
-        ret.addAll(clazz.getImports());
+        for (String s : clazz.getImports()) {
+            ret.add(new Option("Class : " + s, s));
+        }
         return ret;
     }
 
@@ -45,6 +48,25 @@ public class Analyzer {
         public Option(String a, String b) {
             caption = a;
             realText = b;
+        }
+
+        /**
+         * @return the caption
+         */
+        public String getCaption() {
+            return caption;
+        }
+
+        /**
+         * @return the realText
+         */
+        public String getRealText() {
+            return realText;
+        }
+
+        @Override
+        public String toString() {
+            return getCaption();
         }
     }
 }

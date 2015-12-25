@@ -85,6 +85,7 @@ public class Program {
         if (!Files.exists(file)) {
             try {
                 Files.createDirectories(getFile().getParent());
+                System.out.println("new : " + getFile().toAbsolutePath().toString());
                 Files.createFile(getFile());
             } catch (IOException ex) {
             }

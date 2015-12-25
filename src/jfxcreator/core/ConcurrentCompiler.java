@@ -43,7 +43,7 @@ public class ConcurrentCompiler implements Runnable {
                 }
             }
         });
-        currentProject.concurrentCompiling(con);
+//        currentProject.concurrentCompiling(con);
         for (String s : temp.split("\n")) {
             System.out.println(s);
         }

@@ -157,7 +157,7 @@ public class ConsoleWindow extends Tab {
     }
 
     private void append(char s) {
-        if (console.getProcess().isAlive()) {
+        if (console.getProcess().isAlive() || !console.getName().contains("Launching")) {
             SwingUtilities.invokeLater(() -> {
                 jArea.append(s + "");
                 length = jArea.getText().length();

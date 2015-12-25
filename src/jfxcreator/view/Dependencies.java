@@ -154,7 +154,21 @@ public class Dependencies {
     }
 
     private static String getVersion(String s) {
+        String OS = System.getProperty("os.name").toLowerCase();
+        if (OS.contains("win")) {
+            return getWindowsVersion(s);
+        } else {
+            return getMacVersion(s);
+        }
+    }
+
+    private static String getWindowsVersion(String s) {
         String sh = s.substring(s.indexOf("Java") + 8, s.lastIndexOf(File.separator));
+        return sh;
+    }
+
+    private static String getMacVersion(String s) {
+        String sh = s.substring(s.indexOf("JavaVirtualMachines") + 24, s.lastIndexOf(".jdk"));
         return sh;
     }
 
@@ -165,13 +179,6 @@ public class Dependencies {
         } else {
             return macList();
         }
-    }
-
-    public boolean isValidPlatform(File f) {
-        if (f != null) {
-
-        }
-        return false;
     }
 
     public String showAndWait() {
@@ -309,7 +316,8 @@ public class Dependencies {
 
             if (getVersion(sa).compareTo(CURRENT_VERSION) < 0) {
                 Alert al = new Alert(Alert.AlertType.WARNING);
-                al.setHeaderText("This version of Java is outdated.\nIf you continue to use it, some features of JFxCreator may not work.\nDo you want to continue?");
+                al.setHeaderText("This version of Java is outdated.\nIf you continue to use it, some features of JFxCreator may not work.\nDo you want to continue?\n"
+                        + "(Optimal Version is jdk1.8.0_45)");
                 al.getButtonTypes().add(ButtonType.CANCEL);
                 al.initOwner(s);
                 ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);

@@ -119,7 +119,6 @@ public class Class {
             return two;
         }
         while (text.contains("}")) {
-//            System.out.println("Before\n" + text);
             int one = text.indexOf('}');
             loc += one;
             close--;
@@ -127,10 +126,8 @@ public class Class {
                 break;
             }
             text = text.substring(one + 1);
-//            System.out.println("After\n" + text);
 
         }
-        System.out.println(close == 0);
         return loc;
     }
 
