@@ -38,6 +38,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -380,11 +381,15 @@ public class Writer extends BorderPane {
                     } else if (sel instanceof BinaryTreeItem) {
                         ZipEntry entry = ((BinaryTreeItem) sel).getEntry();
                         if (!entry.isDirectory()) {
-                            InputStream is = ((BinaryTreeItem) sel).getInputStream();
-                            if (is != null) {
-                                ClassReader cr = new ClassReader(null, ((BinaryTreeItem) sel).getProject(), entry.getName(), is);
-                                tabPane.getTabs().add(cr);
-                                tabPane.getSelectionModel().select(cr);
+                            if (entry.getName().endsWith(".class")) {
+
+                            } else {
+                                InputStream is = ((BinaryTreeItem) sel).getInputStream();
+                                if (is != null) {
+                                    ClassReader cr = new ClassReader(null, ((BinaryTreeItem) sel).getProject(), entry.getName(), is);
+                                    tabPane.getTabs().add(cr);
+                                    tabPane.getSelectionModel().select(cr);
+                                }
                             }
                         }
                     }
@@ -535,6 +540,11 @@ public class Writer extends BorderPane {
         setBottom(bottom);
         bottom.setCenter(console);
         bottom.setPadding(new Insets(5, 10, 5, 10));
+        Label ll;
+        Tab b = new Tab("Welcome", new BorderPane(ll = new Label("Welcome to JFxCreator!")));
+        ll.setFont(new Font(30));
+        tabPane.getTabs().add(0, b);
+        tabPane.getSelectionModel().select(b);
     }
 
     private void reload(Project pro) {

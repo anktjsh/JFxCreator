@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.IntFunction;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -26,6 +28,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -44,6 +47,8 @@ import org.fxmisc.richtext.PopupAlignment;
  * @author Aniket
  */
 public class Editor extends EnvironmentTab {
+
+    private final BooleanProperty canBeSaved = new SimpleBooleanProperty();
 
     private final CodeArea area;
 
@@ -76,7 +81,9 @@ public class Editor extends EnvironmentTab {
         });
         options.setOnMouseClicked((e) -> {
             if (e.getClickCount() == 2) {
-                area.insertText(area.getCaretPosition(), options.getSelectionModel().getSelectedItem().getRealText());
+                if (options.getSelectionModel().getSelectedItem() != null) {
+                    area.insertText(area.getCaretPosition(), options.getSelectionModel().getSelectedItem().getRealText());
+                }
             }
         });
         area.setPopupWindow(popup);
@@ -144,6 +151,16 @@ public class Editor extends EnvironmentTab {
             area.getContextMenu().getItems().stream().forEach((mi) -> {
                 mi.setStyle("-fx-font-size:" + newer.getSize());
             });
+        });
+        canBeSaved.addListener((ob, older, newer) -> {
+            if (newer) {
+                getGraph().setFill(Color.BLUE);
+            } else {
+                getGraph().setFill(Color.BLACK);
+            }
+        });
+        area.textProperty().addListener((ob, older, newer) -> {
+            canBeSaved.set(getScript().canSave(Arrays.asList(newer.split("\n"))));
         });
     }
 
@@ -387,6 +404,7 @@ public class Editor extends EnvironmentTab {
         if (getScript().canSave(asList)) {
             getScript().save(asList);
         }
+        canBeSaved.set(false);
     }
 
     public final boolean canSave() {

@@ -14,6 +14,8 @@ import javafx.scene.control.Tab;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
@@ -27,9 +29,11 @@ public class EnvironmentTab extends Tab {
     private final BorderPane content;
     private final Project project;
     private final Program script;
+    private final Text graph;
 
     public EnvironmentTab(Program scr, Project pro) {
-        super(scr == null ? "" : scr.getFile().getFileName().toString());
+        setGraphic(graph = new Text(scr == null ? "" : scr.getFile().getFileName().toString()));
+        graph.setFill(Color.BLACK);
         project = pro;
         content = new BorderPane();
         setContent(content);
@@ -95,6 +99,10 @@ public class EnvironmentTab extends Tab {
                 }
             });
         }
+    }
+
+    public Text getGraph() {
+        return graph;
     }
 
     public BorderPane getCenter() {

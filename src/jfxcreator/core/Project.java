@@ -760,7 +760,6 @@ public class Project {
                 + " -d "
                 + build.toAbsolutePath().toString()
                 + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
-        System.out.println(one);
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.directory(rootDirectory.toFile());
         pb.redirectErrorStream(true);

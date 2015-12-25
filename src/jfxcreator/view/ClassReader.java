@@ -30,7 +30,7 @@ public class ClassReader extends EnvironmentTab {
 
     public ClassReader(Program sc, Project pro, String name, InputStream input) {
         super(sc, pro);
-        setText(name);
+        getGraph().setText(name);
         area = new CodeArea();
         area.setEditable(false);
         area.setFont(Writer.fontSize.get());

@@ -20,6 +20,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
@@ -57,6 +59,7 @@ public class ConsoleWindow extends Tab {
         } else {
             setText(c.getName());
         }
+        setContextMenu(new ContextMenu());
         console = c;
         if (console != null) {
             console.getConsole().setConsoleWindow(this);
@@ -68,6 +71,15 @@ public class ConsoleWindow extends Tab {
         } else {
             printer = new PrintStream(c.getProcess().getOutputStream());
         }
+
+        getContextMenu().getItems().addAll(new MenuItem("Close"),
+                new MenuItem("Close All"));
+        getContextMenu().getItems().get(0).setOnAction((e) -> {
+            getTabPane().getTabs().remove(this);
+        });
+        getContextMenu().getItems().get(1).setOnAction((e) -> {
+            getTabPane().getTabs().clear();
+        });
 
         jArea = new JTextArea();
         jArea.setFont(jArea.getFont().deriveFont((float) Writer.fontSize.getValue().getSize()));
@@ -157,7 +169,7 @@ public class ConsoleWindow extends Tab {
     }
 
     private void append(char s) {
-        if (console.getProcess().isAlive() || !console.getName().contains("Launching")) {
+        if (console.getProcess().isAlive() || !(console.getName().contains("Launching") && console.getName().contains("Jar"))) {
             SwingUtilities.invokeLater(() -> {
                 jArea.append(s + "");
                 length = jArea.getText().length();
