@@ -7,12 +7,14 @@ package jfxcreator.view;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.zip.ZipEntry;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -371,6 +373,16 @@ public class Writer extends BorderPane {
                         } else {
                             tabPane.getSelectionModel().select(st);
                         }
+                    } else if (sel instanceof BinaryTreeItem) {
+                        ZipEntry entry = ((BinaryTreeItem) sel).getEntry();
+                        if (!entry.isDirectory()) {
+                            InputStream is = ((BinaryTreeItem) sel).getInputStream();
+                            if (is != null) {
+                                ClassReader cr = new ClassReader(null,((BinaryTreeItem)sel).getProject(), entry.getName(), is);
+                                tabPane.getTabs().add(cr);
+                                tabPane.getSelectionModel().select(cr);
+                            }
+                        }
                     }
                 }
             }
@@ -384,6 +396,8 @@ public class Writer extends BorderPane {
                 currentProject.set(((ProgramTreeItem) newer).getScript().getProject());
             } else if (newer instanceof LibraryTreeItem) {
                 currentProject.set(((LibraryTreeItem) newer).getProject());
+            } else if (newer instanceof BinaryTreeItem) {
+                currentProject.set(((BinaryTreeItem) newer).getProject());
             } else {
 //                currentProject.set(null);
             }
@@ -444,6 +458,8 @@ public class Writer extends BorderPane {
             } else if (select instanceof DirectoryTreeItem) {
                 tree.getContextMenu().getItems().clear();
             } else if (select instanceof LibraryTreeItem) {
+                tree.getContextMenu().getItems().clear();
+            } else if (select instanceof BinaryTreeItem) {
                 tree.getContextMenu().getItems().clear();
             } else if (select instanceof ProjectTreeItem) {
                 MenuItem clsepse, delete, reload, prop, details;
@@ -1232,7 +1248,7 @@ public class Writer extends BorderPane {
         Path f = Paths.get(".cache" + File.separator + "open03.txt");
         ArrayList<String> al = new ArrayList<>();
         for (Tab b : tabPane.getTabs()) {
-            if (b instanceof EnvironmentTab) {
+            if (b instanceof EnvironmentTab && !(b instanceof ClassReader)) {
                 EnvironmentTab sb = (EnvironmentTab) b;
                 al.add(sb.getScript().getFile().toAbsolutePath().toString());
             }
@@ -1279,7 +1295,7 @@ public class Writer extends BorderPane {
     }
 
     private void evaluate(KeyEvent kc) {
-        if (kc.isControlDown() || kc.getCode() == KeyCode.COMMAND) {
+        if (kc.isControlDown()) {
             if (kc.isShiftDown()) {
                 if (kc.isAltDown()) {
                     if (kc.getCode() == KeyCode.P) {

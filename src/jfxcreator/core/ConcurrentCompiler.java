@@ -5,11 +5,6 @@
  */
 package jfxcreator.core;
 
-import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ListChangeListener;

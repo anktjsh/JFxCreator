@@ -14,6 +14,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 
@@ -27,12 +28,12 @@ public class EnvironmentTab extends Tab {
     private final Project project;
     private final Program script;
 
-    public EnvironmentTab(Program sc, Project pro) {
-        super(sc.getFile().getFileName().toString());
+    public EnvironmentTab(Program scr, Project pro) {
+        super(scr == null ? "" : scr.getFile().getFileName().toString());
         project = pro;
         content = new BorderPane();
         setContent(content);
-        script = sc;
+        script = scr;
         setContextMenu(new ContextMenu());
         getContextMenu().getItems().addAll(new MenuItem("Close"),
                 new MenuItem("Close All"),
@@ -52,24 +53,30 @@ public class EnvironmentTab extends Tab {
             }
         });
         getContextMenu().getItems().get(2).setOnAction((e) -> {
-            Clipboard cb = Clipboard.getSystemClipboard();
-            ClipboardContent cc = new ClipboardContent();
-            cc.putString(sc.getFile().toAbsolutePath().toString());
-            cc.putUrl(sc.getFile().toUri().toString());
-            cc.putFiles(FXCollections.observableArrayList(sc.getFile().toFile()));
-            if (this instanceof Viewer) {
-                cc.putImage(((Viewer) this).getImage());
+            if (script != null) {
+                Clipboard cb = Clipboard.getSystemClipboard();
+                ClipboardContent cc = new ClipboardContent();
+                cc.putString(script.getFile().toAbsolutePath().toString());
+                cc.putUrl(script.getFile().toUri().toString());
+                cc.putFiles(FXCollections.observableArrayList(script.getFile().toFile()));
+                if (this instanceof Viewer) {
+                    cc.putImage(((Viewer) this).getImage());
+                }
             }
         });
         getContextMenu().getItems().get(3).setOnAction((e) -> {
-            Clipboard cb = Clipboard.getSystemClipboard();
-            ClipboardContent cc = new ClipboardContent();
-            cc.putString(sc.getFile().toAbsolutePath().toString());
-            cc.putUrl(sc.getFile().toUri().toString());
-            cb.setContent(cc);
+            if (script != null) {
+                Clipboard cb = Clipboard.getSystemClipboard();
+                ClipboardContent cc = new ClipboardContent();
+                cc.putString(script.getFile().toAbsolutePath().toString());
+                cc.putUrl(script.getFile().toUri().toString());
+                cb.setContent(cc);
+            }
         });
         getContextMenu().getItems().get(4).setOnAction((e) -> {
-
+            if (script!=null) {
+                Details.getDetails((Stage)getTabPane().getScene().getWindow(), script.getFile());
+            }
         });
 
     }

@@ -45,8 +45,10 @@ import org.fxmisc.richtext.PopupAlignment;
 public class Editor extends EnvironmentTab {
 
     private final CodeArea area;
+    
     private final Popup popup;
     private final ListView<String> options;
+    
     private final ObservableList<Integer> errorLines;
 
     public Editor(Program sc, Project pro) {
@@ -155,7 +157,7 @@ public class Editor extends EnvironmentTab {
         };
         area.setParagraphGraphicFactory(graphicFctory);
         area.setOnKeyPressed((e) -> {
-            if (e.getCode() == KeyCode.SPACE && (e.isControlDown() || e.getCode() == KeyCode.COMMAND)) {
+            if (e.getCode() == KeyCode.SPACE && (e.isControlDown())) {
                 if (popup.isShowing()) {
                     popup.hide();
                 }
@@ -209,7 +211,7 @@ public class Editor extends EnvironmentTab {
                         }
                     }
                 }
-                if ((e.isControlDown() || e.getCode() == KeyCode.COMMAND) && e.getCode() == KeyCode.F) {
+                if ((e.isControlDown()) && e.getCode() == KeyCode.F) {
                     HBox box = new HBox(15);
                     BorderPane main = new BorderPane(box);
                     box.setPadding(new Insets(5, 10, 5, 10));
@@ -256,7 +258,7 @@ public class Editor extends EnvironmentTab {
                         getCenter().setBottom(null);
                     });
                 }
-                if ((e.isControlDown() || e.getCode() == KeyCode.COMMAND) && e.getCode() == KeyCode.H) {
+                if ((e.isControlDown()) && e.getCode() == KeyCode.H) {
                     VBox total = new VBox();
                     total.setStyle("-fx-background-fill:gray;");
                     BorderPane main = new BorderPane(total);

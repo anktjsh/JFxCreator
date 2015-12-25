@@ -39,11 +39,11 @@ public class LibraryTreeItem extends TreeItem<String> {
             while (entries.hasMoreElements()) {
                 ZipEntry next = entries.nextElement();
                 if (next.getName().endsWith(File.separator) && next.getName().substring(0, next.getName().length() - 1).contains(File.separator)) {
-                    add(next.getName());
+                    add(next.getName(), zf, next);
                 } else if (!next.getName().endsWith(File.separator) && next.getName().contains(File.separator)) {
-                    add(next.getName());
+                    add(next.getName(), zf, next);
                 } else {
-                    getChildren().add(new TreeItem<>(replaceAll(next.getName(), File.separator, "")));
+                    getChildren().add(new BinaryTreeItem(project, replaceAll(next.getName(), File.separator, ""), zf, next));
                 }
             }
         } catch (Exception e) {
@@ -54,7 +54,7 @@ public class LibraryTreeItem extends TreeItem<String> {
         return project;
     }
 
-    private void add(String s) {
+    private void add(String s, ZipFile zf, ZipEntry entry) {
         String spl[] = s.split(File.separator);
         ArrayList<String> al = new ArrayList<>();
         al.addAll(Arrays.asList(spl));
@@ -79,7 +79,7 @@ public class LibraryTreeItem extends TreeItem<String> {
             }
         }
         if (ad != null) {
-            ad.getChildren().add(new TreeItem<>(last));
+            ad.getChildren().add(new BinaryTreeItem(project, last, zf, entry));
         }
     }
 
