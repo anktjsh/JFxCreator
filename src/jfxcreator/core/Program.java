@@ -11,6 +11,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 /**
  *
@@ -25,6 +30,8 @@ public class Program {
     private final Project project;
     private final int type;
     private String className;
+    private final ObservableList<ProgramListener> programs;
+    private final BooleanProperty hasErrors;
 
     public Program(int t, String name, Path p, List<String> cod, Project pro) {
         type = t;
@@ -37,6 +44,8 @@ public class Program {
                 verifyClassName();
             }
         }
+        programs = FXCollections.observableArrayList();
+        hasErrors = new SimpleBooleanProperty(false);
         initProgram(cod);
     }
 
@@ -85,7 +94,7 @@ public class Program {
         if (!Files.exists(file)) {
             try {
                 Files.createDirectories(getFile().getParent());
-                System.out.println("new : " + getFile().toAbsolutePath().toString());
+//                System.out.println("new : " + getFile().toAbsolutePath().toString());
                 Files.createFile(getFile());
             } catch (IOException ex) {
             }
@@ -141,11 +150,43 @@ public class Program {
         return lastCode;
     }
 
+    public String getCode() {
+        StringBuilder sb = new StringBuilder();
+        for (String s : getLastCode()) {
+            sb.append(s).append("\n");
+        }
+        return sb.toString();
+    }
+
     public Project getProject() {
         return project;
     }
 
     public int getType() {
         return type;
+    }
+
+    public void hasErrors(List<Long> lines) {
+        if (lines.isEmpty()) {
+            hasErrors.set(false);
+        } else {
+            hasErrors.set(true);
+        }
+        for (ProgramListener ps : getProgramListeners()) {
+            ps.hasErrors(this, lines);
+        }
+    }
+
+    public void addProgramListener(ProgramListener ps) {
+        programs.add(ps);
+    }
+
+    public List<ProgramListener> getProgramListeners() {
+        return programs;
+    }
+
+    public interface ProgramListener {
+
+        public void hasErrors(Program pro, List<Long> errors);
     }
 }

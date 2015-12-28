@@ -305,6 +305,7 @@ public class Writer extends BorderPane {
                                 }
                             }
                         }
+
                     }));
                     added.getPrograms().stream().forEach((s) -> {
                         addScriptTreeItem(item, new ProgramTreeItem(s));
@@ -317,9 +318,6 @@ public class Writer extends BorderPane {
                         for (String s : filePaths) {
                             item.getChildren().get(1).getChildren().add(new LibraryTreeItem(added, s));
                         }
-                    });
-                    added.getCurrentCompiler().outputProperty().addListener((ob, older, newer) -> {
-                        System.out.println(newer);
                     });
                 }
             }

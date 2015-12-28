@@ -5,9 +5,13 @@
  */
 package jfxcreator.view;
 
+import java.util.List;
+import javafx.application.Platform;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import jfxcreator.core.Program;
 
 /**
@@ -23,6 +27,17 @@ public class ProgramTreeItem extends TreeItem<String> {
         setValue(pro.getFile().getFileName().toString());
         setGraphic(new ImageView(file));
         script = pro;
+        script.addProgramListener((Program pro1, List<Long> errors) -> {
+            Platform.runLater(() -> {
+                if (errors.isEmpty()) {
+                    setGraphic(null);
+                } else {
+                    Text t;
+                    setGraphic(t = new Text("X"));
+                    t.setFill(Color.RED);
+                }
+            });
+        });
     }
 
     public Program getScript() {

@@ -19,11 +19,10 @@ import org.reactfx.value.Val;
  * @author swatijoshi
  */
 public class ArrowFactory implements IntFunction<Node> {
-//
 
-    private final ObservableList<Integer> lines;
+    private final ObservableList<Long> lines;
 
-    public ArrowFactory(ObservableList<Integer> liner) {
+    public ArrowFactory(ObservableList<Long> liner) {
         lines = liner;
     }
 
@@ -39,7 +38,7 @@ public class ArrowFactory implements IntFunction<Node> {
     }
 
     private ObservableValue<Boolean> contains(int linenumber) {
-        for (Integer one : lines) {
+        for (Long one : lines) {
             if (one == linenumber) {
                 return new SimpleBooleanProperty(true);
             }

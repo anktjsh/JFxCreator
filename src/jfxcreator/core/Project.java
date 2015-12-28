@@ -57,7 +57,6 @@ public class Project {
     private LibraryListener ll;
     private final Task<Void> task;
     private final ObservableList<String> allLibs;
-    private final ConcurrentCompiler compiler;
     private String mainClassName;
 
     public Project(Path src, String mcn, boolean isNew) {
@@ -116,11 +115,6 @@ public class Project {
         } else {
             readConfig();
         }
-        compiler = new ConcurrentCompiler(this);
-    }
-
-    public ConcurrentCompiler getCurrentCompiler() {
-        return compiler;
     }
 
     public Path getConfig() {
@@ -971,6 +965,7 @@ public class Project {
         public void fileAdded(Project pro, Program add);
 
         public void fileRemoved(Project pro, Program scr);
+
     }
 
     public static class Reader implements Runnable {

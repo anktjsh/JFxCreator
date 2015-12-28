@@ -9,13 +9,12 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.Event;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
@@ -29,11 +28,11 @@ public class EnvironmentTab extends Tab {
     private final BorderPane content;
     private final Project project;
     private final Program script;
-    private final Text graph;
+    private final Label graph;
 
     public EnvironmentTab(Program scr, Project pro) {
-        setGraphic(graph = new Text(scr == null ? "" : scr.getFile().getFileName().toString()));
-        graph.setFill(Color.BLACK);
+        setGraphic(graph = new Label(scr == null ? "" : scr.getFile().getFileName().toString()));
+        graph.setStyle("-fx-text-fill:black;");
         project = pro;
         content = new BorderPane();
         setContent(content);
@@ -101,7 +100,7 @@ public class EnvironmentTab extends Tab {
         }
     }
 
-    public Text getGraph() {
+    public Label getGraph() {
         return graph;
     }
 
