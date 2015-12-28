@@ -1,3 +1,2 @@
 /Users/swatijoshi/Documents/JFxCreatorProjects/Tester/src/com/tester/example/HelloWorld.java
 /Users/swatijoshi/Documents/JFxCreatorProjects/Tester/src/com/tester/NewFile.java
-/Users/swatijoshi/Documents/JFxCreatorProjects/Tester/src/com/tester/OneTwoThree.java

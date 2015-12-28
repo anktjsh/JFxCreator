@@ -538,11 +538,11 @@ public class Writer extends BorderPane {
         setBottom(bottom);
         bottom.setCenter(console);
         bottom.setPadding(new Insets(5, 10, 5, 10));
-        Label ll;
-        Tab b = new Tab("Welcome", new BorderPane(ll = new Label("Welcome to JFxCreator!")));
-        ll.setFont(new Font(30));
-        tabPane.getTabs().add(0, b);
-        tabPane.getSelectionModel().select(b);
+//        Label ll;
+//        Tab b = new Tab("Welcome", new BorderPane(ll = new Label("Welcome to JFxCreator!")));
+//        ll.setFont(new Font(30));
+//        tabPane.getTabs().add(0, b);
+//        tabPane.getSelectionModel().select(b);
     }
 
     private void reload(Project pro) {
@@ -1026,7 +1026,7 @@ public class Writer extends BorderPane {
                 if (show.get().getDescription().contains("Other")) {
                     String extension = show.get().getName().substring(show.get().getName().lastIndexOf('.'));
                     sc = new Program(Program.RESOURCE,
-                            Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separatorChar + Program.getFilePath(show.get().getName().substring(0, show.get().getName().lastIndexOf('.'))) + "." + extension),
+                            Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separatorChar + Program.getFilePath(show.get().getName().substring(0, show.get().getName().lastIndexOf('.'))) + extension),
                             FileWizard.getTemplateCode(show.get().getDescription(),
                                     show.get().getName()),
                             getCurrentProject());

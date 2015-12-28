@@ -50,16 +50,16 @@ import org.fxmisc.richtext.PopupAlignment;
  * @author Aniket
  */
 public class Editor extends EnvironmentTab {
-    
+
     private final BooleanProperty canBeSaved = new SimpleBooleanProperty();
-    
+
     private final CodeArea area;
-    
+
     private final Popup popup;
     private final ListView<Option> options;
-    
+
     private final ObservableList<Long> errorLines;
-    
+
     public Editor(Program sc, Project pro) {
         super(sc, pro);
         area = new CodeArea();
@@ -73,7 +73,7 @@ public class Editor extends EnvironmentTab {
         Writer.wrapText.addListener((ob, older, neweer) -> {
             area.setWrapText(neweer);
         });
-        
+
         popup = new Popup();
         popup.setHideOnEscape(true);
         popup.getContent().add(options = new ListView<>());
@@ -97,7 +97,7 @@ public class Editor extends EnvironmentTab {
                 popup.hide();
             }
         });
-        
+
         getCenter().setCenter(area);
         getCenter().setTop(new TabToolbar(this));
         HBox hb = new HBox(15);
@@ -165,6 +165,9 @@ public class Editor extends EnvironmentTab {
         });
         area.textProperty().addListener((ob, older, newer) -> {
             canBeSaved.set(getScript().canSave(Arrays.asList(newer.split("\n"))));
+            if (getScript().getType() == Program.JAVA) {
+                ConcurrentCompiler.getInstance().compile(this);
+            }
         });
         errorLines.addListener((ListChangeListener.Change<? extends Long> c) -> {
             c.next();
@@ -192,15 +195,15 @@ public class Editor extends EnvironmentTab {
             }
         });
     }
-    
-    public void setErrorLines(List<Long> sl) {
+
+    public final void setErrorLines(List<Long> sl) {
         errorLines.clear();
         errorLines.addAll(sl);
     }
-    
+
     private IntFunction<Node> numberFactory;
     private IntFunction<Node> arrowFactory;
-    
+
     private void bindMouseListeners() {
         Highlighter.highlight(area, this);
         numberFactory = LineNumberFactory.get(area);
@@ -228,7 +231,7 @@ public class Editor extends EnvironmentTab {
 //                    options.getSelectionModel().select(options.getItems().get(0));
 //                }
 //                Analyzer.analyze(this);
-//                       
+//
 //                popup.show(getTabPane().getScene().getWindow());
 //                popup.getContent().get(0).requestFocus();
             } else {
@@ -390,10 +393,9 @@ public class Editor extends EnvironmentTab {
                     });
                 }
             }
-            ConcurrentCompiler.getInstance().compile(this);
         });
     }
-    
+
     private int getRow(int caret) {
         String spl[] = area.getText().split("\n");
         int count = 0;
@@ -405,7 +407,7 @@ public class Editor extends EnvironmentTab {
         }
         return -1;
     }
-    
+
     private String getTabText(String s) {
         int count = 0;
         for (int x = 0; x < s.length(); x += 4) {
@@ -427,18 +429,18 @@ public class Editor extends EnvironmentTab {
         }
         return ret;
     }
-    
+
     private void readFromScript() {
         List<String> read = getScript().getLastCode();
         read.stream().forEach((s) -> {
             area.appendText(s + "\n");
         });
     }
-    
+
     public CodeArea getCodeArea() {
         return area;
     }
-    
+
     public final void save() {
         List<String> asList = Arrays.asList(area.getText().split("\n"));
         if (getScript().canSave(asList)) {
@@ -446,44 +448,45 @@ public class Editor extends EnvironmentTab {
         }
         canBeSaved.set(false);
     }
-    
+
     public final boolean canSave() {
         List<String> asList = Arrays.asList(area.getText().split("\n"));
         return getScript().canSave(asList);
     }
-    
+
     public void undo() {
         area.undo();
     }
-    
+
     public void redo() {
         area.redo();
     }
-    
+
     public void cut() {
         area.cut();
     }
-    
+
     public void copy() {
         area.copy();
     }
-    
+
     public void paste() {
         area.paste();
     }
-    
+
     public void selectAll() {
         area.selectAll();
     }
-    
+
     private class TabToolbar extends javafx.scene.control.ToolBar {
-        
+
         private final Button source, history, left, right,
                 comment, uncomment;
         private final Editor editor;
-        
+
         public TabToolbar(Editor edit) {
             editor = edit;
+            setPadding(new Insets(5, 10, 5, 10));
             getItems().addAll(source = new Button("Source"),
                     history = new Button("History"),
                     new Separator(),
@@ -497,16 +500,16 @@ public class Editor extends EnvironmentTab {
             left.setDisable(true);
             right.setDisable(true);
             source.setOnAction((E) -> {
-                
+
             });
             history.setOnAction((E) -> {
-                
+
             });
             left.setOnAction((E) -> {
-                
+
             });
             right.setOnAction((E) -> {
-                
+
             });
             comment.setOnAction((E) -> {
                 comment(editor);
@@ -515,7 +518,7 @@ public class Editor extends EnvironmentTab {
                 uncomment(editor);
             });
         }
-        
+
         public final void uncomment(Editor dt) {
             if (dt != null) {
                 String s = dt.getCodeArea().getSelectedText();
@@ -566,11 +569,11 @@ public class Editor extends EnvironmentTab {
                             break;
                         }
                     }
-                    
+
                 }
             }
         }
-        
+
         public final void comment(Editor dt) {
             if (dt != null) {
                 String s = dt.getCodeArea().getSelectedText();
@@ -611,11 +614,11 @@ public class Editor extends EnvironmentTab {
                             break;
                         }
                     }
-                    
+
                 }
             }
         }
-        
+
     }
-    
+
 }
