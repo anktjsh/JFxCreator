@@ -60,6 +60,9 @@ public class Editor extends EnvironmentTab {
 
     private final ObservableList<Long> errorLines;
 
+    private final BorderPane main, bottom;
+    private HistoryPane hPane;
+
     public Editor(Program sc, Project pro) {
         super(sc, pro);
         area = new CodeArea();
@@ -98,12 +101,16 @@ public class Editor extends EnvironmentTab {
             }
         });
 
-        getCenter().setCenter(area);
+        main = new BorderPane();
+        main.setCenter(area);
+        getCenter().setCenter(main);
         getCenter().setTop(new TabToolbar(this));
         HBox hb = new HBox(15);
         hb.setAlignment(Pos.CENTER_RIGHT);
         hb.setPadding(new Insets(5, 10, 5, 10));
-        getCenter().setBottom(hb);
+        bottom = new BorderPane();
+        main.setBottom(bottom);
+        bottom.setCenter(hb);
         Text caret;
         hb.getChildren().add(caret = new Text(""));
         area.caretPositionProperty().addListener((ob, older, newer) -> {
@@ -134,10 +141,14 @@ public class Editor extends EnvironmentTab {
                 new MenuItem("Copy"),
                 new MenuItem("Paste"));
         area.getContextMenu().getItems().get(0).setOnAction((e) -> {
-            area.undo();
+            if (area.isUndoAvailable()) {
+                area.undo();
+            }
         });
         area.getContextMenu().getItems().get(1).setOnAction((e) -> {
-            area.redo();
+            if (area.isRedoAvailable()) {
+                area.redo();
+            }
         });
         area.getContextMenu().getItems().get(2).setOnAction((e) -> {
             area.cut();
@@ -194,6 +205,9 @@ public class Editor extends EnvironmentTab {
                 });
             }
         });
+        if (getScript().getProject() != null) {
+            hPane = new HistoryPane(this);
+        }
     }
 
     public final void setErrorLines(List<Long> sl) {
@@ -273,7 +287,7 @@ public class Editor extends EnvironmentTab {
                 }
                 if ((e.isControlDown()) && e.getCode() == KeyCode.F) {
                     HBox box = new HBox(15);
-                    BorderPane main = new BorderPane(box);
+                    BorderPane center = new BorderPane(box);
                     box.setPadding(new Insets(5, 10, 5, 10));
                     box.setStyle("-fx-background-fill:gray;");
                     TextField fi;
@@ -310,31 +324,31 @@ public class Editor extends EnvironmentTab {
                         }
                     });
                     Button close;
-                    main.setRight(close = new Button("X"));
-                    BorderPane.setMargin(main.getRight(), new Insets(5, 10, 5, 10));
-                    getCenter().setBottom(main);
+                    center.setRight(close = new Button("X"));
+                    BorderPane.setMargin(center.getRight(), new Insets(5, 10, 5, 10));
+                    bottom.setTop(center);
                     fi.requestFocus();
                     close.setOnAction((se) -> {
-                        getCenter().setBottom(null);
+                        bottom.setTop(null);
                     });
                 }
                 if ((e.isControlDown()) && e.getCode() == KeyCode.H) {
                     VBox total = new VBox();
                     total.setStyle("-fx-background-fill:gray;");
-                    BorderPane main = new BorderPane(total);
+                    BorderPane center = new BorderPane(total);
                     HBox top = new HBox(15);
-                    HBox bottom = new HBox(5);
+                    HBox below = new HBox(5);
                     top.setStyle("-fx-background-fill:gray;");
-                    bottom.setStyle("-fx-background-fill:gray;");
-                    total.getChildren().addAll(top, bottom);
-                    bottom.setPadding(new Insets(5, 10, 5, 10));
+                    below.setStyle("-fx-background-fill:gray;");
+                    total.getChildren().addAll(top, below);
+                    below.setPadding(new Insets(5, 10, 5, 10));
                     top.setPadding(new Insets(5, 10, 5, 10));
                     TextField fi, replace;
                     Button prev, next, rep, reAll, close;
                     top.getChildren().addAll(fi = new TextField(),
                             prev = new Button("Previous"),
                             next = new Button("Next"));
-                    bottom.getChildren().addAll(replace = new TextField(),
+                    below.getChildren().addAll(replace = new TextField(),
                             rep = new Button("Replace"),
                             reAll = new Button("Replace All"));
                     fi.setOnAction((ea) -> {
@@ -384,12 +398,12 @@ public class Editor extends EnvironmentTab {
                             area.replaceText(index, index + a.length(), b);
                         }
                     });
-                    main.setRight(close = new Button("X"));
-                    BorderPane.setMargin(main.getRight(), new Insets(5, 10, 5, 10));
-                    getCenter().setBottom(main);
+                    center.setRight(close = new Button("X"));
+                    BorderPane.setMargin(center.getRight(), new Insets(5, 10, 5, 10));
+                    bottom.setTop(center);
                     fi.requestFocus();
                     close.setOnAction((se) -> {
-                        getCenter().setBottom(null);
+                        bottom.setTop(null);
                     });
                 }
             }
@@ -495,15 +509,28 @@ public class Editor extends EnvironmentTab {
                     new Separator(),
                     comment = new Button("Comment"),
                     uncomment = new Button("UnComment"));
-            source.setDisable(true);
-            history.setDisable(true);
-            left.setDisable(true);
-            right.setDisable(true);
+            if (editor.getScript().getProject() == null || editor.getScript().getType() == Program.RESOURCE) {
+                source.setDisable(true);
+                history.setDisable(true);
+            }
             source.setOnAction((E) -> {
-
+                if (!getCenter().getCenter().equals(main)) {
+                    getCenter().setCenter(main);
+                }
+                left.setDisable(false);
+                right.setDisable(false);
+                comment.setDisable(false);
+                uncomment.setDisable(false);
             });
             history.setOnAction((E) -> {
-
+                if (!getCenter().getCenter().equals(hPane)) {
+                    getCenter().setCenter(hPane);
+                    hPane.refresh();
+                }
+                left.setDisable(true);
+                right.setDisable(true);
+                comment.setDisable(true);
+                uncomment.setDisable(true);
             });
             left.setOnAction((E) -> {
 

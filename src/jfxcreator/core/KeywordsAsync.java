@@ -7,7 +7,7 @@ package jfxcreator.core;
 
 /**
  *
- * @author swatijoshi
+ * @author Aniket
  */
 import java.time.Duration;
 import java.util.Collection;

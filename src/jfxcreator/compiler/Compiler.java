@@ -22,6 +22,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
@@ -29,7 +30,7 @@ import jfxcreator.view.Editor;
 
 /**
  *
- * @author swatijoshi
+ * @author Aniket
  */
 public class Compiler {
 
@@ -40,7 +41,7 @@ public class Compiler {
     private final ObservableList<Program> allPrograms;
 
     private final ObservableList<String> compilerOptions;
-    private final StandardJavaFileManager standard;
+    private StandardJavaFileManager standard;
     private final DiagnosticCollector<JavaFileObject> diag;
 
     public Compiler(Editor edit) {
@@ -68,13 +69,12 @@ public class Compiler {
 
     public void prepare() {
         ObservableList<JavaFileObject> objs = FXCollections.observableArrayList();
-        for (Editor ed : allEditors) {
+        allEditors.stream().forEach((ed) -> {
             objs.add(new DynamicJavaSourceCodeObject(ed.getScript().getClassName(), ed.getCodeArea().getText()));
-        }
-        for (Program p : allPrograms) {
+        });
+        allPrograms.stream().forEach((p) -> {
             objs.add(new DynamicJavaSourceCodeObject(p.getClassName(), p.getCode()));
-        }
-
+        });
         JavaCompiler.CompilationTask task = compiler.getTask(null, standard, diag, compilerOptions, null, objs);
         HashMap<String, ArrayList<Long>> map = new HashMap<>();
         boolean status = task.call();
@@ -86,9 +86,6 @@ public class Compiler {
                     map.put(c.getSource().toString(), new ArrayList<>());
                     map.get(c.getSource().toString()).add(c.getLineNumber() - 1);
                 }
-//                System.out.println(c.getLineNumber());
-//                System.out.println(c.getCode());
-//                System.out.println(c.getSource());
             }
         }
         ArrayList<Program> sent = new ArrayList<>();
@@ -107,8 +104,8 @@ public class Compiler {
         try {
             standard.close();
         } catch (IOException e) {
-            e.printStackTrace();
         }
+        standard = compiler.getStandardFileManager(null, Locale.getDefault(), null);
         compilerOptions.clear();
     }
 
@@ -127,10 +124,21 @@ public class Compiler {
     }
 
     public void setDirectory(File filepath) {
+        if (!filepath.exists()) {
+            filepath.mkdirs();
+        }
         addCompilerOptions("-d", filepath.getAbsolutePath());
     }
 
-    public void addToClassPath(File... jars) {
+    public void addToClassPath(List<String> a) {
+        try {
+            ArrayList<File> al = new ArrayList<>();
+            for (String s : a) {
+                al.add(new File(s));
+            }
+            standard.setLocation(StandardLocation.CLASS_PATH, al);
+        } catch (IOException ex) {
+        }
     }
 
     public void addCompilerOptions(String... options) {
@@ -167,6 +175,7 @@ public class Compiler {
             return getCode();
         }
 
+        @Override
         public String getName() {
             return name;
         }

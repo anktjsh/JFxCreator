@@ -33,7 +33,7 @@ import jfxcreator.view.Editor;
 
 /**
  *
- * @author swatijoshi
+ * @author Aniket
  */
 public class Analyzer {
 

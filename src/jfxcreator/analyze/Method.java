@@ -13,7 +13,7 @@ import javafx.collections.ObservableList;
 
 /**
  *
- * @author swatijoshi
+ * @author Aniket
  */
 public class Method {
 

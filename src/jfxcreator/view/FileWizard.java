@@ -72,6 +72,7 @@ public class FileWizard {
                 "JavaFx Main Class",
                 "JavaFx Preloader",
                 "Empty Java File",
+                /*"Empty FXML File",*/
                 "Other File"));
         options.setOnMouseClicked((e) -> {
             if (e.getClickCount() == 2) {
@@ -152,15 +153,23 @@ public class FileWizard {
         });
         if (type.contains("Java")) {
             filename.textProperty().addListener((ob, older, newer) -> {
-                destination.setText(sourcepath + File.separator + newer + ".java");
+                destination.setText(sourcepath + File.separator + getDir(packageName.getText()) + File.separator + newer + ".java");
             });
             destination.setText(destination.getText() + ".java");
             packageName.textProperty().addListener((ob, older, newer) -> {
                 destination.setText(sourcepath + File.separator + getDir(newer) + File.separator + filename.getText() + ".java");
             });
-        } else {
+        } /*else if (type.contains("FXML")) {
+         filename.textProperty().addListener((ob, older, newer) -> {
+         destination.setText(sourcepath + File.separator + getDir(packageName.getText()) + File.separator + newer + ".fxml");
+         });
+         destination.setText(destination.getText() + ".fxml");
+         packageName.textProperty().addListener((ob, older, newer) -> {
+         destination.setText(sourcepath + File.separator + getDir(newer) + File.separator + filename.getText() + ".fxml");
+         });
+         } */ else {
             filename.textProperty().addListener((ob, older, newer) -> {
-                destination.setText(sourcepath + File.separator + newer);
+                destination.setText(sourcepath + File.separator + getDir(packageName.getText()) + File.separator + newer);
             });
             packageName.textProperty().addListener((ob, older, newer) -> {
                 destination.setText(sourcepath + File.separator + getDir(newer) + File.separator + filename.getText());
@@ -270,6 +279,8 @@ public class FileWizard {
                 return six(pack, clas);
             case "Other File":
                 return seven(pack, clas);
+            case "Empty FXML File":
+                return eight();
             default:
                 return new ArrayList<>();
         }
@@ -526,6 +537,22 @@ public class FileWizard {
 
     private static List<String> seven(String pack, String clas) {
         return new ArrayList<>();
+    }
+
+    private static List<String> eight() {
+        String list = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "\n"
+                + "<?import java.lang.*?>\n"
+                + "<?import java.util.*?>\n"
+                + "<?import javafx.scene.*?>\n"
+                + "<?import javafx.scene.control.*?>\n"
+                + "<?import javafx.scene.layout.*?>\n"
+                + "\n"
+                + "<AnchorPane id=\"AnchorPane\" prefHeight=\"400.0\" prefWidth=\"600.0\" xmlns:fx=\"http://javafx.com/fxml/1\">\n"
+                + "    \n"
+                + "</AnchorPane>\n"
+                + "";
+        return FXCollections.observableArrayList(list.split("\n"));
     }
 
 }

@@ -7,6 +7,7 @@ package jfxcreator.view;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -48,7 +49,9 @@ public class EnvironmentTab extends Tab {
         });
         getContextMenu().getItems().get(1).setOnAction((e) -> {
             if (getTabPane() != null) {
-                for (Tab b : getTabPane().getTabs()) {
+                ObservableList<Tab> tabs = getTabPane().getTabs();
+                for (int x = tabs.size() - 1; x >= 0; x--) {
+                    Tab b = tabs.get(x);
                     if (b instanceof EnvironmentTab) {
                         ((EnvironmentTab) b).close();
                     }

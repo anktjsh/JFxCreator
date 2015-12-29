@@ -7,6 +7,7 @@ package jfxcreator.core;
 
 import jfxcreator.view.Editor;
 import org.fxmisc.richtext.CodeArea;
+import org.fxmisc.richtext.LineNumberFactory;
 
 /**
  *
@@ -32,6 +33,12 @@ public class Highlighter {
                 }
             }
         }
+    }
+
+    public static void highlight(CodeArea area) {
+        JavaKeywordsAsync as = new JavaKeywordsAsync(area);
+        area.setParagraphGraphicFactory(LineNumberFactory.get(area));
+        as.apply();
     }
 
     private static boolean isSupported(String s) {

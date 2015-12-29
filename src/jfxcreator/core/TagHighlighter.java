@@ -7,7 +7,7 @@ package jfxcreator.core;
 
 /**
  *
- * @author swatijoshi
+ * @author Aniket
  */
 import java.util.Collection;
 import java.util.Collections;

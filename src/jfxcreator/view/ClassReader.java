@@ -22,7 +22,7 @@ import org.fxmisc.richtext.LineNumberFactory;
 
 /**
  *
- * @author swatijoshi
+ * @author Aniket
  */
 public class ClassReader extends EnvironmentTab {
 

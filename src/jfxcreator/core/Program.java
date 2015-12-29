@@ -9,9 +9,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
@@ -32,6 +35,8 @@ public class Program {
     private String className;
     private final ObservableList<ProgramListener> programs;
     private final BooleanProperty hasErrors;
+
+    private final HashMap<String, List<String>> previous = new HashMap<>();
 
     public Program(int t, String name, Path p, List<String> cod, Project pro) {
         type = t;
@@ -94,7 +99,6 @@ public class Program {
         if (!Files.exists(file)) {
             try {
                 Files.createDirectories(getFile().getParent());
-//                System.out.println("new : " + getFile().toAbsolutePath().toString());
                 Files.createFile(getFile());
             } catch (IOException ex) {
             }
@@ -115,7 +119,66 @@ public class Program {
         return !code.equals(lastCode);
     }
 
+    public String getCurrentTime() {
+        return LocalDate.now().toString() + " " + LocalTime.now().toString();
+    }
+
+    public List<String> previousSavedDates() {
+        ArrayList<String> al = new ArrayList<>();
+        if (getProject() == null) {
+            return al;
+        }
+        File se = new File(".cache" + File.separator
+                + getProject().getProjectName() + File.separator + "previous"
+                + File.separator + getClassName() + File.separator);
+        if (se.exists()) {
+            for (File f : se.listFiles()) {
+                al.add(f.getName().substring(0, f.getName().indexOf(".txt")));
+            }
+        }
+        return al;
+    }
+
+    public List<String> getPreviousCode(String date) {
+        ArrayList<String> al = new ArrayList<>();
+        if (getProject() == null) {
+            return al;
+        }
+        File se = new File(".cache" + File.separator
+                + getProject().getProjectName() + File.separator + "previous"
+                + File.separator + getClassName() + File.separator);
+        if (se.exists()) {
+            if (previous.containsKey(date)) {
+                return previous.get(date);
+            } else {
+                for (File f : se.listFiles()) {
+                    if (f.getName().contains(date)) {
+                        try {
+                            List<String> read = Files.readAllLines(f.toPath());
+                            previous.put(date, read);
+                            al.addAll(read);
+                        } catch (IOException ex) {
+                        }
+                    }
+                }
+            }
+        }
+        return al;
+    }
+
     public void save(List<String> code) {
+        if (getProject() != null) {
+            try {
+                Path get = Paths.get(".cache" + File.separator
+                        + getProject().getProjectName() + File.separator + "previous" + File.separator + getClassName()
+                        + File.separator + getCurrentTime() + ".txt");
+                if (!Files.exists(get)) {
+                    Files.createDirectories(get.getParent());
+                }
+                Files.write(get, getLastCode());
+            } catch (IOException e) {
+            }
+        }
         try {
             Files.write(file, code);
         } catch (IOException ex) {

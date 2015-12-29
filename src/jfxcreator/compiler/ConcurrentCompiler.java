@@ -15,7 +15,7 @@ import jfxcreator.view.Editor;
 
 /**
  *
- * @author swatijoshi
+ * @author Aniket
  */
 public class ConcurrentCompiler {
 
@@ -44,6 +44,9 @@ public class ConcurrentCompiler {
             allowed.set(false);
             Compiler comp = new Compiler(edit);
             comp.setDirectory(new File(".cache" + File.separator + edit.getProject().getProjectName() + File.separator + "builds"));
+            if (edit.getProject().getNumLibs() != 0) {
+                comp.addToClassPath(edit.getProject().getAllLibs());
+            }
             comp.prepare();
             lastCall.set(null);
         }

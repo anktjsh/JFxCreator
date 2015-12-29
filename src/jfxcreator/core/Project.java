@@ -662,7 +662,11 @@ public class Project {
         return sb.toString();
     }
 
-    private String getLibsList() {
+    public int getNumLibs() {
+        return allLibs.size();
+    }
+
+    public String getLibsList() {
         StringBuilder sb = new StringBuilder();
         File f = new File(rootDirectory.toAbsolutePath().toString() + File.separator + "libs");
         for (File file : f.listFiles()) {
@@ -673,50 +677,6 @@ public class Project {
         return sb.toString();
     }
 
-    /*public void concurrentCompiling(Console con) {
-     String os = System.getProperty("os.name").toLowerCase();
-     if (os.contains("win")) {
-     windowsConcurrentCompile(con);
-     } else {
-     macConcurrentCompile(con);
-     }
-     }
-
-     private void windowsConcurrentCompile(Console pro) {
-     String JAVA_HOME = Dependencies.local_version;
-     String one = "\"" + JAVA_HOME + File.separator + "javac\""
-     + getFileList() + " -d "
-     + build.toAbsolutePath().toString()
-     + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
-     ProcessBuilder pb = new ProcessBuilder(one.split(" "));
-     pb.directory(rootDirectory.toFile());
-     pb.redirectErrorStream(true);
-     try {
-     Process start = pb.start();
-     (new Thread(new Reader(start.getInputStream(), pro))).start();
-     int waitFor = start.waitFor();
-     System.out.println(waitFor);
-     } catch (IOException | InterruptedException e) {
-     }
-     }
-
-     private void macConcurrentCompile(Console pro) {
-     String JAVA_HOME = Dependencies.local_version;
-     String one = JAVA_HOME + File.separator + "javac"
-     + getFileList()
-     + " -d "
-     + build.toAbsolutePath().toString()
-     + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
-     ProcessBuilder pb = new ProcessBuilder(one.split(" "));
-     pb.directory(rootDirectory.toFile());
-     pb.redirectErrorStream(true);
-     try {
-     Process start = pb.start();
-     (new Thread(new Reader(start.getInputStream(), pro))).start();
-     System.out.println(start.waitFor());
-     } catch (IOException | InterruptedException e) {
-     }
-     }*/
     public void compile(ProcessItem pro) {
         String os = System.getProperty("os.name").toLowerCase();
         if (os.contains("win")) {
@@ -941,7 +901,7 @@ public class Project {
         if (!Files.exists(fe)) {
             return;
         }
-        if (Files.isDirectory(fe) || !fe.getFileName().toString().contains(".")) {
+        if (Files.isDirectory(fe)) {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(fe)) {
                 for (Path run : stream) {
                     deepDelete(run);

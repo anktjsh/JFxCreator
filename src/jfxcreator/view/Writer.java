@@ -20,14 +20,11 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.print.Printer;
 import javafx.print.PrinterJob;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -35,10 +32,8 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -380,7 +375,13 @@ public class Writer extends BorderPane {
                         ZipEntry entry = ((BinaryTreeItem) sel).getEntry();
                         if (!entry.isDirectory()) {
                             if (entry.getName().endsWith(".class")) {
-
+                                //
+                                InputStream is = ((BinaryTreeItem) sel).getInputStream();
+                                if (is != null) {
+                                    ClassReader cr = new ClassReader(null, ((BinaryTreeItem) sel).getProject(), entry.getName(), is);
+                                    tabPane.getTabs().add(cr);
+                                    tabPane.getSelectionModel().select(cr);
+                                }
                             } else {
                                 InputStream is = ((BinaryTreeItem) sel).getInputStream();
                                 if (is != null) {
@@ -513,7 +514,9 @@ public class Writer extends BorderPane {
         });
         tabPane.getSelectionModel().selectedItemProperty().addListener((ob, older, newer) -> {
             if (newer instanceof Editor) {
-                currentProject.set(((Editor) newer).getScript().getProject());
+                Editor ed = ((Editor) newer);
+                currentProject.set(ed.getScript().getProject());
+//                ed.getCodeArea().undoAvailableProperty().
             } else if (newer instanceof Viewer) {
                 currentProject.set(((Viewer) newer).getScript().getProject());
             } else {
@@ -726,6 +729,7 @@ public class Writer extends BorderPane {
                     type = Files.probeContentType(f.toPath());
                 } catch (IOException ef) {
                 }
+                System.out.println(type);
                 if (type != null) {
                     if (type.contains("text")) {
                         Editor ed;
@@ -746,7 +750,12 @@ public class Writer extends BorderPane {
                         }
                     }
                 } else {
-                    if (alert()) {
+                    if (f.toPath().getFileName().toString().endsWith(".pdf")) {
+                        PdfReader pd;
+                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                        tabPane.getTabs().add(pd = new PdfReader(pro, parent));
+                        tabPane.getSelectionModel().select(pd);
+                    } else if (alert()) {
                         Editor vi;
                         Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
                         tabPane.getTabs().add(vi = new Editor(pro, parent));
@@ -760,6 +769,7 @@ public class Writer extends BorderPane {
                 type = Files.probeContentType(prog.getFile());
             } catch (IOException ef) {
             }
+            System.out.println(type);
             if (type != null) {
                 if (type.contains("text")) {
                     Editor ed;
@@ -777,7 +787,12 @@ public class Writer extends BorderPane {
                     }
                 }
             } else {
-                if (alert()) {
+                if (prog.getFile().toString().endsWith(".pdf")) {
+                    PdfReader pd;
+                    Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                    tabPane.getTabs().add(pd = new PdfReader(pro, parent));
+                    tabPane.getSelectionModel().select(pd);
+                } else if (alert()) {
                     Editor vi;
                     tabPane.getTabs().add(vi = new Editor(prog, prog.getProject()));
                     tabPane.getSelectionModel().select(vi);
@@ -956,43 +971,27 @@ public class Writer extends BorderPane {
 
     private void print() {
         if (getSelectedTab() != null) {
-            ObservableSet<Printer> allP = Printer.getAllPrinters();
-            ObservableList<Printer> printers = FXCollections.observableArrayList();
-            ObservableList<String> names = FXCollections.observableArrayList();
-            allP.stream().map((p) -> {
-                printers.add(p);
-                return p;
-            }).forEach((p) -> {
-                names.add(p.getName());
-            });
-            ChoiceDialog<String> dialog = new ChoiceDialog<>(Printer.getDefaultPrinter().getName(), names);
-            dialog.setTitle("Printer Options");
-            dialog.setHeaderText("Choose your Printer");
-            dialog.initOwner(getScene().getWindow());
-            ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-            Optional<String> result = dialog.showAndWait();
-            if (result.isPresent()) {
-                Printer pri = null;
-                for (Printer p : printers) {
-                    if (p.getName().equals(result.get())) {
-                        pri = p;
+            PrinterJob job = PrinterJob.createPrinterJob();
+            if (job != null) {
+                if (job.showPrintDialog(getScene().getWindow())) {
+                    boolean suc = job.printPage(getSelectedTab().getContent());
+                    if (suc) {
+                        job.endJob();
+                        Alert al = new Alert(Alert.AlertType.INFORMATION);
+                        al.setTitle("Printer");
+                        al.initOwner(getScene().getWindow());
+                        al.setHeaderText("Print Complete");
+                        ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+                        al.showAndWait();
                     }
                 }
-                if (pri != null) {
-                    PrinterJob job = PrinterJob.createPrinterJob(pri);
-                    if (job != null) {
-                        boolean suc = job.printPage(getSelectedTab().getContent());
-                        if (suc) {
-                            job.endJob();
-                            Alert al = new Alert(Alert.AlertType.INFORMATION);
-                            al.setTitle("Printer");
-                            al.initOwner(getScene().getWindow());
-                            al.setHeaderText("Print Complete");
-                            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-                            al.showAndWait();
-                        }
-                    }
-                }
+            } else {
+                Alert al = new Alert(AlertType.ERROR);
+                al.setTitle("Printer");
+                al.initOwner(getScene().getWindow());
+                al.setHeaderText("No Printers Found!");
+                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+                al.showAndWait();
             }
         }
     }

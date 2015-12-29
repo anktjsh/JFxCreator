@@ -19,7 +19,7 @@ import jfxcreator.core.Project;
 
 /**
  *
- * @author swatijoshi
+ * @author Aniket
  */
 public class LibraryTreeItem extends TreeItem<String> {
 

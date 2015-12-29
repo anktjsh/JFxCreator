@@ -14,7 +14,7 @@ import jfxcreator.core.Project;
 
 /**
  *
- * @author swatijoshi
+ * @author Aniket
  */
 public class BinaryTreeItem extends TreeItem<String> {
 
