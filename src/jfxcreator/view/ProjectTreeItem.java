@@ -5,6 +5,7 @@
  */
 package jfxcreator.view;
 
+import java.util.Arrays;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -30,7 +31,7 @@ public class ProjectTreeItem extends TreeItem<String> {
             src.setGraphic(new ImageView(folder));
             libs = new TreeItem<>("Libraries");
             libs.setGraphic(new ImageView(folder));
-            getChildren().addAll(src, libs);
+            getChildren().addAll(Arrays.asList(src, libs));
         }
     }
 

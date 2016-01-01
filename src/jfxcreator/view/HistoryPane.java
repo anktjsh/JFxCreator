@@ -20,12 +20,12 @@ import org.fxmisc.richtext.CodeArea;
  * @author swatijoshi
  */
 public class HistoryPane extends BorderPane {
-    
+
     private final HBox box;
     private final CodeArea code1, code2;
     private final ListView<String> options;
     private final Editor edit;
-    
+
     public HistoryPane(Editor edi) {
         edit = edi;
         box = new HBox(10);
@@ -62,12 +62,12 @@ public class HistoryPane extends BorderPane {
             }
         });
     }
-    
+
     public void refresh() {
         options.getItems().clear();
         options.getItems().addAll(edit.getScript().previousSavedDates());
     }
-    
+
     private String getCode(List<String> list) {
         StringBuilder sb = new StringBuilder();
         for (String s : list) {
@@ -75,5 +75,5 @@ public class HistoryPane extends BorderPane {
         }
         return sb.toString();
     }
-    
+
 }

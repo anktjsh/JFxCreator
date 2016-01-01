@@ -25,7 +25,7 @@ public class Console {
     public Console(Project project) {
         proje = project;
         list = FXCollections.observableArrayList();
-        window = new SimpleObjectProperty();
+        window = new SimpleObjectProperty<>();
     }
 
     public void setConsoleWindow(ConsoleWindow cs) {

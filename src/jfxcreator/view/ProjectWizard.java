@@ -84,6 +84,10 @@ public class ProjectWizard {
                 hb = new HBox(5,
                         cancel = new Button("Cancel"),
                         confirm = new Button("Confirm")));
+        projectName.setPromptText("Project Name");
+        projectPath.setPromptText("Project File Path");
+        packageName.setPromptText("Package Name");
+        mainClassName.setPromptText("Main-Class Name");
         box.setAlignment(Pos.CENTER);
         hb.setAlignment(Pos.CENTER_RIGHT);
         projectPath.setText(Dependencies.workplace_location + File.separator + projectName.getText());

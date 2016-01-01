@@ -142,7 +142,11 @@ public class FileWizard {
                 filename = new TextField("NewFile"),
                 destination = new TextField());
         projectName.setEditable(false);
+        projectName.setPromptText("Project Name");
         destination.setEditable(false);
+        packageName.setPromptText("Package Name");
+        filename.setPromptText("FileName");
+        destination.setPromptText("File Path");
 
         String sourcepath = project.getSource().toAbsolutePath().toString();
         destination.setText(sourcepath + File.separator + filename.getText());

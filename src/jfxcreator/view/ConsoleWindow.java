@@ -220,6 +220,7 @@ public class ConsoleWindow extends Tab {
                 box.getChildren().addAll(fi = new TextField(),
                         prev = new Button("Previous"),
                         next = new Button("Next"));
+                fi.setPromptText("Find");
                 fi.setOnAction((ea) -> {
                     if (jArea.getSelectedText() == null || jArea.getSelectedText().length() == 0) {
                         String a = fi.getText();
@@ -243,8 +244,8 @@ public class ConsoleWindow extends Tab {
                     int end = jArea.getSelectionEnd();
                     String a = jArea.getText().substring(end);
                     int index = a.indexOf(fi.getText());
-                    index += end;
                     if (index != -1) {
+                        index += end;
                         jArea.select(index, index + fi.getText().length());
                     }
                 });

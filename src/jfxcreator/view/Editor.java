@@ -6,6 +6,7 @@
 package jfxcreator.view;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.IntFunction;
@@ -43,6 +44,7 @@ import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
+import org.fxmisc.richtext.Paragraph;
 import org.fxmisc.richtext.PopupAlignment;
 
 /**
@@ -114,7 +116,7 @@ public class Editor extends EnvironmentTab {
         Text caret;
         hb.getChildren().add(caret = new Text(""));
         area.caretPositionProperty().addListener((ob, older, newer) -> {
-            caret.setText(getRow(area.getCaretPosition()) + ":" + area.getCaretColumn());
+            caret.setText(getRow(area.getCaretPosition())[0] + ":" + area.getCaretColumn());
         });
         readFromScript();
         setOnCloseRequest((e) -> {
@@ -295,6 +297,7 @@ public class Editor extends EnvironmentTab {
                     box.getChildren().addAll(fi = new TextField(),
                             prev = new Button("Previous"),
                             next = new Button("Next"));
+                    fi.setPromptText("Find");
                     fi.setOnAction((ea) -> {
                         if (area.getSelection().getLength() == 0) {
                             String a = fi.getText();
@@ -318,8 +321,8 @@ public class Editor extends EnvironmentTab {
                         int end = area.getSelection().getEnd();
                         String a = area.getText().substring(end);
                         int index = a.indexOf(fi.getText());
-                        index += end;
                         if (index != -1) {
+                            index += end;
                             area.selectRange(index, index + fi.getText().length());
                         }
                     });
@@ -348,9 +351,11 @@ public class Editor extends EnvironmentTab {
                     top.getChildren().addAll(fi = new TextField(),
                             prev = new Button("Previous"),
                             next = new Button("Next"));
+                    fi.setPromptText("Find");
                     below.getChildren().addAll(replace = new TextField(),
                             rep = new Button("Replace"),
                             reAll = new Button("Replace All"));
+                    replace.setPromptText("Replace");
                     fi.setOnAction((ea) -> {
                         if (area.getSelection().getLength() == 0) {
                             String a = fi.getText();
@@ -377,8 +382,8 @@ public class Editor extends EnvironmentTab {
                         int end = area.getSelection().getEnd();
                         String a = area.getText().substring(end);
                         int index = a.indexOf(fi.getText());
-                        index += end;
                         if (index != -1) {
+                            index += end;
                             area.selectRange(index, index + fi.getText().length());
                         }
                     });
@@ -410,16 +415,16 @@ public class Editor extends EnvironmentTab {
         });
     }
 
-    private int getRow(int caret) {
+    private int[] getRow(int caret) {
         String spl[] = area.getText().split("\n");
         int count = 0;
         for (int x = 0; x < spl.length; x++) {
             count += spl[x].length() + 1;
             if (caret <= count) {
-                return x + 1;
+                return new int[]{x + 1, count - spl[x].length() - 1};
             }
         }
-        return -1;
+        return new int[]{-1, -1};
     }
 
     private String getTabText(String s) {
@@ -507,8 +512,8 @@ public class Editor extends EnvironmentTab {
                     left = new Button("<-"),
                     right = new Button("->"),
                     new Separator(),
-                    comment = new Button("Comment"),
-                    uncomment = new Button("UnComment"));
+                    comment = new Button("//-"),
+                    uncomment = new Button("X-"));
             if (editor.getScript().getProject() == null || editor.getScript().getType() == Program.RESOURCE) {
                 source.setDisable(true);
                 history.setDisable(true);
@@ -533,10 +538,14 @@ public class Editor extends EnvironmentTab {
                 uncomment.setDisable(true);
             });
             left.setOnAction((E) -> {
-
+                int row = getRow(editor.getCodeArea().getCaretPosition())[1];
+                if (editor.getCodeArea().getText(row, row + 4).equals("    ")) {
+                    editor.getCodeArea().deleteText(row, row + 4);
+                }
             });
             right.setOnAction((E) -> {
-
+                int row = getRow(editor.getCodeArea().getCaretPosition())[1];
+                editor.getCodeArea().insertText(row, "    ");
             });
             comment.setOnAction((E) -> {
                 comment(editor);

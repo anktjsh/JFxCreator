@@ -73,9 +73,9 @@ import jfxcreator.view.FileWizard.FileDescription;
  */
 public class Writer extends BorderPane {
 
-    public static final ObjectProperty<Font> fontSize = new SimpleObjectProperty(new Font(15));
+    public static final ObjectProperty<Font> fontSize = new SimpleObjectProperty<>(new Font(15));
     public static final BooleanProperty wrapText = new SimpleBooleanProperty(false);
-    public static final ObjectProperty<Project> currentProject = new SimpleObjectProperty(null);
+    public static final ObjectProperty<Project> currentProject = new SimpleObjectProperty<>(null);
 
     private final TabPane tabPane;
     private final MenuBar bar;
@@ -267,7 +267,7 @@ public class Writer extends BorderPane {
             al.showAndWait();
         });
 
-        tree = new TreeView();
+        tree = new TreeView<>();
         setLeft(tree);
         tree.setRoot(new TreeItem<>("Projects"));
         tree.getRoot().setExpanded(true);
@@ -406,8 +406,13 @@ public class Writer extends BorderPane {
                 currentProject.set(((LibraryTreeItem) newer).getProject());
             } else if (newer instanceof BinaryTreeItem) {
                 currentProject.set(((BinaryTreeItem) newer).getProject());
+            } else if (newer.getParent() != null) {
+                if (newer.getParent() instanceof ProjectTreeItem) {
+                    ProjectTreeItem pti = (ProjectTreeItem) newer.getParent();
+                    currentProject.set(pti.getProject());
+                }
             } else {
-//                currentProject.set(null);
+
             }
         });
         tree.setContextMenu(new ContextMenu());

@@ -74,6 +74,7 @@ public class ClassReader extends EnvironmentTab {
                 box.getChildren().addAll(fi = new TextField(),
                         prev = new Button("Previous"),
                         next = new Button("Next"));
+                fi.setPromptText("Find");
                 fi.setOnAction((ea) -> {
                     if (area.getSelection().getLength() == 0) {
                         String a = fi.getText();
@@ -97,8 +98,8 @@ public class ClassReader extends EnvironmentTab {
                     int end = area.getSelection().getEnd();
                     String a = area.getText().substring(end);
                     int index = a.indexOf(fi.getText());
-                    index += end;
                     if (index != -1) {
+                        index += end;
                         area.selectRange(index, index + fi.getText().length());
                     }
                 });

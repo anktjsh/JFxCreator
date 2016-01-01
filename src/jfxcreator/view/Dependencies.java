@@ -82,6 +82,7 @@ public class Dependencies {
         });
         box = new VBox(10);
         field = new TextField();
+        field.setPromptText("JDK File Path");
         field.setEditable(false);
         options = new ComboBox<>();
         options.getItems().addAll(getAvailableOptions());
@@ -104,6 +105,7 @@ public class Dependencies {
         });
 
         directory = new TextField();
+        directory.setPromptText("Projects Home");
         String home = System.getProperty("user.home");
         directory.setText(home + File.separator + "Documents"
                 + File.separator + "JFxCreatorProjects");
@@ -302,6 +304,7 @@ public class Dependencies {
                         cancel = new Button("Cancel"),
                         confirm = new Button("Confirm")));
         choice.getItems().setAll(getAvailableOptions());
+        field.setPromptText("Java Platform");
         h.setAlignment(Pos.CENTER);
         field.setText(Dependencies.local_version);
         field.setEditable(false);
@@ -368,6 +371,7 @@ public class Dependencies {
         bottom.getChildren().addAll(cancel = new Button("Cancel"),
                 save = new Button("Save"));
         TextField dir = new TextField(workplace_location);
+        dir.setPromptText("Projects Home");
         dir.setEditable(false);
         Button choose = new Button("Select Directory");
         box.getChildren().addAll(0, FXCollections.observableArrayList(

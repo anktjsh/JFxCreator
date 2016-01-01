@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//NetBeans//DTD Tool Configuration 1.0//EN" "http://www.netbeans.org/dtds/ToolConfiguration-1_0.dtd">
+<configuration>
+    <tool kind="hints" type="text/x-java">
+        <node name="org.netbeans.modules.java.hints.StaticImport">
+            <attribute name="enabled" value="true"/>
+        </node>
+        <node name="org.netbeans.modules.java.hints.bugs.BroadCatchBlock.broadCatch">
+            <attribute name="catch.umbrella" value="false"/>
+            <attribute name="catch.common" value="true"/>
+            <attribute name="catch.umbrella.types" value="java.io.IOException, java.sql.SqlException"/>
+            <attribute name="enabled" value="true"/>
+        </node>
+    </tool>
+</configuration>

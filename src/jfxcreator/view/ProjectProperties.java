@@ -65,6 +65,7 @@ public class ProjectProperties {
                 mai = new HBox(10,
                         cancel = new Button("Cancel"),
                         confirm = new Button("Confirm")))));
+        mainClass.setPromptText("Main-Class");
         stage.getScene().getStylesheets().add(stylesheet);
         box.setPadding(new Insets(5, 10, 5, 10));
         mai.setAlignment(Pos.CENTER_RIGHT);
