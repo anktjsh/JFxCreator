@@ -1,2 +1,0 @@
-Project : /Users/swatijoshi/Documents/JFxCreatorProjects/Tester : com.tester.example.HelloWorld
-Project : /Users/swatijoshi/Documents/JFxCreatorProjects/Cleaner : hello.world.Clean

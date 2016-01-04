@@ -1,3 +1,0 @@
-/Users/swatijoshi/Documents/JFxCreatorProjects/Cleaner/src/hello/world/Clean.java
-/Users/swatijoshi/Documents/JFxCreatorProjects/Cleaner/src/hello/world/NewFile.html
-/Users/swatijoshi/Documents/JFxCreatorProjects/Cleaner/src/hello/world/NewFile.java
