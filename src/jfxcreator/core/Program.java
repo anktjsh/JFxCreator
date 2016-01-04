@@ -120,7 +120,7 @@ public class Program {
     }
 
     public String getCurrentTime() {
-        return LocalDate.now().toString() + " " + LocalTime.now().toString();
+        return LocalDate.now().toString() + " " + LocalTime.now().toString().replaceAll(":", "-");
     }
 
     public List<String> previousSavedDates() {

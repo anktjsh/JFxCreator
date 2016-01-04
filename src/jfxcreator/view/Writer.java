@@ -755,12 +755,7 @@ public class Writer extends BorderPane {
                         }
                     }
                 } else {
-                    if (f.toPath().getFileName().toString().endsWith(".pdf")) {
-                        PdfReader pd;
-                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                        tabPane.getTabs().add(pd = new PdfReader(pro, parent));
-                        tabPane.getSelectionModel().select(pd);
-                    } else if (alert()) {
+                    if (alert()) {
                         Editor vi;
                         Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
                         tabPane.getTabs().add(vi = new Editor(pro, parent));
@@ -792,12 +787,7 @@ public class Writer extends BorderPane {
                     }
                 }
             } else {
-                if (prog.getFile().toString().endsWith(".pdf")) {
-                    PdfReader pd;
-                    Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                    tabPane.getTabs().add(pd = new PdfReader(pro, parent));
-                    tabPane.getSelectionModel().select(pd);
-                } else if (alert()) {
+                if (alert()) {
                     Editor vi;
                     tabPane.getTabs().add(vi = new Editor(prog, prog.getProject()));
                     tabPane.getSelectionModel().select(vi);
@@ -1064,13 +1054,10 @@ public class Writer extends BorderPane {
         Project pro = ProjectWizard.createProject(getScene().getWindow());
         if (pro != null) {
             ArrayList<Program> scripts = pro.getPrograms();
-            scripts.stream().map((s) -> {
-                Editor ed;
-                tabPane.getTabs().add(ed = new Editor(s, pro));
-                return ed;
-            }).forEach((ed) -> {
-                tabPane.getSelectionModel().select(ed);
-            });
+            for (int x=0;x<scripts.size();x++) {
+                Editor ed = new Editor(scripts.get(x), pro);
+                tabPane.getTabs().add(ed);
+            }
             ProjectTree.getTree().addProject(pro);
         }
     }

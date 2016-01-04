@@ -461,7 +461,7 @@ public class Project {
         saveConfig();
     }
 
-    private void uncompress(String compress, String folderPath) {
+    public static void uncompress(String compress, String folderPath) {
         int BUFFER = 2048;
         System.out.println(System.currentTimeMillis());
         try {

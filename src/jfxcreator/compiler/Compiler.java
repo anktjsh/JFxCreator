@@ -112,11 +112,10 @@ public class Compiler {
     public Program getProgram(String key) {
         String uri = key.substring(key.indexOf('[') + 1, key.indexOf(']'));
         uri = uri.replace("string:///", "");
-        uri = replaceAll(uri, File.separator, ".");
+        uri = replaceAll(uri, "/", ".");
         uri = uri.substring(0, uri.indexOf(".java"));
         for (Program p : total.getPrograms()) {
             if (p.getClassName().equals(uri)) {
-//                System.out.println(p.getClassName());
                 return p;
             }
         }
