@@ -1054,7 +1054,7 @@ public class Writer extends BorderPane {
         Project pro = ProjectWizard.createProject(getScene().getWindow());
         if (pro != null) {
             ArrayList<Program> scripts = pro.getPrograms();
-            for (int x=0;x<scripts.size();x++) {
+            for (int x = 0; x < scripts.size(); x++) {
                 Editor ed = new Editor(scripts.get(x), pro);
                 tabPane.getTabs().add(ed);
             }

@@ -66,6 +66,8 @@ public class HistoryPane extends BorderPane {
     public void refresh() {
         options.getItems().clear();
         options.getItems().addAll(edit.getScript().previousSavedDates());
+        code1.clear();
+        code1.appendText(edit.getCodeArea().getText());
     }
 
     private String getCode(List<String> list) {

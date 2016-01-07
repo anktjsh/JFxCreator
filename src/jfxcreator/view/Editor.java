@@ -6,7 +6,6 @@
 package jfxcreator.view;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.IntFunction;
@@ -44,7 +43,6 @@ import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
-import org.fxmisc.richtext.Paragraph;
 import org.fxmisc.richtext.PopupAlignment;
 
 /**

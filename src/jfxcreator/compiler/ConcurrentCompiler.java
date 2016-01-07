@@ -11,6 +11,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import jfxcreator.view.Dependencies;
 import jfxcreator.view.Editor;
 
 /**
@@ -35,6 +36,7 @@ public class ConcurrentCompiler {
         allowed = new SimpleBooleanProperty(false);
         runners = new ArrayList<>();
         lastCall = new SimpleObjectProperty<>();
+        System.setProperty("java.home", Dependencies.local_version.replace("bin", "jre"));
     }
 
     public synchronized void compile(Editor edit) {
@@ -43,7 +45,8 @@ public class ConcurrentCompiler {
             System.out.println("Preparing on " + Thread.currentThread().getName());
             allowed.set(false);
             Compiler comp = new Compiler(edit);
-            comp.setDirectory(new File(".cache" + File.separator + edit.getProject().getProjectName() + File.separator + "builds"));
+            File fi = new File(".cache" + File.separator + edit.getProject().getProjectName() + File.separator + "builds");
+            comp.setDirectory(fi);
             if (edit.getProject().getNumLibs() != 0) {
                 comp.addToClassPath(edit.getProject().getAllLibs());
             }
@@ -52,6 +55,7 @@ public class ConcurrentCompiler {
         }
         (new Thread(new Runner())).start();
     }
+
     private static ArrayList<Runner> runners;
 
     private class Runner implements Runnable {

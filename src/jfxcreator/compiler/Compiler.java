@@ -123,9 +123,7 @@ public class Compiler {
     }
 
     public void setDirectory(File filepath) {
-        if (!filepath.exists()) {
-            filepath.mkdirs();
-        }
+        filepath.mkdirs();
         addCompilerOptions("-d", filepath.getAbsolutePath());
     }
 
