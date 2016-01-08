@@ -276,6 +276,7 @@ public class Dependencies {
             al.setContentText("Click on Settings and Select a new JDK Version or some features of JFxCreator may not work properly");
             al.showAndWait();
         }
+        System.setProperty("java.home", Dependencies.local_version.replace("bin", "jre"));
     }
 
     public static void platform(Window w) {

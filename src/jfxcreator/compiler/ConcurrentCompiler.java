@@ -36,7 +36,6 @@ public class ConcurrentCompiler {
         allowed = new SimpleBooleanProperty(false);
         runners = new ArrayList<>();
         lastCall = new SimpleObjectProperty<>();
-        System.setProperty("java.home", Dependencies.local_version.replace("bin", "jre"));
     }
 
     public synchronized void compile(Editor edit) {

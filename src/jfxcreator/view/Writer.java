@@ -755,7 +755,13 @@ public class Writer extends BorderPane {
                         }
                     }
                 } else {
-                    if (alert()) {
+                    if (f.getName().endsWith(".pdf")) {
+                        PdfReader pd;
+                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                        tabPane.getTabs().add(pd = new PdfReader(pro, parent));
+                        tabPane.getSelectionModel().select(pd);
+                        System.out.println(tabPane.getTabs().size());
+                    } else if (alert()) {
                         Editor vi;
                         Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
                         tabPane.getTabs().add(vi = new Editor(pro, parent));
@@ -787,7 +793,12 @@ public class Writer extends BorderPane {
                     }
                 }
             } else {
-                if (alert()) {
+                if (prog.getFile().toString().endsWith(".pdf")) {
+                    PdfReader pd;
+                    Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                    tabPane.getTabs().add(pd = new PdfReader(pro, parent));
+                    tabPane.getSelectionModel().select(pd);
+                } else if (alert()) {
                     Editor vi;
                     tabPane.getTabs().add(vi = new Editor(prog, prog.getProject()));
                     tabPane.getSelectionModel().select(vi);
@@ -878,6 +889,7 @@ public class Writer extends BorderPane {
 
     private void resizeMenus(ObservableList<Menu> me, String style) {
         me.stream().forEach((m) -> {
+            resizeMenuItems(m.getItems(), style);
             m.setStyle(style);
         });
         tree.setStyle(style);
