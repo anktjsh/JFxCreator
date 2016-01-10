@@ -8,6 +8,7 @@ package jfxcreator.view;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -240,6 +241,18 @@ public class Dependencies {
             }
             Files.write(Paths.get(".cache" + File.separator + "preferences03.txt"), FXCollections.observableArrayList(local_version, alert + "", workplace_location));
         } catch (IOException ex) {
+        }
+        try {
+            Object hidden = Files.getAttribute(p, "dos:hidden", LinkOption.NOFOLLOW_LINKS);
+            if (hidden != null) {
+                if (hidden instanceof Boolean) {
+                    Boolean bool = (Boolean) hidden;
+                    if (!bool) {
+                        Files.setAttribute(p, "dos:hidden", Boolean.TRUE, LinkOption.NOFOLLOW_LINKS);
+                    }
+                }
+            }
+        } catch (IOException e) {
         }
     }
 
