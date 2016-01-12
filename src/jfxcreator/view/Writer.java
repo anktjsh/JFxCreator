@@ -715,10 +715,18 @@ public class Writer extends BorderPane {
         }
     }
 
-    private void loadFiles(List<File> fil) {
+    public void loadFiles(List<File> fil) {
         fil.stream().forEach((f) -> {
             loadFile(f, null);
         });
+    }
+    
+    public void loadFiles(String[] arr) {
+        ArrayList<File> al = new ArrayList<>();
+        for (String s : arr) {
+            al.add(new File(s));
+        }
+        loadFiles(al);
     }
 
     private void loadFile(File f, Program prog, Project parent) {

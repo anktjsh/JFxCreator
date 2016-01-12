@@ -5,16 +5,13 @@
  */
 package jfxcreator.view;
 
-import java.awt.BorderLayout;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Optional;
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
-import javafx.embed.swing.SwingNode;
 import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -23,15 +20,13 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
-import javax.swing.text.DefaultCaret;
 import jfxcreator.JFxCreator;
 import jfxcreator.core.ProcessPool.ProcessItem;
 import jfxcreator.core.Project;
@@ -43,11 +38,14 @@ import jfxcreator.core.Project;
 public class ConsoleWindow extends Tab {
 
     private final ProcessItem console;
-    private final JTextArea jArea;
     private PrintStream printer;
     private final BorderPane center, bottom;
     private final Button cancel;
     private int length;
+
+    private final TextTimer timer;
+    private final TextArea area;
+    private String currentText = "";
 
     public ConsoleWindow(ProcessItem c) {
         if (c.getName() == null) {
@@ -81,22 +79,14 @@ public class ConsoleWindow extends Tab {
             getTabPane().getTabs().clear();
         });
 
-        jArea = new JTextArea();
-        jArea.setFont(jArea.getFont().deriveFont((float) Writer.fontSize.getValue().getSize()));
+        setContent(center = new BorderPane(area = new TextArea()));
+
         Writer.fontSize.addListener((ob, older, newer) -> {
-            jArea.setFont(jArea.getFont().deriveFont((float) newer.getSize()));
+            area.setFont(newer);
         });
         Writer.wrapText.addListener((ob, older, neweer) -> {
-            jArea.setWrapStyleWord(neweer);
+            area.setWrapText(neweer);
         });
-        SwingNode node = new SwingNode();
-
-        JPanel main = new JPanel(new BorderLayout());
-        main.add(new JScrollPane(jArea), BorderLayout.CENTER);
-        DefaultCaret caret = (DefaultCaret) jArea.getCaret();
-        caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-        node.setContent(main);
-        setContent(center = new BorderPane(node));
 
         appendAll(console.getConsole().getList());
 
@@ -104,7 +94,7 @@ public class ConsoleWindow extends Tab {
             c1.next();
             if (c1.wasAdded()) {
                 for (char s : c1.getAddedSubList()) {
-                    append(s);
+                    addToQueue(s);
                 }
             }
         });
@@ -113,7 +103,7 @@ public class ConsoleWindow extends Tab {
         center.setBottom(bottom = new BorderPane());
         bottom.setPadding(new Insets(5, 10, 5, 10));
         bottom.setLeft(cancel = new Button("Cancel Process"));
-
+        (timer = new TextTimer()).start();
         cancel.setOnAction((e) -> {
             Alert al = new Alert(AlertType.CONFIRMATION);
             al.setTitle("End Process");
@@ -131,15 +121,15 @@ public class ConsoleWindow extends Tab {
                         console.getProcess().destroyForcibly();
                     }
                     cancel.setDisable(true);
+                    timer.stop();
                 }
             }
         });
-
         setOnCloseRequest((e) -> {
             if (console.getProcess().isAlive()) {
                 Alert al = new Alert(AlertType.CONFIRMATION);
                 al.setTitle(console.getName());
-                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(jfxcreator.JFxCreator.icon);
+                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
                 al.setHeaderText("Cancel Process");
                 Optional<ButtonType> show = al.showAndWait();
                 if (show.isPresent()) {
@@ -152,64 +142,69 @@ public class ConsoleWindow extends Tab {
                     e.consume();
                 }
             }
+            if (!e.isConsumed()) {
+                timer.stop();
+            }
         });
+
+    }
+
+    private void addToQueue(Character c) {
+        currentText += c;
+    }
+
+    private class TextTimer extends AnimationTimer {
+
+        public TextTimer() {
+        }
+
+        @Override
+        public void handle(long now) {
+            if (!currentText.isEmpty()) {
+                append(currentText);
+                currentText = "";
+            }
+        }
+
     }
 
     public void complete(String process) {
-        SwingUtilities.invokeLater(() -> {
-            jArea.append("\n" + process + " Complete\n");
-            length = jArea.getText().length();
+        Platform.runLater(() -> {
+            append("\n" + process + " Complete\n");
         });
     }
 
     private void appendAll(List<Character> al) {
         for (char s : al) {
-            append(s);
+            currentText += s;
         }
     }
 
-    private void append(char s) {
-        if (console.getProcess().isAlive() || !(console.getName().contains("Launching") && console.getName().contains("Jar"))) {
-            SwingUtilities.invokeLater(() -> {
-                jArea.append(s + "");
-                length = jArea.getText().length();
-            });
-        } else {
-            System.out.print(s);
-        }
+    private void append(String s) {
+        area.appendText(s);
+        length = area.getText().length();
     }
 
     private void bindKeyListeners() {
-        jArea.addKeyListener(new KeyListener() {
-
-            @Override
-            public void keyTyped(java.awt.event.KeyEvent e) {
-            }
-
-            @Override
-            public void keyPressed(java.awt.event.KeyEvent e) {
-                type(jArea.getText(), console.getConsole().getProject(), e);
-            }
-
-            @Override
-            public void keyReleased(java.awt.event.KeyEvent e) {
-            }
+        area.setOnKeyPressed((e) -> {
+            type(area.getText(), console.getConsole().getProject(), e);
         });
     }
 
     public void type(String st, Project proj, KeyEvent ke) {
-        if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+        if (ke.getCode() == KeyCode.ENTER) {
             if (console.getProcess().isAlive()) {
                 String s = st.substring(length == 0 ? 0 : (length));
                 printer.println(s);
                 printer.flush();
-                length = jArea.getText().length();
+                length = area.getText().length();
+                System.out.println(length);
             }
         }
-        if (ke.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+        if (ke.getCode() == KeyCode.BACK_SPACE) {
             ke.consume();
         }
-        if (ke.getKeyCode() == KeyEvent.VK_F) {
+        if (ke.getCode() == KeyCode.F) {
             if (ke.isControlDown()) {
                 HBox box = new HBox(15);
                 BorderPane main = new BorderPane(box);
@@ -222,31 +217,31 @@ public class ConsoleWindow extends Tab {
                         next = new Button("Next"));
                 fi.setPromptText("Find");
                 fi.setOnAction((ea) -> {
-                    if (jArea.getSelectedText() == null || jArea.getSelectedText().length() == 0) {
+                    if (area.getSelectedText() == null || area.getSelectedText().length() == 0) {
                         String a = fi.getText();
-                        int index = jArea.getText().indexOf(a);
+                        int index = area.getText().indexOf(a);
                         if (index != -1) {
-                            jArea.select(index, index + a.length());
+                            area.selectRange(index, index + a.length());
                         }
                     } else {
                         next.fire();
                     }
                 });
                 prev.setOnAction((efd) -> {
-                    int start = jArea.getSelectionStart();
-                    String a = jArea.getText().substring(0, start);
+                    int start = area.getSelection().getStart();
+                    String a = area.getText().substring(0, start);
                     int index = a.lastIndexOf(fi.getText());
                     if (index != -1) {
-                        jArea.select(index, index + fi.getText().length());
+                        area.selectRange(index, index + fi.getText().length());
                     }
                 });
                 next.setOnAction((sdfsdfsd) -> {
-                    int end = jArea.getSelectionEnd();
-                    String a = jArea.getText().substring(end);
+                    int end = area.getSelection().getEnd();
+                    String a = area.getText().substring(end);
                     int index = a.indexOf(fi.getText());
                     if (index != -1) {
                         index += end;
-                        jArea.select(index, index + fi.getText().length());
+                        area.selectRange(index, index + fi.getText().length());
                     }
                 });
                 Button close;

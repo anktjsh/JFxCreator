@@ -43,7 +43,7 @@ public class Console {
     public ObservableList<Character> getList() {
         return list;
     }
-
+    
     public void log(String st) {
         for (char c : st.toCharArray()) {
             log(c);

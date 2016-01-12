@@ -516,7 +516,7 @@ public class Project {
             item.setName("Launching File : " + program.getClassName());
             item.setProcess(start);
             ProcessPool.getPool().addItem(item);
-            (new Thread(new Reader(start.getInputStream(), item.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), item.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -533,7 +533,7 @@ public class Project {
             item.setName("Launching File : " + program.getClassName());
             item.setProcess(start);
             ProcessPool.getPool().addItem(item);
-            (new Thread(new Reader(start.getInputStream(), item.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), item.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -613,7 +613,7 @@ public class Project {
             pro.setName("Combining All Existing Jars for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
-            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -635,7 +635,7 @@ public class Project {
             pro.setName("Combining All Existing Jars for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
-            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -700,7 +700,7 @@ public class Project {
             pro.setName("Compile Files for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
-            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -722,7 +722,7 @@ public class Project {
             pro.setName("Compile Files for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
-            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
             System.out.println(start.waitFor());
         } catch (IOException | InterruptedException e) {
 
@@ -752,7 +752,7 @@ public class Project {
             pro.setName("Build Jar File for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
-            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -772,7 +772,7 @@ public class Project {
             pro.setName("Build Jar File for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
-            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -804,7 +804,7 @@ public class Project {
             pro.setName("Launching Jar File for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
-            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -826,7 +826,7 @@ public class Project {
             pro.setName("Launching Jar File for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
-            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -857,7 +857,7 @@ public class Project {
             pro.setName("Compile Native .exe for Project " + getRootDirectory().getFileName().toString());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
-            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
         } catch (IOException | InterruptedException ex) {
         }
@@ -878,7 +878,7 @@ public class Project {
             pro.setName("Compile Native for Project " + getRootDirectory().getFileName().toString());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
-            (new Thread(new Reader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
         } catch (IOException | InterruptedException ex) {
         }
@@ -928,12 +928,12 @@ public class Project {
 
     }
 
-    public static class Reader implements Runnable {
+    public static class OutputReader implements Runnable {
 
         private final InputStream strea;
         private final Console console;
 
-        public Reader(InputStream is, Console so) {
+        public OutputReader(InputStream is, Console so) {
             strea = is;
             console = so;
         }
@@ -952,7 +952,7 @@ public class Project {
             }
         }
     }
-
+    
     public static Project unserialize(String s) {
         try {
             String[] split = s.split(" : ");
@@ -970,6 +970,7 @@ public class Project {
         listeners.add(al);
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof Project) {
             Project pro = (Project) obj;

@@ -34,7 +34,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.jpedal.examples.viewer.gui.javafx.FXViewerTransitions;
 import org.jpedal.examples.viewer.gui.javafx.FXViewerTransitions.TransitionDirection;
@@ -207,7 +206,6 @@ public class BaseViewer extends BorderPane {
 
         final ToolBar toolbar = new ToolBar();
 
-        final Button open = new Button("Open");
         final Button back = new Button("Back");
         final ComboBox<String> pages = new ComboBox<>();
         final Label pageCount = new Label();
@@ -220,7 +218,6 @@ public class BaseViewer extends BorderPane {
       
         ComboBox<String> transitionList = new ComboBox<>();
 
-        open.setId("open");
         back.setId("back");
         pageCount.setId("pgCount");
         pages.setId("pages");
@@ -234,30 +231,6 @@ public class BaseViewer extends BorderPane {
         /**
          * Open the PDF File
          */
-        open.setOnAction((final ActionEvent t) -> {
-            final FileChooser chooser = new FileChooser();
-            chooser.setTitle("Open PDF file");
-            
-            //Open directory from existing directory
-            if(file != null){
-                final File existDirectory = file.getParentFile();
-                if(existDirectory.exists()) {
-                    chooser.setInitialDirectory(existDirectory);
-                }
-            }
-            
-            //Set extension filter
-            final FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("PDF files (*.pdf)", "*.pdf");
-            chooser.getExtensionFilters().add(extFilter);
-            
-            file = chooser.showOpenDialog(null);
-            
-            if(file != null){
-                Platform.runLater(() -> {
-                    loadPDF(file);
-                });              
-            }
-        });
         
         pages.getSelectionModel().selectedIndexProperty().addListener((final ObservableValue<? extends Number> ov, final Number oldVal, final Number newVal) -> {
             if(newVal.intValue() != -1 && newVal.intValue()+1 != currentPage){
@@ -367,7 +340,7 @@ public class BaseViewer extends BorderPane {
             transitionList.setValue(options.get(transitionType.ordinal()));
         }
         
-        toolbar.getItems().addAll(open, spacerLeft, back, pages, pageCount, forward, zoomIn, zoomOut, spacerRight, transitionList);
+        toolbar.getItems().addAll(spacerLeft, back, pages, pageCount, forward, zoomIn, zoomOut, spacerRight, transitionList);
         
         return toolbar;
     }

@@ -81,6 +81,21 @@ public class JFxCreator extends Application {
             env.setMaximized(true);
             if (OS.contains("mac")) {
                 env.setFullScreen(true);
+                com.sun.glass.ui.Application.GetApplication().setEventHandler(new com.sun.glass.ui.Application.EventHandler() {
+
+                    @Override
+                    public void handleQuitAction(com.sun.glass.ui.Application app, long time) {
+                        super.handleQuitAction(app, time);
+                        close(script, null);
+                    }
+
+                    @Override
+                    public void handleOpenFilesAction(com.sun.glass.ui.Application app, long time, String[] files) {
+                        super.handleOpenFilesAction(app, time, files); //To change body of generated methods, choose Tools | Templates.
+                        script.loadFiles(files);
+                    }
+
+                });
             }
             env.getScene().getStylesheets().add(stylesheet);
             env.getIcons().add(icon);
@@ -108,7 +123,9 @@ public class JFxCreator extends Application {
 
     private void close(Writer script, Event E) {
         if (!script.processCheck()) {
-            E.consume();
+            if (E != null) {
+                E.consume();
+            }
             return;
         }
         if (script.canSave()) {
