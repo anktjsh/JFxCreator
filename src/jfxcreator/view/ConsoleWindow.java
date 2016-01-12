@@ -105,45 +105,45 @@ public class ConsoleWindow extends Tab {
         bottom.setLeft(cancel = new Button("Cancel Process"));
         (timer = new TextTimer()).start();
         cancel.setOnAction((e) -> {
-            Alert al = new Alert(AlertType.CONFIRMATION);
-            al.setTitle("End Process");
-            al.setHeaderText("Are you sure you want to end the process?");
-            al.initOwner(getTabPane().getScene().getWindow());
-            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
-            Optional<ButtonType> show = al.showAndWait();
-            if (show.isPresent()) {
-                if (show.get() == ButtonType.OK) {
-                    try {
-                        console.getProcess().getOutputStream().close();
-                    } catch (IOException ex) {
+            if (console.getProcess().isAlive()) {
+                Alert al = new Alert(AlertType.CONFIRMATION);
+                al.setTitle("End Process");
+                al.setHeaderText("Are you sure you want to end the process?");
+                al.initOwner(getTabPane().getScene().getWindow());
+                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
+                Optional<ButtonType> show = al.showAndWait();
+                if (show.isPresent()) {
+                    if (show.get() == ButtonType.OK) {
+                        try {
+                            console.getProcess().getOutputStream().close();
+                        } catch (IOException ex) {
+                        }
+                        if (console.getProcess().isAlive()) {
+                            console.getProcess().destroyForcibly();
+                        }
+                        cancel.setDisable(true);
+                        if (timer.isAlive()) {
+                            timer.stop();
+                        }
                     }
-                    if (console.getProcess().isAlive()) {
-                        console.getProcess().destroyForcibly();
-                    }
-                    cancel.setDisable(true);
+                }
+            } else {
+                cancel.setDisable(true);
+                if (timer.isAlive()) {
                     timer.stop();
                 }
             }
         });
         setOnCloseRequest((e) -> {
             if (console.getProcess().isAlive()) {
-                Alert al = new Alert(AlertType.CONFIRMATION);
-                al.setTitle(console.getName());
-                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
-                al.setHeaderText("Cancel Process");
-                Optional<ButtonType> show = al.showAndWait();
-                if (show.isPresent()) {
-                    if (show.get() == ButtonType.OK) {
-                        cancel.fire();
-                    } else {
-                        e.consume();
-                    }
-                } else {
-                    e.consume();
-                }
+                cancel.fire();
+            } else {
+                e.consume();
             }
             if (!e.isConsumed()) {
-                timer.stop();
+                if (timer.isAlive()) {
+                    timer.stop();
+                }
             }
         });
 
@@ -155,7 +155,25 @@ public class ConsoleWindow extends Tab {
 
     private class TextTimer extends AnimationTimer {
 
+        private boolean isAlive;
+
         public TextTimer() {
+        }
+
+        @Override
+        public void start() {
+            super.start(); //To change body of generated methods, choose Tools | Templates.
+            isAlive = true;
+        }
+
+        @Override
+        public void stop() {
+            super.stop(); //To change body of generated methods, choose Tools | Templates.
+            isAlive = false;
+        }
+
+        public boolean isAlive() {
+            return isAlive;
         }
 
         @Override
