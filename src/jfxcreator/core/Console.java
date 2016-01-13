@@ -5,11 +5,9 @@
  */
 package jfxcreator.core;
 
+import java.util.ArrayList;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import jfxcreator.view.ConsoleWindow;
 
 /**
@@ -18,14 +16,16 @@ import jfxcreator.view.ConsoleWindow;
  */
 public class Console {
 
-    private final ObservableList<Character> list;
+    private String content;
     private final Project proje;
     private final ObjectProperty<ConsoleWindow> window;
+    private final ArrayList<ConsoleListener> listen;
 
     public Console(Project project) {
         proje = project;
-        list = FXCollections.observableArrayList();
+        content = "";
         window = new SimpleObjectProperty<>();
+        listen = new ArrayList<>();
     }
 
     public void setConsoleWindow(ConsoleWindow cs) {
@@ -40,18 +40,20 @@ public class Console {
         return proje;
     }
 
-    public ObservableList<Character> getList() {
-        return list;
-    }
-    
     public void log(String st) {
-        for (char c : st.toCharArray()) {
-            log(c);
-        }
+        content += st;
+        listen.stream().forEach((cl) -> {
+            cl.stringAdded(st);
+        });
+        cancel();
     }
 
-    public synchronized void log(char c) {
-        list.add(c);
+    public void log(char c) {
+        content += c;
+        listen.stream().forEach((cl) -> {
+            cl.charAdded(c);
+        });
+        cancel();
     }
 
     public void complete(String s) {
@@ -60,13 +62,37 @@ public class Console {
         }
     }
 
+    public String getContent() {
+        return content;
+    }
+
+    public void cancel() {
+        content = "";
+    }
+
     public void merge(Console col) {
-        col.getList().addAll(0, getList());
-        getList().addListener((ListChangeListener.Change<? extends Character> c) -> {
-            c.next();
-            if (c.wasAdded()) {
-                col.getList().addAll(c.getAddedSubList());
+        addConsoleListener(new ConsoleListener() {
+
+            @Override
+            public void charAdded(char c) {
+                col.log(c);
+            }
+
+            @Override
+            public void stringAdded(String c) {
+                col.log(c);
             }
         });
+    }
+
+    public void addConsoleListener(ConsoleListener listn) {
+        listen.add(listn);
+    }
+
+    public interface ConsoleListener {
+
+        public void charAdded(char c);
+
+        public void stringAdded(String c);
     }
 }

@@ -47,8 +47,8 @@ public class Viewer extends EnvironmentTab {
         controls.getItems().addAll(zIn = new Button("Zoom In"),
                 zOut = new Button("Zoom Out"),
                 new Separator(),
-                rotate = new Button("Rotate"), 
-                new Separator(), 
+                rotate = new Button("Rotate"),
+                new Separator(),
                 revert = new Button("Revert"));
         zIn.setOnAction((e) -> {
             if (zoom.get() < 2.0) {

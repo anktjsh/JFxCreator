@@ -33,6 +33,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import javafx.collections.FXCollections;
@@ -510,13 +511,14 @@ public class Project {
         String JAVA_HOME = Dependencies.local_version;
         ProcessBuilder pb = new ProcessBuilder("\"" + JAVA_HOME + File.separator + "java\"", program.getClassName());
         pb.directory(build.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             item.setName("Launching File : " + program.getClassName());
             item.setProcess(start);
             ProcessPool.getPool().addItem(item);
             (new Thread(new OutputReader(start.getInputStream(), item.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), item.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -527,13 +529,14 @@ public class Project {
         String JAVA_HOME = Dependencies.local_version;
         ProcessBuilder pb = new ProcessBuilder(JAVA_HOME + File.separator + "java", program.getClassName());
         pb.directory(build.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             item.setName("Launching File : " + program.getClassName());
             item.setProcess(start);
             ProcessPool.getPool().addItem(item);
             (new Thread(new OutputReader(start.getInputStream(), item.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), item.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -607,13 +610,14 @@ public class Project {
                 "-outdir", "dist",
                 "-outfile", "bundle.jar", "-v");
         pb.directory(rootDirectory.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             pro.setName("Combining All Existing Jars for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
             (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -629,13 +633,14 @@ public class Project {
                 "-outdir", "dist",
                 "-outfile", "bundle.jar", "-v");
         pb.directory(rootDirectory.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             pro.setName("Combining All Existing Jars for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
             (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -694,13 +699,14 @@ public class Project {
                 + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.directory(rootDirectory.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             pro.setName("Compile Files for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
             (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -716,13 +722,14 @@ public class Project {
                 + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.directory(rootDirectory.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             pro.setName("Compile Files for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
             (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
             System.out.println(start.waitFor());
         } catch (IOException | InterruptedException e) {
 
@@ -746,13 +753,14 @@ public class Project {
                 + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar" + " -classpath" + getLibsList();
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.directory(rootDirectory.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             pro.setName("Build Jar File for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
             (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -766,13 +774,14 @@ public class Project {
                 + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar" + " -classpath" + getLibsList();
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.directory(rootDirectory.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             pro.setName("Build Jar File for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
             (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -798,13 +807,14 @@ public class Project {
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.environment().put("PATH", JAVA_HOME);
         pb.directory(rootDirectory.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             pro.setName("Launching Jar File for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
             (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -820,13 +830,14 @@ public class Project {
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         pb.environment().put("PATH", JAVA_HOME);
         pb.directory(rootDirectory.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             pro.setName("Launching Jar File for Project " + getProjectName());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
             (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
             System.out.println(waitFor);
         } catch (IOException | InterruptedException e) {
@@ -851,13 +862,14 @@ public class Project {
                 + ".jar " + " -appclass " + getMainClassName() + " -name " + getProjectName() + " -title " + getProjectName() + " -v";
         ProcessBuilder pb = new ProcessBuilder(a.split(" "));
         pb.directory(dist.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             pro.setName("Compile Native .exe for Project " + getRootDirectory().getFileName().toString());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
             (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
         } catch (IOException | InterruptedException ex) {
         }
@@ -872,13 +884,14 @@ public class Project {
                 + ".jar " + "-appclass " + getMainClassName() + " -name " + getProjectName() + " -title " + getProjectName() + " mac.CFBundleName=" + getProjectName() + " -v";
         pb = new ProcessBuilder(Arrays.asList(a.split(" ")));
         pb.directory(dist.toFile());
-        pb.redirectErrorStream(true);
+
         try {
             Process start = pb.start();
             pro.setName("Compile Native for Project " + getRootDirectory().getFileName().toString());
             pro.setProcess(start);
             ProcessPool.getPool().addItem(pro);
             (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
+            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
             int waitFor = start.waitFor();
         } catch (IOException | InterruptedException ex) {
         }
@@ -952,7 +965,26 @@ public class Project {
             }
         }
     }
-    
+
+    public static class ErrorReader implements Runnable {
+
+        private final InputStream strea;
+        private final Console console;
+
+        public ErrorReader(InputStream is, Console so) {
+            strea = is;
+            console = so;
+        }
+
+        @Override
+        public void run() {
+            Scanner in = new Scanner(strea);
+            while (in.hasNextLine()) {
+                console.log("\n" + in.nextLine());
+            }
+        }
+    }
+
     public static Project unserialize(String s) {
         try {
             String[] split = s.split(" : ");

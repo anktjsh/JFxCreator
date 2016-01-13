@@ -71,7 +71,7 @@ public class Editor extends EnvironmentTab {
         bindMouseListeners();
         area.setFont(Writer.fontSize.get());
         Writer.fontSize.addListener((ob, older, newer) -> {
-           area.setFont(newer);
+            area.setFont(newer);
         });
         Writer.wrapText.addListener((ob, older, neweer) -> {
             area.setWrapText(neweer);

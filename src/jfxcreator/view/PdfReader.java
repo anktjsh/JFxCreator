@@ -13,7 +13,7 @@ import jfxcreator.core.Project;
  *
  * @author Aniket
  */
-public class PdfReader extends EnvironmentTab{
+public class PdfReader extends EnvironmentTab {
 
     public PdfReader(Program scr, Project pro) {
         super(scr, pro);
@@ -21,11 +21,11 @@ public class PdfReader extends EnvironmentTab{
         setContent(f = new BaseViewer());
         selectedProperty().addListener((ob, older, newer) -> {
             if (newer) {
-                if (f.getPDFfilename()==null) {
+                if (f.getPDFfilename() == null) {
                     (new Thread(() -> {
-                        try{
+                        try {
                             Thread.sleep(500);
-                        }catch(InterruptedException e) {
+                        } catch (InterruptedException e) {
                         }
                         Platform.runLater(() -> {
                             f.loadPDF(scr.getFile().toFile());
@@ -34,7 +34,7 @@ public class PdfReader extends EnvironmentTab{
                 }
             }
         });
-        
+
     }
-    
+
 }

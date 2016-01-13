@@ -720,7 +720,7 @@ public class Writer extends BorderPane {
             loadFile(f, null);
         });
     }
-    
+
     public void loadFiles(String[] arr) {
         ArrayList<File> al = new ArrayList<>();
         for (String s : arr) {

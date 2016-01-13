@@ -7,11 +7,9 @@ package jfxcreator.view;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.List;
 import java.util.Optional;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
-import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -28,6 +26,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import jfxcreator.JFxCreator;
+import jfxcreator.core.Console;
 import jfxcreator.core.ProcessPool.ProcessItem;
 import jfxcreator.core.Project;
 
@@ -88,16 +87,21 @@ public class ConsoleWindow extends Tab {
             area.setWrapText(neweer);
         });
 
-        appendAll(console.getConsole().getList());
+        append(console.getConsole().getContent());
 
-        console.getConsole().getList().addListener((ListChangeListener.Change<? extends Character> c1) -> {
-            c1.next();
-            if (c1.wasAdded()) {
-                for (char s : c1.getAddedSubList()) {
-                    addToQueue(s);
-                }
+        console.getConsole().addConsoleListener(new Console.ConsoleListener() {
+
+            @Override
+            public void charAdded(char c) {
+                addToQueue(c);
+            }
+
+            @Override
+            public void stringAdded(String c) {
+                addToQueue(c);
             }
         });
+
         bindKeyListeners();
 
         center.setBottom(bottom = new BorderPane());
@@ -138,9 +142,6 @@ public class ConsoleWindow extends Tab {
             if (console.getProcess().isAlive()) {
                 cancel.fire();
             } else {
-                e.consume();
-            }
-            if (!e.isConsumed()) {
                 if (timer.isAlive()) {
                     timer.stop();
                 }
@@ -149,7 +150,11 @@ public class ConsoleWindow extends Tab {
 
     }
 
-    private void addToQueue(Character c) {
+    private void addToQueue(char c) {
+        currentText += c;
+    }
+
+    private void addToQueue(String c) {
         currentText += c;
     }
 
@@ -170,6 +175,7 @@ public class ConsoleWindow extends Tab {
         public void stop() {
             super.stop(); //To change body of generated methods, choose Tools | Templates.
             isAlive = false;
+            console.getConsole().cancel();
         }
 
         public boolean isAlive() {
@@ -190,12 +196,6 @@ public class ConsoleWindow extends Tab {
         Platform.runLater(() -> {
             append("\n" + process + " Complete\n");
         });
-    }
-
-    private void appendAll(List<Character> al) {
-        for (char s : al) {
-            currentText += s;
-        }
     }
 
     private void append(String s) {
