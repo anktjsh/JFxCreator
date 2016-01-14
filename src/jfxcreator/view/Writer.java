@@ -754,8 +754,13 @@ public class Writer extends BorderPane {
                         Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
                         tabPane.getTabs().add(vi = new Viewer(pro, parent));
                         tabPane.getSelectionModel().select(vi);
+                    } else if (type.contains("fxml")) {
+                        FXMLTab tab;
+                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                        tabPane.getTabs().add(tab = new FXMLTab(pro, parent));
+                        tabPane.getSelectionModel().select(tab);
                     } else {
-                        if (alert()) {
+                        if (alert(f.getAbsolutePath())) {
                             Editor vi;
                             Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
                             tabPane.getTabs().add(vi = new Editor(pro, parent));
@@ -769,7 +774,7 @@ public class Writer extends BorderPane {
                         tabPane.getTabs().add(pd = new PdfReader(pro, parent));
                         tabPane.getSelectionModel().select(pd);
                         System.out.println(tabPane.getTabs().size());
-                    } else if (alert()) {
+                    } else if (alert(f.getAbsolutePath())) {
                         Editor vi;
                         Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
                         tabPane.getTabs().add(vi = new Editor(pro, parent));
@@ -793,8 +798,12 @@ public class Writer extends BorderPane {
                     Viewer vi;
                     tabPane.getTabs().add(vi = new Viewer(prog, prog.getProject()));
                     tabPane.getSelectionModel().select(vi);
+                } else if (type.contains("fxml")) {
+                    FXMLTab tab;
+                    tabPane.getTabs().add(tab = new FXMLTab(prog, prog.getProject()));
+                    tabPane.getSelectionModel().select(tab);
                 } else {
-                    if (alert()) {
+                    if (alert(prog.getFile().toAbsolutePath().toString())) {
                         Editor vi;
                         tabPane.getTabs().add(vi = new Editor(prog, prog.getProject()));
                         tabPane.getSelectionModel().select(vi);
@@ -806,7 +815,7 @@ public class Writer extends BorderPane {
                     Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
                     tabPane.getTabs().add(pd = new PdfReader(pro, parent));
                     tabPane.getSelectionModel().select(pd);
-                } else if (alert()) {
+                } else if (alert(prog.getFile().toAbsolutePath().toString())) {
                     Editor vi;
                     tabPane.getTabs().add(vi = new Editor(prog, prog.getProject()));
                     tabPane.getSelectionModel().select(vi);
@@ -869,7 +878,13 @@ public class Writer extends BorderPane {
         });
     }
 
-    private boolean alert() {
+    private boolean alert(String s) {
+        if (s.endsWith(".java")
+                || s.endsWith(".fxml")
+                || s.endsWith(".c")
+                || s.endsWith(".h")) {
+            return true;
+        }
         if (getScene() == null) {
             return true;
         }
@@ -1046,6 +1061,15 @@ public class Writer extends BorderPane {
                             getCurrentProject());
                     getCurrentProject().addScript(sc);
                     loadFile(sc.getFile().toFile(), sc, sc.getProject());
+                } else if (show.get().getDescription().contains("FXML")) {
+                    String extension = ".fxml";
+                    sc = new Program(Program.RESOURCE,
+                            Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separatorChar + Program.getFilePath(show.get().getName()) + extension),
+                            FileWizard.getTemplateCode(show.get().getDescription(),
+                                    show.get().getName()),
+                            getCurrentProject());
+                    getCurrentProject().addScript(sc);
+                    loadFile(sc.getFile().toFile(), sc, sc.getProject());
                 } else {
                     sc = new Program(Program.JAVA,
                             show.get().getName(),
@@ -1071,7 +1095,10 @@ public class Writer extends BorderPane {
     }
 
     public final void newProject() {
-        Project pro = ProjectWizard.createProject(getScene().getWindow());
+        ProjectOptions opt = new ProjectOptions(getScene().getWindow());
+        int show = opt.showAndWait();
+        System.out.println(show);
+        Project pro = ProjectWizard.createProject(getScene().getWindow(), show);
         if (pro != null) {
             ArrayList<Program> scripts = pro.getPrograms();
             for (int x = 0; x < scripts.size(); x++) {

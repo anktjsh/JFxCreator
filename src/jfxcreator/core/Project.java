@@ -41,6 +41,7 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import jfxcreator.core.ProcessPool.ProcessItem;
 import jfxcreator.view.Dependencies;
+import jfxcreator.view.FileWizard;
 import jfxcreator.view.LibraryTreeItem.LibraryListener;
 
 /**
@@ -60,7 +61,7 @@ public class Project {
     private final ObservableList<String> allLibs;
     private String mainClassName;
 
-    public Project(Path src, String mcn, boolean isNew) {
+    public Project(Path src, String mcn, boolean isNew, int... conf) {
         rootDirectory = src;
         if (!Files.exists(rootDirectory)) {
             try {
@@ -104,7 +105,7 @@ public class Project {
         programs = new ArrayList<>();
         listeners = FXCollections.observableArrayList();
         if (isNew) {
-            initializeProject();
+            initializeProject(conf[0]);
         } else {
             addExistingPrograms();
         }
@@ -359,49 +360,21 @@ public class Project {
         return "Project : " + getRootDirectory().toAbsolutePath().toString() + " : " + getMainClassName();
     }
 
-    private void initializeProject() {
-        Program pro = new Program(Program.JAVA,
-                Paths.get(source.toAbsolutePath() + Program.getFilePath(mainClassName) + ".java"),
-                getInitialCode(mainClassName),
-                this);
-        addScript(pro);
-    }
-
-    private List<String> getInitialCode(String className) {
-        if (className.contains(".")) {
-            String pack = className.substring(0, className.lastIndexOf('.'));
-            String clas = className.substring(className.lastIndexOf('.') + 1);
-            return getInitialCode(pack, clas);
-        } else {
-            return getInitialCode(null, className);
+    private void initializeProject(int check) {
+        Program pro = null;
+        if (check == 0) {
+            pro = new Program(Program.JAVA,
+                    Paths.get(source.toAbsolutePath() + Program.getFilePath(mainClassName) + ".java"),
+                    FileWizard.getTemplateCode("Java Main Class", mainClassName),
+                    this);
+        } else if (check == 1) {
+            pro = new Program(Program.JAVA,
+                    Paths.get(source.toAbsolutePath() + Program.getFilePath(mainClassName) + ".java"),
+                    FileWizard.getTemplateCode("JavaFx Main Class", mainClassName),
+                    this);
         }
-    }
-
-    private List<String> getInitialCode(String packageName, String className) {
-        if (packageName != null) {
-            String list = "\n"
-                    + "package " + packageName + ";\n"
-                    + "\n"
-                    + "public class " + className + " {\n"
-                    + "    \n"
-                    + "    public static void main (String args[]) {\n"
-                    + "        System.out.println(\"Hello, World!\");\n"
-                    + "    }\n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
-        } else {
-            String list = "\n"
-                    + "public class " + className + " {\n"
-                    + "    \n"
-                    + "    public static void main (String args[]) {\n"
-                    + "        System.out.println(\"Hello, World!\");\n"
-                    + "    }\n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
+        if (pro != null) {
+            addScript(pro);
         }
     }
 
@@ -959,7 +932,11 @@ public class Project {
             try {
                 while ((value = br.read()) != -1) {
                     char c = (char) value;
-                    console.log(c);
+                    if (console == null) {
+                        System.out.println(c);
+                    } else {
+                        console.log(c);
+                    }
                 }
             } catch (IOException ex) {
             }
@@ -980,7 +957,11 @@ public class Project {
         public void run() {
             Scanner in = new Scanner(strea);
             while (in.hasNextLine()) {
-                console.log("\n" + in.nextLine());
+                if (console == null) {
+                    System.out.println(in.nextLine());
+                } else {
+                    console.log("\n" + in.nextLine());
+                }
             }
         }
     }

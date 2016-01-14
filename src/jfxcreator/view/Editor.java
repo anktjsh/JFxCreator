@@ -27,6 +27,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToolBar;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -453,6 +454,12 @@ public class Editor extends EnvironmentTab {
             area.appendText(s + "\n");
         });
     }
+    
+    public void reload() {
+        area.clear();
+        readFromScript();
+        save();
+    }
 
     public CodeArea getCodeArea() {
         return area;
@@ -495,7 +502,7 @@ public class Editor extends EnvironmentTab {
         area.selectAll();
     }
 
-    private class TabToolbar extends javafx.scene.control.ToolBar {
+    class TabToolbar extends ToolBar {
 
         private final Button source, history, left, right,
                 comment, uncomment;

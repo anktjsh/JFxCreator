@@ -36,7 +36,7 @@ import jfxcreator.core.Project;
  */
 public class ProjectWizard {
 
-    public static Project createProject(Window w) {
+    public static Project createProject(Window w, int n) {
         String loca = Dependencies.workplace_location;
         Path f = Paths.get(loca);
         if (!Files.exists(f)) {
@@ -49,7 +49,7 @@ public class ProjectWizard {
         if (file.isEmpty()) {
             return null;
         }
-        return new Project(Paths.get(file.get(0)), file.get(1), true);
+        return new Project(Paths.get(file.get(0)), file.get(1), true, n);
     }
 
     private final Stage stage;

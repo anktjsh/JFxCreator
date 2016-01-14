@@ -72,7 +72,7 @@ public class FileWizard {
                 "JavaFx Main Class",
                 "JavaFx Preloader",
                 "Empty Java File",
-                /*"Empty FXML File",*/
+                "Empty FXML File",
                 "Other File"));
         options.setOnMouseClicked((e) -> {
             if (e.getClickCount() == 2) {
@@ -163,15 +163,15 @@ public class FileWizard {
             packageName.textProperty().addListener((ob, older, newer) -> {
                 destination.setText(sourcepath + File.separator + getDir(newer) + File.separator + filename.getText() + ".java");
             });
-        } /*else if (type.contains("FXML")) {
-         filename.textProperty().addListener((ob, older, newer) -> {
-         destination.setText(sourcepath + File.separator + getDir(packageName.getText()) + File.separator + newer + ".fxml");
-         });
-         destination.setText(destination.getText() + ".fxml");
-         packageName.textProperty().addListener((ob, older, newer) -> {
-         destination.setText(sourcepath + File.separator + getDir(newer) + File.separator + filename.getText() + ".fxml");
-         });
-         } */ else {
+        } else if (type.contains("FXML")) {
+            filename.textProperty().addListener((ob, older, newer) -> {
+                destination.setText(sourcepath + File.separator + getDir(packageName.getText()) + File.separator + newer + ".fxml");
+            });
+            destination.setText(destination.getText() + ".fxml");
+            packageName.textProperty().addListener((ob, older, newer) -> {
+                destination.setText(sourcepath + File.separator + getDir(newer) + File.separator + filename.getText() + ".fxml");
+            });
+        } else {
             filename.textProperty().addListener((ob, older, newer) -> {
                 destination.setText(sourcepath + File.separator + getDir(packageName.getText()) + File.separator + newer);
             });
