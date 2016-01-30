@@ -11,7 +11,11 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
@@ -20,6 +24,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -30,15 +35,21 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.Dragboard;
@@ -46,6 +57,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -54,18 +66,25 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.stage.WindowEvent;
+import javafx.util.Pair;
 import jfxcreator.JFxCreator;
 import static jfxcreator.JFxCreator.icon;
 import static jfxcreator.JFxCreator.stylesheet;
+import jfxcreator.contact.EmailPicker;
 import jfxcreator.core.Console;
+import jfxcreator.core.Examples;
+import jfxcreator.core.JavaLibrary;
+import jfxcreator.core.ProcessItem;
 import jfxcreator.core.ProcessPool;
-import jfxcreator.core.ProcessPool.ProcessItem;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 import jfxcreator.core.ProjectTree;
+import jfxcreator.core.Template;
 import jfxcreator.core.ZipUtils;
 import jfxcreator.view.FileWizard.FileDescription;
+import org.fxmisc.richtext.Paragraph;
 
 /**
  *
@@ -79,13 +98,16 @@ public class Writer extends BorderPane {
 
     private final TabPane tabPane;
     private final MenuBar bar;
-    private final Menu file, edit, launch, deploy, settings, help;
+    private final Menu file, edit, launch, deploy, settings, help, source;
     private final MenuItem nFile, nProject, print, oFile, close, property, oProject, cProject, closeAll, save, saveAll, fullsc,
             undo, redo, cut, copy, paste, selectAll,
             build, clean, run, runF,
             jar, zip, dNative,
             jPlatforms, pDirectory, view,
-            about;
+            examples,
+            request, report, information;
+    private final Menu templates, about;
+    private final MenuItem newTemplate, selectTemplate;
     private final TreeView<String> tree;
     private final BorderPane top;
     private final BorderPane bottom;
@@ -101,8 +123,9 @@ public class Writer extends BorderPane {
         launch = new Menu("Launch");
         deploy = new Menu("Deploy");
         settings = new Menu("Settings");
+        source = new Menu("Source");
         help = new Menu("Help");
-        bar.getMenus().addAll(file, edit, launch, deploy, settings, help);
+        bar.getMenus().addAll(file, edit, launch, deploy, settings, source, help);
         file.getItems().addAll(nFile = new MenuItem("New File"),
                 nProject = new MenuItem("New Project"),
                 oFile = new MenuItem("Open File"),
@@ -125,14 +148,22 @@ public class Writer extends BorderPane {
                 clean = new MenuItem("Clean and Build"),
                 run = new MenuItem("Run"),
                 runF = new MenuItem("Run File"));
-
         deploy.getItems().addAll(jar = new MenuItem("Deploy Jar"),
                 zip = new MenuItem("Deploy Zip"),
                 dNative = new MenuItem("Native Executable"));
         settings.getItems().addAll(jPlatforms = new MenuItem("Java Platforms"),
                 pDirectory = new MenuItem("Workplace Directory"),
                 view = new MenuItem("View"));
-        help.getItems().add(about = new MenuItem("About"));
+        source.getItems().addAll(templates = new Menu("Templates"),
+                examples = new MenuItem("Examples"));
+        templates.getItems().addAll(newTemplate = new MenuItem("New Template"),
+                selectTemplate = new MenuItem("Select Template"));
+        help.getItems().add(about = new Menu("About"));
+        about.getItems().addAll(
+                information = new MenuItem("Information"),
+                report = new MenuItem("Report a Bug"),
+                request = new MenuItem("Request a Feature"));
+
         nFile.setOnAction((e) -> {
             newFile();
         });
@@ -257,7 +288,81 @@ public class Writer extends BorderPane {
             });
             st.showAndWait();
         });
-        about.setOnAction((e) -> {
+        newTemplate.setOnAction((e) -> {
+            if (getSelectedEditor() != null) {
+                TextInputDialog tid = new TextInputDialog();
+                tid.setTitle("New Template");
+                tid.initOwner(getScene().getWindow());
+                tid.initModality(Modality.APPLICATION_MODAL);
+                tid.getDialogPane().getScene().getStylesheets().add(JFxCreator.stylesheet);
+                ((Stage) tid.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
+                tid.setHeaderText("Set Template Name");
+                Optional<String> name = tid.showAndWait();
+                if (name.isPresent()) {
+                    if (!name.get().isEmpty()) {
+                        ObservableList<String> list = null;
+                        try {
+                            String s = getSelectedEditor().getCodeArea().getText();
+                            int packIndex = s.indexOf("package");
+                            String one = s.substring(0, packIndex);
+                            String two = s.substring(packIndex);
+                            two = two.substring(two.indexOf(";") + 1);
+                            int classIndex = two.indexOf("public class");
+                            String three = two.substring(classIndex);
+                            three = three.substring(three.indexOf("{"));
+                            two = two.substring(0, classIndex);
+                            list = FXCollections.observableArrayList(one, two, three);
+                        } catch (Exception eg) {
+                        }
+                        if (list != null) {
+                            Template.addTemplate(name.get(), list);
+                        } else {
+                            Alert al = new Alert(AlertType.ERROR);
+                            al.setTitle("New Template");
+                            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
+                            al.setHeaderText("Error in creating New Template");
+                            al.initOwner(getScene().getWindow());
+                            al.showAndWait();
+                        }
+                    }
+                }
+            }
+        });
+        selectTemplate.setOnAction((e) -> {
+            if (getCurrentProject() != null) {
+                Stage st = new Stage();
+                st.setTitle("Select Template");
+                st.initModality(Modality.APPLICATION_MODAL);
+                ListView<String> options = new ListView<>();
+                st.setScene(new Scene(options));
+                st.initOwner(getScene().getWindow());
+                options.getItems().addAll(Template.getAvailableTemplates());
+                st.getScene().getStylesheets().add(JFxCreator.stylesheet);
+                st.getIcons().add(JFxCreator.icon);
+                options.setOnMouseClicked((ex) -> {
+                    if (ex.getClickCount() == 2) {
+                        if (options.getSelectionModel().getSelectedItem() != null) {
+                            String temp = options.getSelectionModel().getSelectedItem();
+                            st.close();
+                            (new Thread(() -> {
+                                try {
+                                    Thread.sleep(250);
+                                } catch (InterruptedException ef) {
+                                }
+                                Platform.runLater(() -> {
+                                    loadTemplate(temp, getScene().getWindow());
+                                });
+                            })).start();
+                        }
+                    }
+                });
+                st.showAndWait();
+            }
+        });
+        examples.setDisable(true);
+        examples.setOnAction((e) -> {
+        });
+        information.setOnAction((e) -> {
             Alert al = new Alert(Alert.AlertType.INFORMATION);
             al.setTitle("About");
             ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
@@ -265,6 +370,12 @@ public class Writer extends BorderPane {
             al.setContentText("Created by Aniket Joshi");
             al.initOwner(getScene().getWindow());
             al.showAndWait();
+        });
+        request.setOnAction((e) -> {
+            sendEmail("Feature Request");
+        });
+        report.setOnAction((e) -> {
+            sendEmail("Report Bug");
         });
 
         tree = new TreeView<>();
@@ -305,13 +416,13 @@ public class Writer extends BorderPane {
                     added.getPrograms().stream().forEach((s) -> {
                         addScriptTreeItem(item, new ProgramTreeItem(s));
                     });
-                    for (String s : added.getAllLibs()) {
+                    for (JavaLibrary s : added.getAllLibs()) {
                         item.getChildren().get(1).getChildren().add(new LibraryTreeItem(added, s));
                     }
                     added.setLibraryListener((List<String> filePaths) -> {
                         item.getChildren().get(1).getChildren().clear();
                         for (String s : filePaths) {
-                            item.getChildren().get(1).getChildren().add(new LibraryTreeItem(added, s));
+                            item.getChildren().get(1).getChildren().add(new LibraryTreeItem(added, new JavaLibrary(s)));
                         }
                     });
                 }
@@ -354,9 +465,11 @@ public class Writer extends BorderPane {
                         for (Tab b : tabPane.getTabs()) {
                             if (b instanceof EnvironmentTab) {
                                 EnvironmentTab ed = (EnvironmentTab) b;
-                                if (ed.getScript().equals(sti.getScript())) {
-                                    contains = false;
-                                    st = ed;
+                                if (ed.getScript() != null) {
+                                    if (ed.getScript().equals(sti.getScript())) {
+                                        contains = false;
+                                        st = ed;
+                                    }
                                 }
                             }
                         }
@@ -375,19 +488,14 @@ public class Writer extends BorderPane {
                         ZipEntry entry = ((BinaryTreeItem) sel).getEntry();
                         if (!entry.isDirectory()) {
                             if (entry.getName().endsWith(".class")) {
-                                //
-                                InputStream is = ((BinaryTreeItem) sel).getInputStream();
+                                InputStream is = ((BinaryTreeItem) sel).sourceInputStream();
                                 if (is != null) {
-                                    ClassReader cr = new ClassReader(null, ((BinaryTreeItem) sel).getProject(), entry.getName(), is);
-                                    tabPane.getTabs().add(cr);
-                                    tabPane.getSelectionModel().select(cr);
+                                    addClassReader(((BinaryTreeItem) sel).getProject(), entry.getName().replace(".class", ""), is, 0);
                                 }
                             } else {
                                 InputStream is = ((BinaryTreeItem) sel).getInputStream();
                                 if (is != null) {
-                                    ClassReader cr = new ClassReader(null, ((BinaryTreeItem) sel).getProject(), entry.getName(), is);
-                                    tabPane.getTabs().add(cr);
-                                    tabPane.getSelectionModel().select(cr);
+                                    addClassReader(((BinaryTreeItem) sel).getProject(), entry.getName().replace(".class", ""), is, 0);
                                 }
                             }
                         }
@@ -396,23 +504,27 @@ public class Writer extends BorderPane {
             }
         });
         tree.getSelectionModel().selectedItemProperty().addListener((ob, older, newer) -> {
-            if (newer instanceof DirectoryTreeItem) {
-                currentProject.set(((DirectoryTreeItem) newer).getProject());
-            } else if (newer instanceof ProjectTreeItem) {
-                currentProject.set(((ProjectTreeItem) newer).getProject());
-            } else if (newer instanceof ProgramTreeItem) {
-                currentProject.set(((ProgramTreeItem) newer).getScript().getProject());
-            } else if (newer instanceof LibraryTreeItem) {
-                currentProject.set(((LibraryTreeItem) newer).getProject());
-            } else if (newer instanceof BinaryTreeItem) {
-                currentProject.set(((BinaryTreeItem) newer).getProject());
-            } else if (newer.getParent() != null) {
-                if (newer.getParent() instanceof ProjectTreeItem) {
-                    ProjectTreeItem pti = (ProjectTreeItem) newer.getParent();
-                    currentProject.set(pti.getProject());
-                }
-            } else {
+            if (newer != null) {
+                if (newer instanceof DirectoryTreeItem) {
+                    currentProject.set(((DirectoryTreeItem) newer).getProject());
+                } else if (newer instanceof ProjectTreeItem) {
+                    currentProject.set(((ProjectTreeItem) newer).getProject());
+                } else if (newer instanceof ProgramTreeItem) {
+                    currentProject.set(((ProgramTreeItem) newer).getScript().getProject());
+                } else if (newer instanceof LibraryTreeItem) {
+                    currentProject.set(((LibraryTreeItem) newer).getProject());
+                } else if (newer instanceof BinaryTreeItem) {
+                    currentProject.set(((BinaryTreeItem) newer).getProject());
+                } else if (newer instanceof PlatformTreeItem) {
+                    currentProject.set(((PlatformTreeItem) newer).getProject());
+                } else if (newer.getParent() != null) {
+                    if (newer.getParent() instanceof ProjectTreeItem) {
+                        ProjectTreeItem pti = (ProjectTreeItem) newer.getParent();
+                        currentProject.set(pti.getProject());
+                    }
+                } else {
 
+                }
             }
         });
         tree.setContextMenu(new ContextMenu());
@@ -420,10 +532,11 @@ public class Writer extends BorderPane {
             TreeItem<String> select = tree.getSelectionModel().getSelectedItem();
             if (select instanceof ProgramTreeItem) {
                 ProgramTreeItem sti = (ProgramTreeItem) select;
-                MenuItem open, delete, details;
+                MenuItem open, delete, details, count;
                 tree.getContextMenu().getItems().setAll(open = new MenuItem("Open File"),
                         delete = new MenuItem("Delete File"),
-                        details = new MenuItem("File Details"));
+                        details = new MenuItem("File Details"),
+                        count = new MenuItem("Word Count"));
                 open.setOnAction((ae) -> {
                     boolean contains = true;
                     EnvironmentTab st = null;
@@ -468,19 +581,25 @@ public class Writer extends BorderPane {
                 details.setOnAction((ev) -> {
                     Details.getDetails((Stage) getScene().getWindow(), sti.getScript().getFile()).showAndWait();
                 });
+                count.setOnAction((fe) -> {
+                    WordCount.getWordCount((Stage) getScene().getWindow(), sti.getScript());
+                });
             } else if (select instanceof DirectoryTreeItem) {
                 tree.getContextMenu().getItems().clear();
             } else if (select instanceof LibraryTreeItem) {
                 tree.getContextMenu().getItems().clear();
+            } else if (select instanceof PlatformTreeItem) {
+                tree.getContextMenu().getItems().clear();
             } else if (select instanceof BinaryTreeItem) {
                 tree.getContextMenu().getItems().clear();
             } else if (select instanceof ProjectTreeItem) {
-                MenuItem clsepse, delete, reload, prop, details;
+                MenuItem clsepse, delete, reload, prop, details, count;
                 tree.getContextMenu().getItems().setAll(clsepse = new MenuItem("Close Project"),
                         delete = new MenuItem("Delete Project"),
                         reload = new MenuItem("Reload Project"),
                         details = new MenuItem("Project Details"),
-                        prop = new MenuItem("Properties")
+                        prop = new MenuItem("Properties"),
+                        count = new MenuItem("Word Count")
                 );
                 clsepse.setOnAction((c) -> {
                     closeProject(((ProjectTreeItem) select).getProject());
@@ -508,6 +627,9 @@ public class Writer extends BorderPane {
                 details.setOnAction((ejgf) -> {
                     Details.getDetails((Stage) getScene().getWindow(), ((ProjectTreeItem) select).getProject().getRootDirectory()).showAndWait();
                 });
+                count.setOnAction((efd) -> {
+                    WordCount.getWordCount((Stage) getScene().getWindow(), ((ProjectTreeItem) select).getProject());
+                });
             } else {
                 tree.getContextMenu().getItems().clear();
             }
@@ -521,11 +643,8 @@ public class Writer extends BorderPane {
             if (newer instanceof Editor) {
                 Editor ed = ((Editor) newer);
                 currentProject.set(ed.getScript().getProject());
-//                ed.getCodeArea().undoAvailableProperty().
             } else if (newer instanceof Viewer) {
                 currentProject.set(((Viewer) newer).getScript().getProject());
-            } else {
-//                currentProject.set(null);
             }
         });
         openPreviousProjects();
@@ -551,6 +670,112 @@ public class Writer extends BorderPane {
 //        ll.setFont(new Font(30));
 //        tabPane.getTabs().add(0, b);
 //        tabPane.getSelectionModel().select(b);
+    }
+
+    private void loadTemplate(String temp, Window st) {
+        Dialog<Pair<String, String>> dialog = new Dialog<>();
+        dialog.initOwner(st);
+        dialog.setTitle("Class Name");
+        dialog.setHeaderText("Enter Package Name and Class Name");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField username = new TextField();
+        username.setPromptText("Package");
+        TextField password = new TextField();
+        password.setPromptText("Class");
+
+        grid.add(new Label("Package:"), 0, 0);
+        grid.add(username, 1, 0);
+        grid.add(new Label("Class:"), 0, 1);
+        grid.add(password, 1, 1);
+
+        ButtonType loginButtonType = new ButtonType("Finish", ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+
+        dialog.getDialogPane().setContent(grid);
+        Platform.runLater(() -> username.requestFocus());
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == loginButtonType) {
+                return new Pair<>(username.getText(), password.getText());
+            }
+            return null;
+        });
+        Optional<Pair<String, String>> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            if (!result.get().getValue().isEmpty()) {
+                String cName;
+                if (!result.get().getKey().isEmpty()) {
+                    cName = result.get().getKey() + "." + result.get().getValue();
+                } else {
+                    cName = result.get().getValue();
+                }
+                System.out.println(Program.getFilePath(cName));
+                String totalPath = getCurrentProject().getSource().toAbsolutePath().toString() + File.separator + Program.getFilePath(cName) + ".java";
+                System.out.println("Total : " + totalPath);
+                File f = new File(totalPath);
+                if (f.exists()) {
+                    Alert al = new Alert(AlertType.WARNING);
+                    al.initOwner(getScene().getWindow());
+                    al.setTitle("File Exists");
+                    al.setHeaderText("Unfortunately this file already exists");
+                    ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
+                    al.getDialogPane().getScene().getStylesheets().add(JFxCreator.stylesheet);
+                    al.showAndWait();
+                } else {
+                    Program pro = new Program(Program.JAVA, cName, f.toPath(), Template.getTemplateCode(temp, result.get().getKey(), result.get().getValue()), getCurrentProject());
+                    getCurrentProject().addScript(pro);
+                    loadFile(pro.getFile().toFile(), pro, pro.getProject());
+                }
+            }
+        }
+    }
+
+    private void sendEmail(String subject) {
+        File f = new File(".cache" + File.separator + "emailstamp.txt");
+        if (f.exists()) {
+            ArrayList<String> al = new ArrayList<>();
+            try {
+                al.addAll(Files.readAllLines(f.toPath()));
+            } catch (IOException ex) {
+            }
+            LocalDate ld = LocalDate.parse(al.get(0));
+            LocalTime lt = LocalTime.parse(al.get(1));
+            LocalDate today = LocalDate.now();
+            LocalTime now = LocalTime.now();
+            if (today.isEqual(ld)) {
+                if (now.isAfter(lt)) {
+                    if (now.getHour() > lt.getHour() + 1) {
+                        confirmSend(subject);
+                    } else {
+                        unableToSend();
+                    }
+                } else {
+                    unableToSend();
+                }
+            } else if (today.isAfter(ld)) {
+                confirmSend(subject);
+            } else {
+                unableToSend();
+            }
+        } else {
+            confirmSend(subject);
+        }
+    }
+
+    private void unableToSend() {
+        Alert al = new Alert(AlertType.ERROR);
+        al.initOwner(getScene().getWindow());
+        al.setTitle("Unable to send");
+        al.setHeaderText("Cannot send another email so soon after the last one!");
+        al.showAndWait();
+    }
+
+    private void confirmSend(String sub) {
+        new EmailPicker(getScene().getWindow(), sub).showAndWait();
     }
 
     private void reload(Project pro) {
@@ -665,7 +890,7 @@ public class Writer extends BorderPane {
         return null;
     }
 
-    public Project getCurrentProject() {
+    public final Project getCurrentProject() {
         return currentProject.get();
     }
 
@@ -894,7 +1119,7 @@ public class Writer extends BorderPane {
         Alert al = new Alert(AlertType.ERROR);
         al.setTitle("File Type");
         ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
-        al.setHeaderText("ScriptFx is unable to read this type of File");
+        al.setHeaderText("JFxCreator is unable to read this type of File");
         al.setContentText("Would you still like to open this File?");
         al.initOwner(getScene().getWindow());
         Optional<ButtonType> show = al.showAndWait();
@@ -1061,8 +1286,17 @@ public class Writer extends BorderPane {
                             getCurrentProject());
                     getCurrentProject().addScript(sc);
                     loadFile(sc.getFile().toFile(), sc, sc.getProject());
-                } else if (show.get().getDescription().contains("FXML")) {
-                    String extension = ".fxml";
+                } else if (show.get().getDescription().contains("FXML")
+                        || show.get().getDescription().contains("HTML")
+                        || show.get().getDescription().contains("Text")) {
+                    String extension;
+                    if (show.get().getDescription().contains("FXML")) {
+                        extension = ".fxml";
+                    } else if (show.get().getDescription().contains("HTML")) {
+                        extension = ".html";
+                    } else {
+                        extension = ".txt";
+                    }
                     sc = new Program(Program.RESOURCE,
                             Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separatorChar + Program.getFilePath(show.get().getName()) + extension),
                             FileWizard.getTemplateCode(show.get().getDescription(),
@@ -1097,15 +1331,17 @@ public class Writer extends BorderPane {
     public final void newProject() {
         ProjectOptions opt = new ProjectOptions(getScene().getWindow());
         int show = opt.showAndWait();
-        System.out.println(show);
-        Project pro = ProjectWizard.createProject(getScene().getWindow(), show);
-        if (pro != null) {
-            ArrayList<Program> scripts = pro.getPrograms();
-            for (int x = 0; x < scripts.size(); x++) {
-                Editor ed = new Editor(scripts.get(x), pro);
-                tabPane.getTabs().add(ed);
+        if (show != -1) {
+            System.out.println(show);
+            Project pro = ProjectWizard.createProject(getScene().getWindow(), show);
+            if (pro != null) {
+                ArrayList<Program> scripts = pro.getPrograms();
+                for (int x = 0; x < scripts.size(); x++) {
+                    Editor ed = new Editor(scripts.get(x), pro);
+                    tabPane.getTabs().add(ed);
+                }
+                ProjectTree.getTree().addProject(pro);
             }
-            ProjectTree.getTree().addProject(pro);
         }
     }
 
@@ -1215,8 +1451,8 @@ public class Writer extends BorderPane {
     }
 
     public final void closeAllProjects() {
-        for (Project p : ProjectTree.getTree().getProjects()) {
-            closeProject(p);
+        for (int x = ProjectTree.getTree().getProjects().size() - 1; x >= 0; x--) {
+            closeProject(ProjectTree.getTree().getProjects().get(x));
         }
     }
 
@@ -1447,6 +1683,56 @@ public class Writer extends BorderPane {
             }
         } else {
         }
+    }
+
+    final void addEditorFromStackTrace(Program p, int line) {
+        Editor ed = null;
+        for (Tab b : tabPane.getTabs()) {
+            if (b instanceof Editor) {
+                Editor eda = (Editor) b;
+                if (eda.getScript().equals(p)) {
+                    ed = eda;
+                }
+            }
+        }
+        if (ed == null) {
+            ed = new Editor(p, p.getProject());
+            tabPane.getTabs().add(ed);
+        }
+        tabPane.getSelectionModel().select(ed);
+        select(ed, line);
+    }
+
+    final void addClassReader(Project pro, String name, InputStream stream, int line) {
+        if (stream != null) {
+            ClassReader cr = null;
+            for (Tab b : tabPane.getTabs()) {
+                if (b instanceof ClassReader) {
+                    ClassReader cra = (ClassReader) b;
+                    if (cra.getGraph().getText().contains(name)) {
+                        cr = cra;
+                    }
+                }
+            }
+            if (cr == null) {
+                cr = new ClassReader(null, pro, name+".class", stream);
+            }
+            tabPane.getTabs().add(cr);
+            tabPane.getSelectionModel().select(cr);
+        }
+    }
+
+    private void select(Editor ed, int line) {
+        int caret = 0;
+        int selectFinal = 0;
+        for (int x = 0; x < line - 1; x++) {
+            Paragraph<Collection<String>> pcs = ed.getCodeArea().getParagraph(x);
+            caret += pcs.toString().length() + 1;
+        }
+        selectFinal += caret;
+        selectFinal += ed.getCodeArea().getParagraph(line - 1).toString().length();
+        ed.getCodeArea().selectRange(caret, selectFinal);
+        ed.getCodeArea().requestFocus();
     }
 
 }

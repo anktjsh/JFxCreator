@@ -15,6 +15,7 @@ import java.util.zip.ZipFile;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import jfxcreator.core.JavaLibrary;
 import jfxcreator.core.Project;
 
 /**
@@ -24,26 +25,28 @@ import jfxcreator.core.Project;
 public class LibraryTreeItem extends TreeItem<String> {
 
     private static final Image lib = new Image(LibraryTreeItem.class.getResourceAsStream("tree/library.PNG"), 25, 25, true, true);
-    private final String path;
+    private final JavaLibrary library;
     private final Project project;
 
-    public LibraryTreeItem(Project pro, String a) {
-        path = a;
+    public LibraryTreeItem(Project pro, JavaLibrary a) {
+        library = a;
         project = pro;
-        File f = new File(path);
-        setValue(f.getName());
+        setValue(a.getBinaryPath().getFileName().toString());
         setGraphic(new ImageView(lib));
         try {
-            ZipFile zf = new ZipFile(f);
+            ZipFile zf = a.getBinaryZipFile();
             Enumeration<? extends ZipEntry> entries = zf.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry next = entries.nextElement();
+                if (next.isDirectory()) {
+                    continue;
+                }
                 if (next.getName().endsWith(File.separator) && next.getName().substring(0, next.getName().length() - 1).contains(File.separator)) {
                     add(next.getName(), zf, next);
                 } else if (!next.getName().endsWith(File.separator) && next.getName().contains(File.separator)) {
                     add(next.getName(), zf, next);
                 } else {
-                    getChildren().add(new BinaryTreeItem(project, replaceAll(next.getName(), File.separator, ""), zf, next));
+                    getChildren().add(new BinaryTreeItem(project, replaceAll(next.getName(), File.separator, ""), library, next));
                 }
             }
         } catch (Exception e) {
@@ -79,7 +82,7 @@ public class LibraryTreeItem extends TreeItem<String> {
             }
         }
         if (ad != null) {
-            ad.getChildren().add(new BinaryTreeItem(project, last, zf, entry));
+            ad.getChildren().add(new BinaryTreeItem(project, last, library, entry));
         }
     }
 

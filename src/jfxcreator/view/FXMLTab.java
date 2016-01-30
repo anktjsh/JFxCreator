@@ -58,7 +58,7 @@ public class FXMLTab extends Editor {
     }
 
     private void launchWindowsSceneBuilder() {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         String one = "\"" + JAVA_HOME + File.separator + "java\"" + " -jar SceneBuilder.jar " + getScript().getFile().toAbsolutePath().toString();
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         try {
@@ -72,7 +72,7 @@ public class FXMLTab extends Editor {
     }
 
     private void launchMacSceneBuilder() {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         String one = JAVA_HOME + File.separator + "java" + " -jar SceneBuilder.jar " + getScript().getFile().toAbsolutePath().toString();
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         try {

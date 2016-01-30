@@ -18,8 +18,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import jfxcreator.core.ProjectTree;
 import jfxcreator.view.Dependencies;
 import jfxcreator.view.Writer;
@@ -32,7 +30,7 @@ public class JFxCreator extends Application {
 
     public static final String OS = System.getProperty("os.name").toLowerCase();
     public static final String stylesheet = JFxCreator.class.getResource(OS.contains("win")
-            ? (OS.contains("7") ? "win7.css" : "JMetroLightTheme.css") : "mac_os.css").toExternalForm();
+            ? (OS.contains("7") ? "win7.css" : "") : "mac_os.css").toExternalForm();
     public static final Image icon = new Image(JFxCreator.class.getResourceAsStream("icon.png"));
     public static HostServices host;
 
@@ -154,15 +152,6 @@ public class JFxCreator extends Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        try {
-            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-        }
         launch(args);
     }
 

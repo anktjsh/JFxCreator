@@ -39,7 +39,6 @@ import java.util.zip.ZipInputStream;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import jfxcreator.core.ProcessPool.ProcessItem;
 import jfxcreator.view.Dependencies;
 import jfxcreator.view.FileWizard;
 import jfxcreator.view.LibraryTreeItem.LibraryListener;
@@ -58,7 +57,7 @@ public class Project {
     private final ObservableList<ProjectListener> listeners;
     private LibraryListener ll;
     private final Task<Void> task;
-    private final ObservableList<String> allLibs;
+    private final ObservableList<JavaLibrary> allLibs;
     private String mainClassName;
 
     public Project(Path src, String mcn, boolean isNew, int... conf) {
@@ -309,7 +308,7 @@ public class Project {
         });
     }
 
-    public List<String> getAllLibs() {
+    public List<JavaLibrary> getAllLibs() {
         return allLibs;
     }
 
@@ -324,7 +323,9 @@ public class Project {
             }
         });
         allLibs.clear();
-        allLibs.addAll(all);
+        for (String s : all) {
+            allLibs.add(new JavaLibrary(s));
+        }
         if (ll != null) {
             ll.librariesChanged(all);
         }
@@ -349,9 +350,11 @@ public class Project {
         if (al.size() >= 2) {
             String spl[] = al.get(1).split(" : ");
             String liberator = spl[1].substring(1, spl[1].length() - 1);
-            allLibs.addAll(Arrays.asList(liberator.split(", ")));
-            if (allLibs.size() == 1 && allLibs.get(0).isEmpty()) {
-                allLibs.clear();
+            List<String> list = Arrays.asList(liberator.split(", "));
+            for (String s : list) {
+                if (!s.isEmpty()) {
+                    allLibs.add(new JavaLibrary(s));
+                }
             }
         }
     }
@@ -473,15 +476,21 @@ public class Project {
     public void runFile(ProcessItem item, Program program) {
         String OS = System.getProperty("os.name").toLowerCase();
         compile(item);
-        if (OS.contains("win")) {
-            windowsRunFile(item, program);
-        } else {
-            macRunFile(item, program);
+        try {
+            Thread.sleep(250);
+        } catch (InterruptedException ex) {
+        }
+        if (!item.isCancelled()) {
+            if (OS.contains("win")) {
+                windowsRunFile(item, program);
+            } else {
+                macRunFile(item, program);
+            }
         }
     }
 
     private void windowsRunFile(ProcessItem item, Program program) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         ProcessBuilder pb = new ProcessBuilder("\"" + JAVA_HOME + File.separator + "java\"", program.getClassName());
         pb.directory(build.toFile());
 
@@ -499,7 +508,7 @@ public class Project {
     }
 
     private void macRunFile(ProcessItem item, Program program) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         ProcessBuilder pb = new ProcessBuilder(JAVA_HOME + File.separator + "java", program.getClassName());
         pb.directory(build.toFile());
 
@@ -541,8 +550,9 @@ public class Project {
             }
         }
 
-        for (String init : getAllLibs()) {
-            try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(init))) {
+        for (JavaLibrary lib : getAllLibs()) {
+            ZipInputStream zipIn = lib.getBinaryZipInputStream();
+            if (zipIn != null) {
                 ZipEntry entry = zipIn.getNextEntry();
                 while (entry != null) {
                     String filePath = fat.getParent().toAbsolutePath().toString() + File.separator + entry.getName();
@@ -567,15 +577,17 @@ public class Project {
 
     private void buildFat(ProcessItem pro) {
         String OS = System.getProperty("os.name").toLowerCase();
-        if (OS.contains("win")) {
-            windowsFat(pro);
-        } else {
-            macFat(pro);
+        if (!pro.isCancelled()) {
+            if (OS.contains("win")) {
+                windowsFat(pro);
+            } else {
+                macFat(pro);
+            }
         }
     }
 
     private void windowsFat(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         ProcessBuilder pb = new ProcessBuilder("\"" + JAVA_HOME + File.separator + "javapackager\"",
                 "-createjar",
                 "-appClass", getMainClassName(),
@@ -598,7 +610,7 @@ public class Project {
     }
 
     private void macFat(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         ProcessBuilder pb = new ProcessBuilder(JAVA_HOME + File.separator + "javapackager",
                 "-createjar",
                 "-appClass", getMainClassName(),
@@ -657,15 +669,17 @@ public class Project {
 
     public void compile(ProcessItem pro) {
         String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            windowsCompile(pro);
-        } else {
-            macCompile(pro);
+        if (!pro.isCancelled()) {
+            if (os.contains("win")) {
+                windowsCompile(pro);
+            } else {
+                macCompile(pro);
+            }
         }
     }
 
     private void windowsCompile(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         String one = "\"" + JAVA_HOME + File.separator + "javac\""
                 + getFileList() + " -d "
                 + build.toAbsolutePath().toString()
@@ -687,7 +701,7 @@ public class Project {
     }
 
     private void macCompile(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         String one = JAVA_HOME + File.separator + "javac"
                 + getFileList()
                 + " -d "
@@ -712,15 +726,17 @@ public class Project {
     public void build(ProcessItem pro) {
         compile(pro);
         String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            windowsBuild(pro);
-        } else {
-            macBuild(pro);
+        if (!pro.isCancelled()) {
+            if (os.contains("win")) {
+                windowsBuild(pro);
+            } else {
+                macBuild(pro);
+            }
         }
     }
 
     private void windowsBuild(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         String one = "\"" + JAVA_HOME + File.separator + "javapackager\"" + " -createjar -appclass " + getMainClassName()
                 + " -srcdir " + build.toAbsolutePath().toString() + " -outdir "
                 + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar" + " -classpath" + getLibsList();
@@ -741,7 +757,7 @@ public class Project {
     }
 
     private void macBuild(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         String one = JAVA_HOME + File.separator + "javapackager" + " -createjar -appclass " + getMainClassName()
                 + " -srcdir " + build.toAbsolutePath().toString() + " -outdir "
                 + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar" + " -classpath" + getLibsList();
@@ -764,15 +780,21 @@ public class Project {
     public void run(ProcessItem pro) {
         build(pro);
         String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            windowsRun(pro);
-        } else {
-            macRun(pro);
+        try {
+            Thread.sleep(250);
+        } catch (InterruptedException ex) {
+        }
+        if (!pro.isCancelled()) {
+            if (os.contains("win")) {
+                windowsRun(pro);
+            } else {
+                macRun(pro);
+            }
         }
     }
 
     private void windowsRun(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         String one = "\"" + JAVA_HOME
                 + File.separator + "java\"" + " -jar " + dist.getFileName().toString()
                 + File.separator + getProjectName() + ".jar"
@@ -795,7 +817,7 @@ public class Project {
     }
 
     private void macRun(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         String one = JAVA_HOME
                 + File.separator + "java" + " -jar " + dist.getFileName().toString()
                 + File.separator + getProjectName() + ".jar"
@@ -820,15 +842,17 @@ public class Project {
     public void nativeExecutable(ProcessItem pro) {
         build(pro);
         String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            windowsExecutable(pro);
-        } else {
-            macExecutable(pro);
+        if (!pro.isCancelled()) {
+            if (os.contains("win")) {
+                windowsExecutable(pro);
+            } else {
+                macExecutable(pro);
+            }
         }
     }
 
     private void windowsExecutable(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         String ico = null;
         String a = "\"" + JAVA_HOME + File.separator + "javapackager\"" + " -deploy -native exe " + (ico == null ? "" : " -Bicon=" + ico) + " -outdir " + dist.toAbsolutePath().toString()
                 + " -outfile " + getProjectName() + " -srcdir " + dist.toAbsolutePath().toString() + " -srcFiles " + getProjectName()
@@ -849,7 +873,7 @@ public class Project {
     }
 
     private void macExecutable(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.local_version;
+        String JAVA_HOME = Dependencies.localVersionProperty.get();
         String ico = null;
         ProcessBuilder pb;
         String a = JAVA_HOME + File.separator + "javapackager -deploy -native dmg" + (ico == null ? "" : " -Bicon=" + ico) + " -outdir " + dist.toAbsolutePath().toString()
@@ -960,7 +984,7 @@ public class Project {
                 if (console == null) {
                     System.out.println(in.nextLine());
                 } else {
-                    console.log("\n" + in.nextLine());
+                    console.error("\n" + in.nextLine());
                 }
             }
         }

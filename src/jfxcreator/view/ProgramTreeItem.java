@@ -7,7 +7,7 @@ package jfxcreator.view;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.List;
+import java.util.TreeMap;
 import javafx.application.Platform;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
@@ -27,6 +27,7 @@ public class ProgramTreeItem extends TreeItem<String> {
     private static final Image java_file = new Image(ProgramTreeItem.class.getResourceAsStream("tree/java.png"), 25, 25, true, true);
     private static final Image image_file = new Image(ProgramTreeItem.class.getResourceAsStream("tree/image.png"), 25, 25, true, true);
     private static final Image text_file = new Image(ProgramTreeItem.class.getResourceAsStream("tree/text.png"), 25, 25, true, true);
+    private static final Image fxml_file = new Image(ProgramTreeItem.class.getResourceAsStream("tree/fxml.png"), 25, 25, true, true);
     private final Program script;
     private final HBox graphic;
 
@@ -36,7 +37,7 @@ public class ProgramTreeItem extends TreeItem<String> {
         graphic = new HBox();
         graphic.getChildren().add(new ImageView(getIconImage()));
         setGraphic(graphic);
-        script.addProgramListener((Program pro1, List<Long> errors) -> {
+        script.addProgramListener((Program pro1, TreeMap<Long, String> errors) -> {
             Platform.runLater(() -> {
                 if (errors.isEmpty()) {
                     if (graphic.getChildren().get(0) instanceof Text) {
@@ -68,6 +69,9 @@ public class ProgramTreeItem extends TreeItem<String> {
             }
             if (type.contains("text")) {
                 return text_file;
+            }
+            if (type.contains("fxml")) {
+                return fxml_file;
             }
         }
         return file;

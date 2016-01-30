@@ -83,6 +83,10 @@ public class JavaKeywordsAsync {
                 .subscribe(this::applyHighlighting);
     }
 
+    public void forceApply() {
+        applyHighlighting(computeHighlighting(codeArea.getText()));
+    }
+
     public final void stop() {
         executor.shutdown();
     }

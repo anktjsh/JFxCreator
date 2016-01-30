@@ -1522,7 +1522,7 @@ TODO: effect-chaining!!!
  *                                                                             *
  ******************************************************************************/
 
-.tooltip {
+/*.tooltip {
     -fx-background-color:
         rgb(251.0, 250.0, 205.0, 0.95);
     -fx-background-insets: 0.5;
@@ -1530,7 +1530,7 @@ TODO: effect-chaining!!!
     -fx-border-width: 0.5;
     -fx-padding: 0.1em 0.35em 0.25em 0.196666em;
     -fx-effect: dropshadow( three-pass-box , rgba(0.0,0.0,0.0,0.4) , 8.0, 0.0 , 0.0 , 3.0 );
-}
+}*/
 
 /*******************************************************************************
  *                                                                             *

@@ -6,6 +6,7 @@
 package jfxcreator.core;
 
 import java.util.ArrayList;
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import jfxcreator.view.ConsoleWindow;
@@ -56,9 +57,29 @@ public class Console {
         cancel();
     }
 
+    public void error(String s) {
+        content += s;
+        listen.stream().forEach((cl) -> {
+            cl.error(s);
+        });
+        cancel();
+    }
+
     public void complete(String s) {
         if (window != null) {
-            window.get().complete(s);
+            if (s.startsWith("Launching")) {
+                (new Thread(() -> {
+                    try {
+                        Thread.sleep(150);
+                    } catch (InterruptedException ei) {
+                    }
+                    Platform.runLater(() -> {
+                        window.get().complete(s);
+                    });
+                })).start();
+            } else {
+                window.get().complete(s);
+            }
         }
     }
 
@@ -82,6 +103,12 @@ public class Console {
             public void stringAdded(String c) {
                 col.log(c);
             }
+
+            @Override
+            public void error(String s) {
+                col.error(s);
+            }
+
         });
     }
 
@@ -94,5 +121,7 @@ public class Console {
         public void charAdded(char c);
 
         public void stringAdded(String c);
+
+        public void error(String s);
     }
 }

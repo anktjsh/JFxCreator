@@ -5,6 +5,7 @@
  */
 package jfxcreator.view;
 
+import java.util.Collections;
 import java.util.List;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -52,6 +53,7 @@ public class HistoryPane extends BorderPane {
         options = new ListView<>();
         options.setMaxHeight(200);
         options.getItems().addAll(edi.getScript().previousSavedDates());
+        Collections.reverse(options.getItems());
         setTop(options);
         options.setOnMouseClicked((e) -> {
             if (e.getClickCount() == 2) {
@@ -66,6 +68,7 @@ public class HistoryPane extends BorderPane {
     public void refresh() {
         options.getItems().clear();
         options.getItems().addAll(edit.getScript().previousSavedDates());
+        Collections.reverse(options.getItems());
         code1.clear();
         code1.appendText(edit.getCodeArea().getText());
     }

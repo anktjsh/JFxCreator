@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.TreeMap;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Tab;
@@ -24,6 +25,7 @@ import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
+import jfxcreator.core.JavaLibrary;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 import jfxcreator.view.Editor;
@@ -52,13 +54,20 @@ public class Compiler {
         for (Tab b : edit.getTabPane().getTabs()) {
             if (b instanceof Editor) {
                 Editor ed = (Editor) b;
-                al.add(ed.getScript());
-                allEditors.add(ed);
+                if (!al.contains(ed.getScript())) {
+                    if (ed.getScript().getType() == Program.JAVA) {
+                        al.add(ed.getScript());
+                        allEditors.add(ed);
+                    }
+                }
+
             }
         }
         for (Program p : total.getPrograms()) {
             if (!al.contains(p)) {
-                allPrograms.add(p);
+                if (p.getType() == Program.JAVA) {
+                    allPrograms.add(p);
+                }
             }
         }
 
@@ -76,15 +85,15 @@ public class Compiler {
             objs.add(new DynamicJavaSourceCodeObject(p.getClassName(), p.getCode()));
         });
         JavaCompiler.CompilationTask task = compiler.getTask(null, standard, diag, compilerOptions, null, objs);
-        HashMap<String, ArrayList<Long>> map = new HashMap<>();
+        HashMap<String, TreeMap<Long, String>> map = new HashMap<>();
         boolean status = task.call();
         if (!status) {
             for (Diagnostic c : diag.getDiagnostics()) {
                 if (map.containsKey(c.getSource().toString())) {
-                    map.get(c.getSource().toString()).add(c.getLineNumber() - 1);
+                    map.get(c.getSource().toString()).put(c.getLineNumber() - 1, c.getMessage(Locale.getDefault()));
                 } else {
-                    map.put(c.getSource().toString(), new ArrayList<>());
-                    map.get(c.getSource().toString()).add(c.getLineNumber() - 1);
+                    map.put(c.getSource().toString(), new TreeMap<>());
+                    map.get(c.getSource().toString()).put(c.getLineNumber() - 1, c.getMessage(Locale.getDefault()));
                 }
             }
         }
@@ -98,7 +107,7 @@ public class Compiler {
         }
         for (Program p : total.getPrograms()) {
             if (!sent.contains(p)) {
-                p.hasErrors(new ArrayList<>());
+                p.hasErrors(new TreeMap<>());
             }
         }
         try {
@@ -127,11 +136,11 @@ public class Compiler {
         addCompilerOptions("-d", filepath.getAbsolutePath());
     }
 
-    public void addToClassPath(List<String> a) {
+    public void addToClassPath(List<JavaLibrary> a) {
         try {
             ArrayList<File> al = new ArrayList<>();
-            for (String s : a) {
-                al.add(new File(s));
+            for (JavaLibrary jl : a) {
+                al.add(jl.getBinaryPath().toFile());
             }
             standard.setLocation(StandardLocation.CLASS_PATH, al);
         } catch (IOException ex) {

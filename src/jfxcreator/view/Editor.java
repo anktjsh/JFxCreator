@@ -7,14 +7,16 @@ package jfxcreator.view;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.IntFunction;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
+import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableMap;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -33,6 +35,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -51,33 +54,35 @@ import org.fxmisc.richtext.PopupAlignment;
  * @author Aniket
  */
 public class Editor extends EnvironmentTab {
-
+    
     private final BooleanProperty canBeSaved = new SimpleBooleanProperty();
-
+    
     private final CodeArea area;
-
+    
     private final Popup popup;
     private final ListView<Option> options;
-
-    private final ObservableList<Long> errorLines;
-
+    
+    private final ObservableMap<Long, String> errorLines;
+    
     private final BorderPane main, bottom;
     private HistoryPane hPane;
-
+    
+    private boolean applyingErrors;
+    
     public Editor(Program sc, Project pro) {
         super(sc, pro);
         area = new CodeArea();
         area.setContextMenu(new ContextMenu());
-        errorLines = FXCollections.observableArrayList();
+        errorLines = FXCollections.observableMap(new TreeMap<>());
         bindMouseListeners();
-        area.setFont(Writer.fontSize.get());
+        area.setStyle("-fx-font-size:" + Writer.fontSize.get().getSize() + ";");
         Writer.fontSize.addListener((ob, older, newer) -> {
-            area.setFont(newer);
+            area.setStyle("-fx-font-size:" + newer.getSize() + ";");
         });
         Writer.wrapText.addListener((ob, older, neweer) -> {
             area.setWrapText(neweer);
         });
-
+        
         popup = new Popup();
         popup.setHideOnEscape(true);
         popup.getContent().add(options = new ListView<>());
@@ -101,7 +106,7 @@ public class Editor extends EnvironmentTab {
                 popup.hide();
             }
         });
-
+        
         main = new BorderPane();
         main.setCenter(area);
         getCenter().setCenter(main);
@@ -178,26 +183,27 @@ public class Editor extends EnvironmentTab {
         area.textProperty().addListener((ob, older, newer) -> {
             canBeSaved.set(getScript().canSave(Arrays.asList(newer.split("\n"))));
             if (getScript().getType() == Program.JAVA) {
-                ConcurrentCompiler.getInstance().compile(this);
+                if (!applyingErrors) {
+                    ConcurrentCompiler.getInstance().compile(this);
+                }
             }
         });
-        errorLines.addListener((ListChangeListener.Change<? extends Long> c) -> {
-            c.next();
-            if (!c.getList().isEmpty()) {
+        errorLines.addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
+            if (!change.getMap().isEmpty()) {
                 Text tl;
                 Editor.this.getGraph().setGraphic(tl = new Text("X"));
                 tl.setFill(Color.RED);
             } else {
                 Editor.this.getGraph().setGraphic(null);
             }
-            IntFunction<Node> graphicFctory = line -> {
-                HBox hbox = new HBox(numberFactory.apply(line), arrowFactory.apply(line));
-                hbox.setAlignment(Pos.CENTER_LEFT);
-                return hbox;
-            };
-            area.setParagraphGraphicFactory(graphicFctory);
+            area.setParagraphGraphicFactory(
+                    line -> {
+                        HBox hbox = new HBox(numberFactory.apply(line), arrowFactory.apply(line));
+                        hbox.setAlignment(Pos.CENTER_LEFT);
+                        return hbox;
+                    });
         });
-        sc.addProgramListener((Program pro1, List<Long> errors) -> {
+        sc.addProgramListener((Program pro1, TreeMap<Long, String> errors) -> {
             if (Platform.isFxApplicationThread()) {
                 setErrorLines(errors);
             } else {
@@ -210,25 +216,25 @@ public class Editor extends EnvironmentTab {
             hPane = new HistoryPane(this);
         }
     }
-
-    public final void setErrorLines(List<Long> sl) {
+    
+    public final void setErrorLines(Map<Long, String> map) {
         errorLines.clear();
-        errorLines.addAll(sl);
+        errorLines.putAll(map);
     }
-
+    
     private IntFunction<Node> numberFactory;
     private IntFunction<Node> arrowFactory;
-
+    
     private void bindMouseListeners() {
         Highlighter.highlight(area, this);
         numberFactory = LineNumberFactory.get(area);
-        arrowFactory = new ArrowFactory(errorLines);
-        IntFunction<Node> graphicFctory = line -> {
-            HBox hbox = new HBox(numberFactory.apply(line), arrowFactory.apply(line));
-            hbox.setAlignment(Pos.CENTER_LEFT);
-            return hbox;
-        };
-        area.setParagraphGraphicFactory(graphicFctory);
+        arrowFactory = new ErrorFactory(errorLines);
+        area.setParagraphGraphicFactory(
+                line -> {
+                    HBox hbox = new HBox(numberFactory.apply(line), arrowFactory.apply(line));
+                    hbox.setAlignment(Pos.CENTER_LEFT);
+                    return hbox;
+                });
         area.setOnKeyPressed((e) -> {
             if (e.getCode() == KeyCode.SPACE && (e.isControlDown())) {
                 if (popup.isShowing()) {
@@ -247,8 +253,8 @@ public class Editor extends EnvironmentTab {
 //                }
 //                Analyzer.analyze(this);
 //
-//                popup.show(getTabPane().getScene().getWindow());
-//                popup.getContent().get(0).requestFocus();
+//                popupControl.show(getTabPane().getScene().getWindow());
+//                popupControl.getContent().get(0).requestFocus();
             } else {
                 if (popup.isShowing()) {
                     popup.hide();
@@ -413,7 +419,7 @@ public class Editor extends EnvironmentTab {
             }
         });
     }
-
+    
     private int[] getRow(int caret) {
         String spl[] = area.getText().split("\n");
         int count = 0;
@@ -425,7 +431,7 @@ public class Editor extends EnvironmentTab {
         }
         return new int[]{-1, -1};
     }
-
+    
     private String getTabText(String s) {
         int count = 0;
         for (int x = 0; x < s.length(); x += 4) {
@@ -447,7 +453,7 @@ public class Editor extends EnvironmentTab {
         }
         return ret;
     }
-
+    
     private void readFromScript() {
         List<String> read = getScript().getLastCode();
         read.stream().forEach((s) -> {
@@ -460,11 +466,11 @@ public class Editor extends EnvironmentTab {
         readFromScript();
         save();
     }
-
+    
     public CodeArea getCodeArea() {
         return area;
     }
-
+    
     public final void save() {
         List<String> asList = Arrays.asList(area.getText().split("\n"));
         if (getScript().canSave(asList)) {
@@ -472,42 +478,42 @@ public class Editor extends EnvironmentTab {
         }
         canBeSaved.set(false);
     }
-
+    
     public final boolean canSave() {
         List<String> asList = Arrays.asList(area.getText().split("\n"));
         return getScript().canSave(asList);
     }
-
+    
     public void undo() {
         area.undo();
     }
-
+    
     public void redo() {
         area.redo();
     }
-
+    
     public void cut() {
         area.cut();
     }
-
+    
     public void copy() {
         area.copy();
     }
-
+    
     public void paste() {
         area.paste();
     }
-
+    
     public void selectAll() {
         area.selectAll();
     }
-
+    
     class TabToolbar extends ToolBar {
-
+        
         private final Button source, history, left, right,
                 comment, uncomment;
         private final Editor editor;
-
+        
         public TabToolbar(Editor edit) {
             editor = edit;
             setPadding(new Insets(5, 10, 5, 10));
@@ -559,7 +565,7 @@ public class Editor extends EnvironmentTab {
                 uncomment(editor);
             });
         }
-
+        
         public final void uncomment(Editor dt) {
             if (dt != null) {
                 String s = dt.getCodeArea().getSelectedText();
@@ -610,11 +616,11 @@ public class Editor extends EnvironmentTab {
                             break;
                         }
                     }
-
+                    
                 }
             }
         }
-
+        
         public final void comment(Editor dt) {
             if (dt != null) {
                 String s = dt.getCodeArea().getSelectedText();
@@ -655,11 +661,11 @@ public class Editor extends EnvironmentTab {
                             break;
                         }
                     }
-
+                    
                 }
             }
         }
-
+        
     }
-
+    
 }

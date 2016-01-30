@@ -15,10 +15,10 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
+import jfxcreator.core.Highlighter;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.LineNumberFactory;
 
 /**
  *
@@ -61,8 +61,12 @@ public class ClassReader extends EnvironmentTab {
         }
     }
 
+    public CodeArea getCodeArea() {
+        return area;
+    }
+
     private void bindMouseListeners() {
-        area.setParagraphGraphicFactory(LineNumberFactory.get(area));
+        Highlighter.highlight(area);
         area.setOnKeyPressed((e) -> {
             if ((e.isControlDown()) && e.getCode() == KeyCode.F) {
                 HBox box = new HBox(15);

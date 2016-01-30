@@ -25,6 +25,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import static jfxcreator.JFxCreator.stylesheet;
+import jfxcreator.core.JavaLibrary;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 
@@ -74,8 +75,8 @@ public class ProjectProperties {
         box.setAlignment(Pos.CENTER);
         mainClass.setEditable(false);
         mainClass.setPrefWidth(200);
-        for (String s : project.getAllLibs()) {
-            libsView.getItems().add(s);
+        for (JavaLibrary lib : project.getAllLibs()) {
+            libsView.getItems().add(lib.getBinaryAbsolutePath());
         }
 
         addJar.setOnAction((e) -> {

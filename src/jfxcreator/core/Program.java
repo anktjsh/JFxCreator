@@ -15,6 +15,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
@@ -229,7 +230,7 @@ public class Program {
         return type;
     }
 
-    public void hasErrors(List<Long> lines) {
+    public void hasErrors(TreeMap<Long, String> lines) {
         if (lines.isEmpty()) {
             hasErrors.set(false);
         } else {
@@ -250,6 +251,6 @@ public class Program {
 
     public interface ProgramListener {
 
-        public void hasErrors(Program pro, List<Long> errors);
+        public void hasErrors(Program pro, TreeMap<Long, String> errors);
     }
 }

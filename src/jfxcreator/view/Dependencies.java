@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -224,7 +226,7 @@ public class Dependencies {
     }
 
     private static boolean alert;
-    public static String local_version;
+    public static ObjectProperty<String> localVersionProperty = new SimpleObjectProperty<>("");
     public static String workplace_location;
 
     static {
@@ -239,7 +241,7 @@ public class Dependencies {
             if (!Files.exists(p)) {
                 Files.createDirectories(p);
             }
-            Files.write(Paths.get(".cache" + File.separator + "preferences03.txt"), FXCollections.observableArrayList(local_version, alert + "", workplace_location));
+            Files.write(Paths.get(".cache" + File.separator + "preferences03.txt"), FXCollections.observableArrayList(localVersionProperty.get(), alert + "", workplace_location));
         } catch (IOException ex) {
         }
         try {
@@ -263,7 +265,7 @@ public class Dependencies {
                 Scanner in = new Scanner(f);
                 String s = in.nextLine();
                 boolean b = Boolean.parseBoolean(in.nextLine());
-                local_version = s;
+                localVersionProperty.set(s);
                 alert = b;
                 workplace_location = in.nextLine();
             } catch (Exception ex) {
@@ -275,11 +277,11 @@ public class Dependencies {
         if (alert) {
             String s = new Dependencies(w).showAndWait();
             String[] spl = s.split(",");
-            local_version = spl[0];
+            localVersionProperty.set(spl[0]);
             alert = false;
             workplace_location = spl[1];
         }
-        Path p = Paths.get(local_version);
+        Path p = Paths.get(localVersionProperty.get());
         if (!Files.exists(p)) {
             Alert al = new Alert(AlertType.ERROR);
             al.setTitle("Java Platform");
@@ -289,7 +291,7 @@ public class Dependencies {
             al.setContentText("Click on Settings and Select a new JDK Version or some features of JFxCreator may not work properly");
             al.showAndWait();
         }
-        System.setProperty("java.home", Dependencies.local_version.replace("bin", "jre"));
+        System.setProperty("java.home", Dependencies.localVersionProperty.get().replace("bin", "jre"));
     }
 
     public static void platform(Window w) {
@@ -311,7 +313,7 @@ public class Dependencies {
         Button cancel, confirm;
         HBox h;
         box.getChildren().addAll(new Label("Select Java Platform"),
-                new Label("Current Platform is : " + Dependencies.local_version),
+                new Label("Current Platform is : " + Dependencies.localVersionProperty),
                 choice = new ChoiceBox<>(),
                 field = new TextField(),
                 h = new HBox(10,
@@ -320,7 +322,7 @@ public class Dependencies {
         choice.getItems().setAll(getAvailableOptions());
         field.setPromptText("Java Platform");
         h.setAlignment(Pos.CENTER);
-        field.setText(Dependencies.local_version);
+        field.setText(Dependencies.localVersionProperty.get());
         field.setEditable(false);
         choice.valueProperty().addListener((ob, older, newer) -> {
             field.setText(choice.getValue());
@@ -341,7 +343,7 @@ public class Dependencies {
                 Optional<ButtonType> show = al.showAndWait();
                 if (show.isPresent()) {
                     if (show.get() == ButtonType.OK) {
-                        Dependencies.local_version = sa;
+                        Dependencies.localVersionProperty.set(sa);
                     } else {
                         return;
                     }
@@ -349,7 +351,7 @@ public class Dependencies {
                     return;
                 }
             } else {
-                Dependencies.local_version = sa;
+                Dependencies.localVersionProperty.set(sa);
             }
             Alert al = new Alert(Alert.AlertType.INFORMATION);
             al.setTitle("Configuration Set");

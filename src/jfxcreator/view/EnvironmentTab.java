@@ -43,7 +43,8 @@ public class EnvironmentTab extends Tab {
                 new MenuItem("Close All"),
                 new MenuItem("Copy File"),
                 new MenuItem("Copy File Path"),
-                new MenuItem("File Details"));
+                new MenuItem("File Details"),
+                new MenuItem("Word Count"));
         getContextMenu().getItems().get(0).setOnAction((e) -> {
             close();
         });
@@ -82,6 +83,11 @@ public class EnvironmentTab extends Tab {
         getContextMenu().getItems().get(4).setOnAction((e) -> {
             if (script != null) {
                 Details.getDetails((Stage) getTabPane().getScene().getWindow(), script.getFile());
+            }
+        });
+        getContextMenu().getItems().get(5).setOnAction((e) -> {
+            if (script != null) {
+                WordCount.getWordCount((Stage) getTabPane().getScene().getWindow(), script);
             }
         });
 

@@ -9,7 +9,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javafx.collections.FXCollections;
@@ -30,6 +29,7 @@ import javafx.stage.Window;
 import static jfxcreator.JFxCreator.icon;
 import static jfxcreator.JFxCreator.stylesheet;
 import jfxcreator.core.Project;
+import jfxcreator.core.Template;
 
 /**
  *
@@ -73,6 +73,8 @@ public class FileWizard {
                 "JavaFx Preloader",
                 "Empty Java File",
                 "Empty FXML File",
+                "Empty Text File",
+                "Empty HTML File",
                 "Other File"));
         options.setOnMouseClicked((e) -> {
             if (e.getClickCount() == 2) {
@@ -163,13 +165,23 @@ public class FileWizard {
             packageName.textProperty().addListener((ob, older, newer) -> {
                 destination.setText(sourcepath + File.separator + getDir(newer) + File.separator + filename.getText() + ".java");
             });
-        } else if (type.contains("FXML")) {
+        } else if (type.contains("FXML")
+                || type.contains("HTML")
+                || type.contains("Text")) {
+            String extension;
+            if (type.contains("FXML")) {
+                extension = ".fxml";
+            } else if (type.contains("HTML")) {
+                extension = ".html";
+            } else {
+                extension = ".txt";
+            }
             filename.textProperty().addListener((ob, older, newer) -> {
-                destination.setText(sourcepath + File.separator + getDir(packageName.getText()) + File.separator + newer + ".fxml");
+                destination.setText(sourcepath + File.separator + getDir(packageName.getText()) + File.separator + newer + extension);
             });
-            destination.setText(destination.getText() + ".fxml");
+            destination.setText(destination.getText() + extension);
             packageName.textProperty().addListener((ob, older, newer) -> {
-                destination.setText(sourcepath + File.separator + getDir(newer) + File.separator + filename.getText() + ".fxml");
+                destination.setText(sourcepath + File.separator + getDir(newer) + File.separator + filename.getText() + extension);
             });
         } else {
             filename.textProperty().addListener((ob, older, newer) -> {
@@ -261,302 +273,10 @@ public class FileWizard {
         if (className.contains(".")) {
             String pack = className.substring(0, className.lastIndexOf('.'));
             String clas = className.substring(className.lastIndexOf('.') + 1);
-            return getTemplateCode(desc, pack, clas);
+            return Template.getTemplateCode(desc, pack, clas);
         } else {
-            return getTemplateCode(desc, null, className);
+            return Template.getTemplateCode(desc, null, className);
         }
-    }
-
-    private static List<String> getTemplateCode(String desc, String pack, String clas) {
-        switch (desc) {
-            case "Java Class":
-                return one(pack, clas);
-            case "Java Main Class":
-                return two(pack, clas);
-            case "Java Interface":
-                return three(pack, clas);
-            case "JavaFx Main Class":
-                return four(pack, clas);
-            case "JavaFx Preloader":
-                return five(pack, clas);
-            case "Empty Java File":
-                return six(pack, clas);
-            case "Other File":
-                return seven(pack, clas);
-            case "Empty FXML File":
-                return eight();
-            default:
-                return new ArrayList<>();
-        }
-
-    }
-
-    private static List<String> one(String pack, String clas) {
-        if (pack != null) {
-            String list = "\n"
-                    + "package " + pack + ";\n"
-                    + "\n"
-                    + "public class " + clas + " {\n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
-        } else {
-            String list = "\n"
-                    + "public class " + clas + " {\n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
-        }
-    }
-
-    private static List<String> two(String pack, String clas) {
-        if (pack != null) {
-            String list = "\n"
-                    + "package " + pack + ";\n"
-                    + "\n"
-                    + "public class " + clas + " {\n"
-                    + "    \n"
-                    + "    public static void main (String args[]) {\n"
-                    + "        System.out.println(\"Hello, World!\");\n"
-                    + "    }\n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
-        } else {
-            String list = "\n"
-                    + "public class " + clas + " {\n"
-                    + "    \n"
-                    + "    public static void main (String args[]) {\n"
-                    + "        System.out.println(\"Hello, World!\");\n"
-                    + "    }\n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
-        }
-    }
-
-    private static List<String> three(String pack, String clas) {
-        if (pack != null) {
-            String list = "\n"
-                    + "package " + pack + ";\n"
-                    + "\n"
-                    + "public interface " + clas + " {\n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
-        } else {
-            String list = "\n"
-                    + "public interface " + clas + " {\n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
-        }
-    }
-
-    private static List<String> four(String pack, String clas) {
-        if (pack != null) {
-            String list
-                    = "package " + pack + ";\n"
-                    + "\n"
-                    + "import javafx.application.Application;\n"
-                    + "import javafx.event.ActionEvent;\n"
-                    + "import javafx.scene.Scene;\n"
-                    + "import javafx.scene.control.Button;\n"
-                    + "import javafx.scene.layout.StackPane;\n"
-                    + "import javafx.stage.Stage;\n"
-                    + "\n"
-                    + "public class " + clas + " extends Application {\n"
-                    + "    \n"
-                    + "    @Override\n"
-                    + "    public void start(Stage primaryStage) {\n"
-                    + "        Button btn = new Button();\n"
-                    + "        btn.setText(\"Say 'Hello World'\");\n"
-                    + "        btn.setOnAction((ActionEvent event) -> {\n"
-                    + "            System.out.println(\"Hello World!\");\n"
-                    + "        });\n"
-                    + "        \n"
-                    + "        StackPane root = new StackPane();\n"
-                    + "        root.getChildren().add(btn);\n"
-                    + "        \n"
-                    + "        Scene scene = new Scene(root, 300, 250);\n"
-                    + "        \n"
-                    + "        primaryStage.setTitle(\"Hello World!\");\n"
-                    + "        primaryStage.setScene(scene);\n"
-                    + "        primaryStage.show();\n"
-                    + "    }\n"
-                    + "\n"
-                    + "    public static void main(String[] args) {\n"
-                    + "        launch(args);\n"
-                    + "    }\n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
-        } else {
-            String list
-                    = "\n"
-                    + "import javafx.application.Application;\n"
-                    + "import javafx.event.ActionEvent;\n"
-                    + "import javafx.scene.Scene;\n"
-                    + "import javafx.scene.control.Button;\n"
-                    + "import javafx.scene.layout.StackPane;\n"
-                    + "import javafx.stage.Stage;\n"
-                    + "\n"
-                    + "public class " + clas + " extends Application {\n"
-                    + "    \n"
-                    + "    @Override\n"
-                    + "    public void start(Stage primaryStage) {\n"
-                    + "        Button btn = new Button();\n"
-                    + "        btn.setText(\"Say 'Hello World'\");\n"
-                    + "        btn.setOnAction((ActionEvent event) -> {\n"
-                    + "            System.out.println(\"Hello World!\");\n"
-                    + "        });\n"
-                    + "        \n"
-                    + "        StackPane root = new StackPane();\n"
-                    + "        root.getChildren().add(btn);\n"
-                    + "        \n"
-                    + "        Scene scene = new Scene(root, 300, 250);\n"
-                    + "        \n"
-                    + "        primaryStage.setTitle(\"Hello World!\");\n"
-                    + "        primaryStage.setScene(scene);\n"
-                    + "        primaryStage.show();\n"
-                    + "    }\n"
-                    + "\n"
-                    + "    public static void main(String[] args) {\n"
-                    + "        launch(args);\n"
-                    + "    }\n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
-        }
-
-    }
-
-    private static List<String> five(String pack, String clas) {
-        if (pack != null) {
-            String list
-                    = "\n"
-                    + "package " + pack + ";\n"
-                    + "\n"
-                    + "import javafx.application.Preloader;\n"
-                    + "import javafx.application.Preloader.ProgressNotification;\n"
-                    + "import javafx.application.Preloader.StateChangeNotification;\n"
-                    + "import javafx.scene.Scene;\n"
-                    + "import javafx.scene.control.ProgressBar;\n"
-                    + "import javafx.scene.layout.BorderPane;\n"
-                    + "import javafx.stage.Stage;\n"
-                    + "\n"
-                    + "public class " + clas + " extends Preloader {\n"
-                    + "    \n"
-                    + "    ProgressBar bar;\n"
-                    + "    Stage stage;\n"
-                    + "    \n"
-                    + "    private Scene createPreloaderScene() {\n"
-                    + "        bar = new ProgressBar();\n"
-                    + "        BorderPane p = new BorderPane();\n"
-                    + "        p.setCenter(bar);\n"
-                    + "        return new Scene(p, 300, 150);        \n"
-                    + "    }\n"
-                    + "    \n"
-                    + "    @Override\n"
-                    + "    public void start(Stage stage) throws Exception {\n"
-                    + "        this.stage = stage;\n"
-                    + "        stage.setScene(createPreloaderScene());        \n"
-                    + "        stage.show();\n"
-                    + "    }\n"
-                    + "    \n"
-                    + "    @Override\n"
-                    + "    public void handleStateChangeNotification(StateChangeNotification scn) {\n"
-                    + "        if (scn.getType() == StateChangeNotification.Type.BEFORE_START) {\n"
-                    + "            stage.hide();\n"
-                    + "        }\n"
-                    + "    }\n"
-                    + "    \n"
-                    + "    @Override\n"
-                    + "    public void handleProgressNotification(ProgressNotification pn) {\n"
-                    + "        bar.setProgress(pn.getProgress());\n"
-                    + "    }    \n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
-        } else {
-            String list
-                    = "\n"
-                    + "import javafx.application.Preloader;\n"
-                    + "import javafx.application.Preloader.ProgressNotification;\n"
-                    + "import javafx.application.Preloader.StateChangeNotification;\n"
-                    + "import javafx.scene.Scene;\n"
-                    + "import javafx.scene.control.ProgressBar;\n"
-                    + "import javafx.scene.layout.BorderPane;\n"
-                    + "import javafx.stage.Stage;\n"
-                    + "\n"
-                    + "public class " + clas + " extends Preloader {\n"
-                    + "    \n"
-                    + "    ProgressBar bar;\n"
-                    + "    Stage stage;\n"
-                    + "    \n"
-                    + "    private Scene createPreloaderScene() {\n"
-                    + "        bar = new ProgressBar();\n"
-                    + "        BorderPane p = new BorderPane();\n"
-                    + "        p.setCenter(bar);\n"
-                    + "        return new Scene(p, 300, 150);        \n"
-                    + "    }\n"
-                    + "    \n"
-                    + "    @Override\n"
-                    + "    public void start(Stage stage) throws Exception {\n"
-                    + "        this.stage = stage;\n"
-                    + "        stage.setScene(createPreloaderScene());        \n"
-                    + "        stage.show();\n"
-                    + "    }\n"
-                    + "    \n"
-                    + "    @Override\n"
-                    + "    public void handleStateChangeNotification(StateChangeNotification scn) {\n"
-                    + "        if (scn.getType() == StateChangeNotification.Type.BEFORE_START) {\n"
-                    + "            stage.hide();\n"
-                    + "        }\n"
-                    + "    }\n"
-                    + "    \n"
-                    + "    @Override\n"
-                    + "    public void handleProgressNotification(ProgressNotification pn) {\n"
-                    + "        bar.setProgress(pn.getProgress());\n"
-                    + "    }    \n"
-                    + "    \n"
-                    + "}\n"
-                    + "";
-            return FXCollections.observableArrayList(list.split("\n"));
-        }
-    }
-
-    private static List<String> six(String pack, String clas) {
-        return new ArrayList<>();
-    }
-
-    private static List<String> seven(String pack, String clas) {
-        return new ArrayList<>();
-    }
-
-    private static List<String> eight() {
-        String list = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "\n"
-                + "<?import java.lang.*?>\n"
-                + "<?import java.util.*?>\n"
-                + "<?import javafx.scene.*?>\n"
-                + "<?import javafx.scene.control.*?>\n"
-                + "<?import javafx.scene.layout.*?>\n"
-                + "\n"
-                + "<AnchorPane id=\"AnchorPane\" prefHeight=\"400.0\" prefWidth=\"600.0\" xmlns:fx=\"http://javafx.com/fxml/1\">\n"
-                + "    \n"
-                + "</AnchorPane>\n"
-                + "";
-        return FXCollections.observableArrayList(list.split("\n"));
     }
 
 }
