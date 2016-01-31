@@ -33,9 +33,9 @@ public class ClassReader extends EnvironmentTab {
         getGraph().setText(name);
         area = new CodeArea();
         area.setEditable(false);
-        area.setFont(Writer.fontSize.get());
+        area.setStyle("-fx-font-size:" + Writer.fontSize.get().getSize() + ";");
         Writer.fontSize.addListener((ob, older, newer) -> {
-            area.setFont(newer);
+            area.setStyle("-fx-font-size:" + newer.getSize() + ";");
         });
         Writer.wrapText.addListener((ob, older, neweer) -> {
             area.setWrapText(neweer);

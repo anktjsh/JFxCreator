@@ -48,7 +48,6 @@ public class EmailPicker {
         stage.getIcons().add(JFxCreator.icon);
         stage.setResizable(false);
         stage.setScene(new Scene(new EmailPane()));
-        stage.getScene().getStylesheets().add(JFxCreator.stylesheet);
     }
 
     public void showAndWait() {

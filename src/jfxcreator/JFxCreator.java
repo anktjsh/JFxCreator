@@ -5,7 +5,6 @@
  */
 package jfxcreator;
 
-import com.herudi.CleanWindowFX;
 import de.codecentric.centerdevice.MenuToolkit;
 import java.util.Optional;
 import javafx.application.Application;
@@ -29,8 +28,6 @@ import jfxcreator.view.Writer;
 public class JFxCreator extends Application {
 
     public static final String OS = System.getProperty("os.name").toLowerCase();
-    public static final String stylesheet = JFxCreator.class.getResource(OS.contains("win")
-            ? (OS.contains("7") ? "win7.css" : "") : "mac_os.css").toExternalForm();
     public static final Image icon = new Image(JFxCreator.class.getResourceAsStream("icon.png"));
     public static HostServices host;
 
@@ -38,74 +35,47 @@ public class JFxCreator extends Application {
     public void start(Stage env) {
         host = getHostServices();
         Writer script;
-        if (OS.contains("win") && OS.contains("10")) {
-            CleanWindowFX clean = new CleanWindowFX();
-            clean.setScene(script = new Writer());
-            script.getStylesheets().add(getClass().getResource("java-keywords.css").toExternalForm());
-            env.setOnCloseRequest((e) -> {
-                close(script, e);
-            });
-            clean.setTitle("JFxCreator");
-            Writer.currentProject.addListener((ob, older, newer) -> {
-                if (newer != null) {
-                    clean.setTitle("JFxCreator - " + newer.getProjectName());
-                } else {
-                    clean.setTitle("JFxCreator");
-                }
-            });
-            clean.setMaximized(true);
-            clean.setIcon(icon);
-            env.showingProperty().addListener((ob, older, newer) -> {
-                if (newer) {
-                    script.setCurrentProject();
-                }
-            });
-            clean.show(env);
-            Dependencies.load(env);
-        } else {
-            env.setScene(new Scene(script = new Writer()));
-            env.getScene().getStylesheets().add(getClass().getResource("java-keywords.css").toExternalForm());
-            env.setOnCloseRequest((e) -> {
-                close(script, e);
-            });
-            env.setTitle("JFxCreator");
-            Writer.currentProject.addListener((ob, older, newer) -> {
-                if (newer != null) {
-                    env.setTitle("JFxCreator - " + newer.getProjectName());
-                } else {
-                    env.setTitle("JFxCreator");
-                }
-            });
-            env.setMaximized(true);
-            if (OS.contains("mac")) {
-                env.setFullScreen(true);
-                com.sun.glass.ui.Application.GetApplication().setEventHandler(new com.sun.glass.ui.Application.EventHandler() {
-
-                    @Override
-                    public void handleQuitAction(com.sun.glass.ui.Application app, long time) {
-                        super.handleQuitAction(app, time);
-                        close(script, null);
-                    }
-
-                    @Override
-                    public void handleOpenFilesAction(com.sun.glass.ui.Application app, long time, String[] files) {
-                        super.handleOpenFilesAction(app, time, files); //To change body of generated methods, choose Tools | Templates.
-                        script.loadFiles(files);
-                    }
-
-                });
+        env.setScene(new Scene(script = new Writer()));
+        env.getScene().getStylesheets().add(getClass().getResource("java-keywords.css").toExternalForm());
+        env.setOnCloseRequest((e) -> {
+            close(script, e);
+        });
+        env.setTitle("JFxCreator");
+        Writer.currentProject.addListener((ob, older, newer) -> {
+            if (newer != null) {
+                env.setTitle("JFxCreator - " + newer.getProjectName());
+            } else {
+                env.setTitle("JFxCreator");
             }
-            env.getScene().getStylesheets().add(stylesheet);
-            env.getIcons().add(icon);
-            env.showingProperty().addListener((ob, older, newer) -> {
-                if (newer) {
-                    script.setCurrentProject();
+        });
+        env.setMaximized(true);
+        if (OS.contains("mac")) {
+            env.setFullScreen(true);
+            com.sun.glass.ui.Application.GetApplication().setEventHandler(new com.sun.glass.ui.Application.EventHandler() {
+
+                @Override
+                public void handleQuitAction(com.sun.glass.ui.Application app, long time) {
+                    super.handleQuitAction(app, time);
+                    close(script, null);
                 }
+
+                @Override
+                public void handleOpenFilesAction(com.sun.glass.ui.Application app, long time, String[] files) {
+                    super.handleOpenFilesAction(app, time, files); //To change body of generated methods, choose Tools | Templates.
+                    script.loadFiles(files);
+                }
+
             });
-            env.show();
-            setMenuBar(script);
-            Dependencies.load(env);
         }
+        env.getIcons().add(icon);
+        env.showingProperty().addListener((ob, older, newer) -> {
+            if (newer) {
+                script.setCurrentProject();
+            }
+        });
+        env.show();
+        setMenuBar(script);
+        Dependencies.load(env);
     }
 
     private void setMenuBar(Writer script) {

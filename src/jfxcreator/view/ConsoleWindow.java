@@ -43,6 +43,7 @@ import jfxcreator.core.JavaPlatform;
 import jfxcreator.core.ProcessItem;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
+import static jfxcreator.view.Writer.fontSize;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.MouseOverTextEvent;
 import org.fxmisc.richtext.Paragraph;
@@ -199,8 +200,9 @@ public class ConsoleWindow extends Tab {
             }
         });
 
+        area.setStyle("-fx-font-size:" + fontSize.get().getSize() + ";");
         Writer.fontSize.addListener((ob, older, newer) -> {
-            area.setFont(newer);
+            area.setStyle("-fx-font-size:" + newer.getSize() + ";");
         });
         Writer.wrapText.addListener((ob, older, neweer) -> {
             area.setWrapText(neweer);

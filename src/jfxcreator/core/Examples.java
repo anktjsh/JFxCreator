@@ -13,9 +13,9 @@ import javafx.collections.FXCollections;
  * @author Aniket
  */
 public class Examples {
-    
+
     private final List<String> all = FXCollections.observableArrayList(
-            "WebBrowser");
+            "WebBrowser", "MediaPlayer");
 
     private Examples() {
 

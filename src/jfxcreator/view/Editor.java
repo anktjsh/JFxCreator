@@ -54,21 +54,21 @@ import org.fxmisc.richtext.PopupAlignment;
  * @author Aniket
  */
 public class Editor extends EnvironmentTab {
-    
+
     private final BooleanProperty canBeSaved = new SimpleBooleanProperty();
-    
+
     private final CodeArea area;
-    
+
     private final Popup popup;
     private final ListView<Option> options;
-    
+
     private final ObservableMap<Long, String> errorLines;
-    
+
     private final BorderPane main, bottom;
     private HistoryPane hPane;
-    
+
     private boolean applyingErrors;
-    
+
     public Editor(Program sc, Project pro) {
         super(sc, pro);
         area = new CodeArea();
@@ -82,7 +82,12 @@ public class Editor extends EnvironmentTab {
         Writer.wrapText.addListener((ob, older, neweer) -> {
             area.setWrapText(neweer);
         });
-        
+        area.focusedProperty().addListener((ob, older, newer) -> {
+            if (newer) {
+                Writer.currentProject.set(pro);
+            }
+        });
+
         popup = new Popup();
         popup.setHideOnEscape(true);
         popup.getContent().add(options = new ListView<>());
@@ -106,7 +111,7 @@ public class Editor extends EnvironmentTab {
                 popup.hide();
             }
         });
-        
+
         main = new BorderPane();
         main.setCenter(area);
         getCenter().setCenter(main);
@@ -216,15 +221,15 @@ public class Editor extends EnvironmentTab {
             hPane = new HistoryPane(this);
         }
     }
-    
+
     public final void setErrorLines(Map<Long, String> map) {
         errorLines.clear();
         errorLines.putAll(map);
     }
-    
+
     private IntFunction<Node> numberFactory;
     private IntFunction<Node> arrowFactory;
-    
+
     private void bindMouseListeners() {
         Highlighter.highlight(area, this);
         numberFactory = LineNumberFactory.get(area);
@@ -419,7 +424,7 @@ public class Editor extends EnvironmentTab {
             }
         });
     }
-    
+
     private int[] getRow(int caret) {
         String spl[] = area.getText().split("\n");
         int count = 0;
@@ -431,7 +436,7 @@ public class Editor extends EnvironmentTab {
         }
         return new int[]{-1, -1};
     }
-    
+
     private String getTabText(String s) {
         int count = 0;
         for (int x = 0; x < s.length(); x += 4) {
@@ -453,24 +458,24 @@ public class Editor extends EnvironmentTab {
         }
         return ret;
     }
-    
+
     private void readFromScript() {
         List<String> read = getScript().getLastCode();
         read.stream().forEach((s) -> {
             area.appendText(s + "\n");
         });
     }
-    
+
     public void reload() {
         area.clear();
         readFromScript();
         save();
     }
-    
+
     public CodeArea getCodeArea() {
         return area;
     }
-    
+
     public final void save() {
         List<String> asList = Arrays.asList(area.getText().split("\n"));
         if (getScript().canSave(asList)) {
@@ -478,42 +483,42 @@ public class Editor extends EnvironmentTab {
         }
         canBeSaved.set(false);
     }
-    
+
     public final boolean canSave() {
         List<String> asList = Arrays.asList(area.getText().split("\n"));
         return getScript().canSave(asList);
     }
-    
+
     public void undo() {
         area.undo();
     }
-    
+
     public void redo() {
         area.redo();
     }
-    
+
     public void cut() {
         area.cut();
     }
-    
+
     public void copy() {
         area.copy();
     }
-    
+
     public void paste() {
         area.paste();
     }
-    
+
     public void selectAll() {
         area.selectAll();
     }
-    
+
     class TabToolbar extends ToolBar {
-        
+
         private final Button source, history, left, right,
                 comment, uncomment;
         private final Editor editor;
-        
+
         public TabToolbar(Editor edit) {
             editor = edit;
             setPadding(new Insets(5, 10, 5, 10));
@@ -565,7 +570,7 @@ public class Editor extends EnvironmentTab {
                 uncomment(editor);
             });
         }
-        
+
         public final void uncomment(Editor dt) {
             if (dt != null) {
                 String s = dt.getCodeArea().getSelectedText();
@@ -616,11 +621,11 @@ public class Editor extends EnvironmentTab {
                             break;
                         }
                     }
-                    
+
                 }
             }
         }
-        
+
         public final void comment(Editor dt) {
             if (dt != null) {
                 String s = dt.getCodeArea().getSelectedText();
@@ -661,11 +666,11 @@ public class Editor extends EnvironmentTab {
                             break;
                         }
                     }
-                    
+
                 }
             }
         }
-        
+
     }
-    
+
 }

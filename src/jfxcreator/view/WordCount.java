@@ -105,7 +105,6 @@ public class WordCount {
         stage.setHeight(400);
         stage.getIcons().add(jfxcreator.JFxCreator.icon);
         stage.setScene(new Scene(new BorderPane()));
-        stage.getScene().getStylesheets().add(JFxCreator.stylesheet);
         return stage;
     }
 }

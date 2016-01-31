@@ -39,7 +39,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import jfxcreator.JFxCreator;
-import static jfxcreator.JFxCreator.stylesheet;
 
 /**
  *
@@ -152,7 +151,6 @@ public class Dependencies {
 
         });
         stage.setScene(new Scene(box));
-        stage.getScene().getStylesheets().add(stylesheet);
         box.setPadding(new Insets(5, 10, 5, 10));
         box.setAlignment(Pos.CENTER);
         box.setSpacing(10);
@@ -305,7 +303,6 @@ public class Dependencies {
         s.initModality(Modality.APPLICATION_MODAL);
         VBox box;
         s.setScene(new Scene(box = new VBox(10)));
-        s.getScene().getStylesheets().add(stylesheet);
         box.setPadding(new Insets(5, 10, 5, 10));
         box.setAlignment(Pos.CENTER);
         ChoiceBox<String> choice;
@@ -376,7 +373,6 @@ public class Dependencies {
         s.initModality(Modality.APPLICATION_MODAL);
         VBox box;
         s.setScene(new Scene(box = new VBox(10)));
-        s.getScene().getStylesheets().add(stylesheet);
         box.setPadding(new Insets(5, 10, 5, 10));
         box.setAlignment(Pos.CENTER);
         HBox bottom;

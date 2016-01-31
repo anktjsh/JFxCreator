@@ -6,7 +6,9 @@
 package jfxcreator.core;
 
 import java.io.IOException;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 /**
@@ -15,8 +17,7 @@ import javafx.beans.property.SimpleObjectProperty;
  */
 public class ProcessItem {
 
-    private boolean isCancelled;
-
+    private final BooleanProperty isCancelled;
     private final ObjectProperty<String> nameProperty;
     private final ObjectProperty<Process> processProperty;
     private final ObjectProperty<Console> consoleProperty;
@@ -25,7 +26,11 @@ public class ProcessItem {
         nameProperty = new SimpleObjectProperty<>(name);
         processProperty = new SimpleObjectProperty<>(proc);
         consoleProperty = new SimpleObjectProperty<>(con);
-        isCancelled = false;
+        isCancelled = new SimpleBooleanProperty(false);
+    }
+    
+    public BooleanProperty isCancelledProperty() {
+        return isCancelled;
     }
 
     public ObjectProperty<Console> consoleProperty() {
@@ -76,11 +81,11 @@ public class ProcessItem {
     }
 
     public boolean isCancelled() {
-        return isCancelled;
+        return isCancelled.get();
     }
 
     public void cancel() {
-        isCancelled = true;
+        isCancelled.set(true);
         endProcess(getProcess());
         processProperty().addListener((ob, older, newer) -> {
             if (newer != null) {

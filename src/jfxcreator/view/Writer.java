@@ -14,7 +14,6 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -71,10 +70,9 @@ import javafx.stage.WindowEvent;
 import javafx.util.Pair;
 import jfxcreator.JFxCreator;
 import static jfxcreator.JFxCreator.icon;
-import static jfxcreator.JFxCreator.stylesheet;
 import jfxcreator.contact.EmailPicker;
 import jfxcreator.core.Console;
-import jfxcreator.core.Examples;
+import jfxcreator.core.DebuggerController;
 import jfxcreator.core.JavaLibrary;
 import jfxcreator.core.ProcessItem;
 import jfxcreator.core.ProcessPool;
@@ -98,10 +96,11 @@ public class Writer extends BorderPane {
 
     private final TabPane tabPane;
     private final MenuBar bar;
-    private final Menu file, edit, launch, deploy, settings, help, source;
+    private final Menu file, edit, launch, debug, deploy, settings, help, source;
     private final MenuItem nFile, nProject, print, oFile, close, property, oProject, cProject, closeAll, save, saveAll, fullsc,
             undo, redo, cut, copy, paste, selectAll,
             build, clean, run, runF,
+            debugP,
             jar, zip, dNative,
             jPlatforms, pDirectory, view,
             examples,
@@ -121,11 +120,12 @@ public class Writer extends BorderPane {
         file = new Menu("File");
         edit = new Menu("Edit");
         launch = new Menu("Launch");
+        debug = new Menu("Debug");
         deploy = new Menu("Deploy");
         settings = new Menu("Settings");
         source = new Menu("Source");
         help = new Menu("Help");
-        bar.getMenus().addAll(file, edit, launch, deploy, settings, source, help);
+        bar.getMenus().addAll(file, edit, launch, debug, deploy, settings, source, help);
         file.getItems().addAll(nFile = new MenuItem("New File"),
                 nProject = new MenuItem("New Project"),
                 oFile = new MenuItem("Open File"),
@@ -148,6 +148,7 @@ public class Writer extends BorderPane {
                 clean = new MenuItem("Clean and Build"),
                 run = new MenuItem("Run"),
                 runF = new MenuItem("Run File"));
+        debug.getItems().addAll(debugP = new MenuItem("Debug Project"));
         deploy.getItems().addAll(jar = new MenuItem("Deploy Jar"),
                 zip = new MenuItem("Deploy Zip"),
                 dNative = new MenuItem("Native Executable"));
@@ -236,6 +237,9 @@ public class Writer extends BorderPane {
         runF.setOnAction((e) -> {
             runFile();
         });
+        debugP.setOnAction((e) -> {
+            debug();
+        });
         jar.setOnAction((e) -> {
             fatJar();
         });
@@ -255,13 +259,13 @@ public class Writer extends BorderPane {
             Stage st = new Stage();
             st.initModality(Modality.APPLICATION_MODAL);
             st.setResizable(false);
+            st.getIcons().add(JFxCreator.icon);
             st.initOwner(getScene().getWindow());
             st.setWidth(450);
             st.setHeight(300);
             st.setTitle("View");
             VBox box;
             st.setScene(new Scene(box = new VBox(10)));
-            st.getScene().getStylesheets().add(stylesheet);
             box.setAlignment(Pos.CENTER);
             box.setPadding(new Insets(5, 10, 5, 10));
             CheckBox wrap;
@@ -294,7 +298,6 @@ public class Writer extends BorderPane {
                 tid.setTitle("New Template");
                 tid.initOwner(getScene().getWindow());
                 tid.initModality(Modality.APPLICATION_MODAL);
-                tid.getDialogPane().getScene().getStylesheets().add(JFxCreator.stylesheet);
                 ((Stage) tid.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
                 tid.setHeaderText("Set Template Name");
                 Optional<String> name = tid.showAndWait();
@@ -337,7 +340,6 @@ public class Writer extends BorderPane {
                 st.setScene(new Scene(options));
                 st.initOwner(getScene().getWindow());
                 options.getItems().addAll(Template.getAvailableTemplates());
-                st.getScene().getStylesheets().add(JFxCreator.stylesheet);
                 st.getIcons().add(JFxCreator.icon);
                 options.setOnMouseClicked((ex) -> {
                     if (ex.getClickCount() == 2) {
@@ -723,7 +725,6 @@ public class Writer extends BorderPane {
                     al.setTitle("File Exists");
                     al.setHeaderText("Unfortunately this file already exists");
                     ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
-                    al.getDialogPane().getScene().getStylesheets().add(JFxCreator.stylesheet);
                     al.showAndWait();
                 } else {
                     Program pro = new Program(Program.JAVA, cName, f.toPath(), Template.getTemplateCode(temp, result.get().getKey(), result.get().getValue()), getCurrentProject());
@@ -1369,6 +1370,25 @@ public class Writer extends BorderPane {
             (new Thread(tk)).start();
         }
     }
+    
+    public final void debug() {
+        saveAll();
+        if (getCurrentProject()!=null) {
+            ProcessItem pro = new ProcessItem(null, null, new Console(getCurrentProject()));
+            addConsoleWindow(pro);
+            DebuggerController con = new DebuggerController();
+            DebuggerConsole debugCon = new DebuggerConsole(this, con);
+            setRight(debugCon);
+            Task<Void> tk = new Task<Void>(){
+                @Override
+                protected Void call() throws Exception {
+                    getCurrentProject().debugProject(pro, con);
+                    return null;
+                }
+            };
+            (new Thread(tk)).start();
+        }
+    }
 
     public final void runFile() {
         saveAll();
@@ -1715,7 +1735,7 @@ public class Writer extends BorderPane {
                 }
             }
             if (cr == null) {
-                cr = new ClassReader(null, pro, name+".class", stream);
+                cr = new ClassReader(null, pro, name + ".class", stream);
             }
             tabPane.getTabs().add(cr);
             tabPane.getSelectionModel().select(cr);

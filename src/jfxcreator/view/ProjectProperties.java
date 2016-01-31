@@ -16,6 +16,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -24,7 +26,6 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import static jfxcreator.JFxCreator.stylesheet;
 import jfxcreator.core.JavaLibrary;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
@@ -36,6 +37,7 @@ import jfxcreator.core.Project;
 public class ProjectProperties {
 
     private final Stage stage;
+    private final TabPane pane;
     private final VBox box;
     private final TextField mainClass;
     private final Button select, confirm, cancel;
@@ -54,20 +56,25 @@ public class ProjectProperties {
         stage.getIcons().add(jfxcreator.JFxCreator.icon);
         stage.setResizable(false);
         HBox mai, libs, one;
-        stage.setScene(new Scene(box = new VBox(15,
-                one = new HBox(10, new Label("Main-Class"),
-                        mainClass = new TextField(project.getMainClassName()),
-                        select = new Button("Select")),
-                libs = new HBox(10, new Label("External Libraries"),
-                        libsView = new ListView<>(),
-                        new VBox(5,
-                                addJar = new Button("Add Jar"),
-                                removeJar = new Button("Remove Jar"))),
-                mai = new HBox(10,
-                        cancel = new Button("Cancel"),
-                        confirm = new Button("Confirm")))));
+        stage.setScene(new Scene(pane = new TabPane(
+                new Tab("Library Settings", box = new VBox(15,
+                                one = new HBox(10, new Label("Main-Class"),
+                                        mainClass = new TextField(project.getMainClassName()),
+                                        select = new Button("Select")),
+                                libs = new HBox(10, new Label("External Libraries"),
+                                        libsView = new ListView<>(),
+                                        new VBox(5,
+                                                addJar = new Button("Add Jar"),
+                                                removeJar = new Button("Remove Jar"))),
+                                mai = new HBox(10,
+                                        cancel = new Button("Cancel"),
+                                        confirm = new Button("Confirm")))))));
+        //add deployment tab
+        //add runtime/compile time tab
+        for (Tab b : pane.getTabs()) {
+            b.setClosable(false);
+        }
         mainClass.setPromptText("Main-Class");
-        stage.getScene().getStylesheets().add(stylesheet);
         box.setPadding(new Insets(5, 10, 5, 10));
         mai.setAlignment(Pos.CENTER_RIGHT);
         libs.setAlignment(Pos.CENTER);

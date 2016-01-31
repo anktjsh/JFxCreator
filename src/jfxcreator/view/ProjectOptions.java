@@ -19,7 +19,6 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import jfxcreator.JFxCreator;
 import static jfxcreator.JFxCreator.icon;
-import static jfxcreator.JFxCreator.stylesheet;
 
 /**
  *
@@ -47,7 +46,6 @@ public class ProjectOptions {
         });
         list = new ListView<>();
         stage.setScene(new Scene(main = new BorderPane(list)));
-        stage.getScene().getStylesheets().add(stylesheet);
         main.setPadding(new Insets(5, 10, 5, 10));
         list.getItems().addAll("Java Standard Project",
                 "JavaFx Application Standard Project");

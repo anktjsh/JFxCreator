@@ -27,7 +27,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import static jfxcreator.JFxCreator.icon;
-import static jfxcreator.JFxCreator.stylesheet;
 import jfxcreator.core.Project;
 import jfxcreator.core.Template;
 
@@ -64,7 +63,6 @@ public class FileWizard {
         box.getChildren().add(label = new Label("Choose your file type"));
         box.setAlignment(Pos.CENTER_LEFT);
         stage.setScene(new Scene(box));
-        stage.getScene().getStylesheets().add(stylesheet);
         options = new ListView<>();
         options.setItems(FXCollections.observableArrayList("Java Class",
                 "Java Main Class",

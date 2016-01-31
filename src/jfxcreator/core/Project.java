@@ -58,6 +58,7 @@ public class Project {
     private LibraryListener ll;
     private final Task<Void> task;
     private final ObservableList<JavaLibrary> allLibs;
+    private final TaskManager manager;
     private String mainClassName;
 
     public Project(Path src, String mcn, boolean isNew, int... conf) {
@@ -116,6 +117,7 @@ public class Project {
         } else {
             readConfig();
         }
+        manager = new TaskManager(this);
     }
 
     public Path getConfig() {
@@ -474,175 +476,14 @@ public class Project {
     }
 
     public void runFile(ProcessItem item, Program program) {
-        String OS = System.getProperty("os.name").toLowerCase();
-        compile(item);
-        try {
-            Thread.sleep(250);
-        } catch (InterruptedException ex) {
-        }
-        if (!item.isCancelled()) {
-            if (OS.contains("win")) {
-                windowsRunFile(item, program);
-            } else {
-                macRunFile(item, program);
-            }
-        }
-    }
-
-    private void windowsRunFile(ProcessItem item, Program program) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        ProcessBuilder pb = new ProcessBuilder("\"" + JAVA_HOME + File.separator + "java\"", program.getClassName());
-        pb.directory(build.toFile());
-
-        try {
-            Process start = pb.start();
-            item.setName("Launching File : " + program.getClassName());
-            item.setProcess(start);
-            ProcessPool.getPool().addItem(item);
-            (new Thread(new OutputReader(start.getInputStream(), item.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), item.getConsole()))).start();
-            int waitFor = start.waitFor();
-            System.out.println(waitFor);
-        } catch (IOException | InterruptedException e) {
-        }
-    }
-
-    private void macRunFile(ProcessItem item, Program program) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        ProcessBuilder pb = new ProcessBuilder(JAVA_HOME + File.separator + "java", program.getClassName());
-        pb.directory(build.toFile());
-
-        try {
-            Process start = pb.start();
-            item.setName("Launching File : " + program.getClassName());
-            item.setProcess(start);
-            ProcessPool.getPool().addItem(item);
-            (new Thread(new OutputReader(start.getInputStream(), item.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), item.getConsole()))).start();
-            int waitFor = start.waitFor();
-            System.out.println(waitFor);
-        } catch (IOException | InterruptedException e) {
-        }
+        manager.runFile(item, program);
     }
 
     public void fatJar(ProcessItem pro) throws IOException {
-        build(pro);
-        Path fat = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "bundle" + File.separator + getProjectName() + ".jar");
-        if (!Files.exists(fat.getParent())) {
-            try {
-                Files.createDirectories(fat.getParent());
-            } catch (IOException ex) {
-            }
-        }
-        almostDeepDelete(new File(fat.getParent().toAbsolutePath().toString()));
-        String input = dist.toAbsolutePath().toString() + File.separator + getProjectName() + ".jar";
-        try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(input))) {
-            ZipEntry entry = zipIn.getNextEntry();
-            while (entry != null) {
-                String filePath = fat.getParent().toAbsolutePath().toString() + File.separator + entry.getName();
-                if (!entry.isDirectory()) {
-                    extractToFile(zipIn, filePath);
-                } else {
-                    Path dir = Paths.get(filePath);
-                    Files.createDirectory(dir);
-                }
-                entry = zipIn.getNextEntry();
-            }
-        }
-
-        for (JavaLibrary lib : getAllLibs()) {
-            ZipInputStream zipIn = lib.getBinaryZipInputStream();
-            if (zipIn != null) {
-                ZipEntry entry = zipIn.getNextEntry();
-                while (entry != null) {
-                    String filePath = fat.getParent().toAbsolutePath().toString() + File.separator + entry.getName();
-                    if (!entry.isDirectory()) {
-                        extractToFile(zipIn, filePath);
-                    } else {
-                        Path dir = Paths.get(filePath);
-                        Files.createDirectory(dir);
-                    }
-                    entry = zipIn.getNextEntry();
-                }
-            }
-        }
-        Path mani = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "bundle" + File.separator + "META-INF" + File.separator
-                + "MANIFEST.MF");
-        if (Files.exists(mani)) {
-            Files.delete(mani);
-        }
-        buildFat(pro);
-        deepDelete(fat.getParent());
+        manager.fatJar(pro);
     }
 
-    private void buildFat(ProcessItem pro) {
-        String OS = System.getProperty("os.name").toLowerCase();
-        if (!pro.isCancelled()) {
-            if (OS.contains("win")) {
-                windowsFat(pro);
-            } else {
-                macFat(pro);
-            }
-        }
-    }
-
-    private void windowsFat(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        ProcessBuilder pb = new ProcessBuilder("\"" + JAVA_HOME + File.separator + "javapackager\"",
-                "-createjar",
-                "-appClass", getMainClassName(),
-                "-srcdir", "bundle",
-                "-outdir", "dist",
-                "-outfile", "bundle.jar", "-v");
-        pb.directory(rootDirectory.toFile());
-
-        try {
-            Process start = pb.start();
-            pro.setName("Combining All Existing Jars for Project " + getProjectName());
-            pro.setProcess(start);
-            ProcessPool.getPool().addItem(pro);
-            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
-            int waitFor = start.waitFor();
-            System.out.println(waitFor);
-        } catch (IOException | InterruptedException e) {
-        }
-    }
-
-    private void macFat(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        ProcessBuilder pb = new ProcessBuilder(JAVA_HOME + File.separator + "javapackager",
-                "-createjar",
-                "-appClass", getMainClassName(),
-                "-srcdir", "bundle",
-                "-outdir", "dist",
-                "-outfile", "bundle.jar", "-v");
-        pb.directory(rootDirectory.toFile());
-
-        try {
-            Process start = pb.start();
-            pro.setName("Combining All Existing Jars for Project " + getProjectName());
-            pro.setProcess(start);
-            ProcessPool.getPool().addItem(pro);
-            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
-            int waitFor = start.waitFor();
-            System.out.println(waitFor);
-        } catch (IOException | InterruptedException e) {
-        }
-    }
-
-    private void extractToFile(ZipInputStream sipIn, String filePath) throws IOException {
-        try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath))) {
-            byte[] bytesIn = new byte[4096];
-            int read;
-            while ((read = sipIn.read(bytesIn)) != -1) {
-                bos.write(bytesIn, 0, read);
-            }
-        }
-    }
-
-    private String getFileList() {
+    public String getFileList() {
         StringBuilder sb = new StringBuilder();
         programs.stream().forEach((p) -> {
             if (p.getFile().toAbsolutePath().toString().endsWith(".java")) {
@@ -668,230 +509,23 @@ public class Project {
     }
 
     public void compile(ProcessItem pro) {
-        String os = System.getProperty("os.name").toLowerCase();
-        if (!pro.isCancelled()) {
-            if (os.contains("win")) {
-                windowsCompile(pro);
-            } else {
-                macCompile(pro);
-            }
-        }
-    }
-
-    private void windowsCompile(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        String one = "\"" + JAVA_HOME + File.separator + "javac\""
-                + getFileList() + " -d "
-                + build.toAbsolutePath().toString()
-                + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
-        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
-        pb.directory(rootDirectory.toFile());
-
-        try {
-            Process start = pb.start();
-            pro.setName("Compile Files for Project " + getProjectName());
-            pro.setProcess(start);
-            ProcessPool.getPool().addItem(pro);
-            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
-            int waitFor = start.waitFor();
-            System.out.println(waitFor);
-        } catch (IOException | InterruptedException e) {
-        }
-    }
-
-    private void macCompile(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        String one = JAVA_HOME + File.separator + "javac"
-                + getFileList()
-                + " -d "
-                + build.toAbsolutePath().toString()
-                + (getAllLibs().isEmpty() ? "" : (" -classpath" + getLibsList()));
-        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
-        pb.directory(rootDirectory.toFile());
-
-        try {
-            Process start = pb.start();
-            pro.setName("Compile Files for Project " + getProjectName());
-            pro.setProcess(start);
-            ProcessPool.getPool().addItem(pro);
-            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
-            System.out.println(start.waitFor());
-        } catch (IOException | InterruptedException e) {
-
-        }
+        manager.compile(pro);
     }
 
     public void build(ProcessItem pro) {
-        compile(pro);
-        String os = System.getProperty("os.name").toLowerCase();
-        if (!pro.isCancelled()) {
-            if (os.contains("win")) {
-                windowsBuild(pro);
-            } else {
-                macBuild(pro);
-            }
-        }
-    }
-
-    private void windowsBuild(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        String one = "\"" + JAVA_HOME + File.separator + "javapackager\"" + " -createjar -appclass " + getMainClassName()
-                + " -srcdir " + build.toAbsolutePath().toString() + " -outdir "
-                + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar" + " -classpath" + getLibsList();
-        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
-        pb.directory(rootDirectory.toFile());
-
-        try {
-            Process start = pb.start();
-            pro.setName("Build Jar File for Project " + getProjectName());
-            pro.setProcess(start);
-            ProcessPool.getPool().addItem(pro);
-            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
-            int waitFor = start.waitFor();
-            System.out.println(waitFor);
-        } catch (IOException | InterruptedException e) {
-        }
-    }
-
-    private void macBuild(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        String one = JAVA_HOME + File.separator + "javapackager" + " -createjar -appclass " + getMainClassName()
-                + " -srcdir " + build.toAbsolutePath().toString() + " -outdir "
-                + dist.toAbsolutePath().toString() + " -outfile " + getProjectName() + ".jar" + " -classpath" + getLibsList();
-        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
-        pb.directory(rootDirectory.toFile());
-
-        try {
-            Process start = pb.start();
-            pro.setName("Build Jar File for Project " + getProjectName());
-            pro.setProcess(start);
-            ProcessPool.getPool().addItem(pro);
-            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
-            int waitFor = start.waitFor();
-            System.out.println(waitFor);
-        } catch (IOException | InterruptedException e) {
-        }
+        manager.build(pro);
     }
 
     public void run(ProcessItem pro) {
-        build(pro);
-        String os = System.getProperty("os.name").toLowerCase();
-        try {
-            Thread.sleep(250);
-        } catch (InterruptedException ex) {
-        }
-        if (!pro.isCancelled()) {
-            if (os.contains("win")) {
-                windowsRun(pro);
-            } else {
-                macRun(pro);
-            }
-        }
-    }
-
-    private void windowsRun(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        String one = "\"" + JAVA_HOME
-                + File.separator + "java\"" + " -jar " + dist.getFileName().toString()
-                + File.separator + getProjectName() + ".jar"
-                + " -classpath" + getLibsList();
-        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
-        pb.environment().put("PATH", JAVA_HOME);
-        pb.directory(rootDirectory.toFile());
-
-        try {
-            Process start = pb.start();
-            pro.setName("Launching Jar File for Project " + getProjectName());
-            pro.setProcess(start);
-            ProcessPool.getPool().addItem(pro);
-            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
-            int waitFor = start.waitFor();
-            System.out.println(waitFor);
-        } catch (IOException | InterruptedException e) {
-        }
-    }
-
-    private void macRun(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        String one = JAVA_HOME
-                + File.separator + "java" + " -jar " + dist.getFileName().toString()
-                + File.separator + getProjectName() + ".jar"
-                + " -classpath" + getLibsList();
-        ProcessBuilder pb = new ProcessBuilder(one.split(" "));
-        pb.environment().put("PATH", JAVA_HOME);
-        pb.directory(rootDirectory.toFile());
-
-        try {
-            Process start = pb.start();
-            pro.setName("Launching Jar File for Project " + getProjectName());
-            pro.setProcess(start);
-            ProcessPool.getPool().addItem(pro);
-            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
-            int waitFor = start.waitFor();
-            System.out.println(waitFor);
-        } catch (IOException | InterruptedException e) {
-        }
+        manager.run(pro);
     }
 
     public void nativeExecutable(ProcessItem pro) {
-        build(pro);
-        String os = System.getProperty("os.name").toLowerCase();
-        if (!pro.isCancelled()) {
-            if (os.contains("win")) {
-                windowsExecutable(pro);
-            } else {
-                macExecutable(pro);
-            }
-        }
+        manager.nativeExecutable(pro);
     }
-
-    private void windowsExecutable(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        String ico = null;
-        String a = "\"" + JAVA_HOME + File.separator + "javapackager\"" + " -deploy -native exe " + (ico == null ? "" : " -Bicon=" + ico) + " -outdir " + dist.toAbsolutePath().toString()
-                + " -outfile " + getProjectName() + " -srcdir " + dist.toAbsolutePath().toString() + " -srcFiles " + getProjectName()
-                + ".jar " + " -appclass " + getMainClassName() + " -name " + getProjectName() + " -title " + getProjectName() + " -v";
-        ProcessBuilder pb = new ProcessBuilder(a.split(" "));
-        pb.directory(dist.toFile());
-
-        try {
-            Process start = pb.start();
-            pro.setName("Compile Native .exe for Project " + getRootDirectory().getFileName().toString());
-            pro.setProcess(start);
-            ProcessPool.getPool().addItem(pro);
-            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
-            int waitFor = start.waitFor();
-        } catch (IOException | InterruptedException ex) {
-        }
-    }
-
-    private void macExecutable(ProcessItem pro) {
-        String JAVA_HOME = Dependencies.localVersionProperty.get();
-        String ico = null;
-        ProcessBuilder pb;
-        String a = JAVA_HOME + File.separator + "javapackager -deploy -native dmg" + (ico == null ? "" : " -Bicon=" + ico) + " -outdir " + dist.toAbsolutePath().toString()
-                + " -outfile " + getProjectName() + " -srcdir " + dist.toAbsolutePath().toString() + " -srcFiles " + getProjectName()
-                + ".jar " + "-appclass " + getMainClassName() + " -name " + getProjectName() + " -title " + getProjectName() + " mac.CFBundleName=" + getProjectName() + " -v";
-        pb = new ProcessBuilder(Arrays.asList(a.split(" ")));
-        pb.directory(dist.toFile());
-
-        try {
-            Process start = pb.start();
-            pro.setName("Compile Native for Project " + getRootDirectory().getFileName().toString());
-            pro.setProcess(start);
-            ProcessPool.getPool().addItem(pro);
-            (new Thread(new OutputReader(start.getInputStream(), pro.getConsole()))).start();
-            (new Thread(new ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
-            int waitFor = start.waitFor();
-        } catch (IOException | InterruptedException ex) {
-        }
+    
+    public void debugProject(ProcessItem pro, DebuggerController con) {
+        manager.debugProject(pro, con);
     }
 
     public void clean() {

@@ -16,7 +16,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import static jfxcreator.JFxCreator.stylesheet;
 
 /**
  *
@@ -67,7 +66,6 @@ public class Details {
         stage.setTitle("Details");
         stage.getIcons().addAll(w.getIcons());
         stage.setScene(new Scene(getDetails(p)));
-        stage.getScene().getStylesheets().add(stylesheet);
         return stage;
     }
 

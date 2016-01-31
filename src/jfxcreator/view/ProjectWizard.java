@@ -27,7 +27,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import static jfxcreator.JFxCreator.icon;
-import static jfxcreator.JFxCreator.stylesheet;
 import jfxcreator.core.Project;
 
 /**
@@ -71,7 +70,6 @@ public class ProjectWizard {
             cancel();
         });
         stage.setScene(new Scene(box = new VBox(10)));
-        stage.getScene().getStylesheets().add(stylesheet);
         box.setPadding(new Insets(5, 10, 5, 10));
         HBox hb;
         box.getChildren().addAll(new Label("New Project"),

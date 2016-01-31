@@ -64,7 +64,7 @@ public class JavaPlatform {
             jl.addSource(fxSourceFolder.getAbsolutePath());
         }
     }
-    
+
     public ArrayList<JavaLibrary> getAllLibs() {
         return allLibs;
     }

@@ -84,7 +84,7 @@ public class JavaLibrary {
         }
         return null;
     }
-    
+
     public ZipInputStream getBinaryZipInputStream() {
         try {
             return new ZipInputStream(new FileInputStream(lib.toFile()));
