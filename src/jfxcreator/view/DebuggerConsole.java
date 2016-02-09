@@ -23,7 +23,8 @@ public class DebuggerConsole extends BorderPane {
 
     private final DebuggerController controller;
     private final VBox box;
-    private final Button run, close;
+    private final Button run, close, threads, suspend, resume, list,
+            classpath, monitor;
     private final Label status;
     private final Label title;
 
@@ -37,7 +38,13 @@ public class DebuggerConsole extends BorderPane {
         box.setPadding(new Insets(5, 10, 5, 10));
         controller = dc;
         box.getChildren().addAll(status = new Label("Debugger is Initializing"),
-                run = new Button("Launch Application"),
+                run = new Button("Run"),
+                threads = new Button("Threads"),
+                suspend = new Button("Suspend"),
+                resume = new Button("Resume"),
+                list = new Button("List"),
+                classpath = new Button("Classpath"),
+                monitor = new Button("Monitor"),
                 close = new Button("Exit Debugger"));
         status.setStyle("-fx-text-fill:red;");
         setCenter(box);
@@ -48,9 +55,47 @@ public class DebuggerConsole extends BorderPane {
             parent.getChildren().remove(this);
         });
         run.setOnAction((e) -> {
-            dc.process("run");
+            if (dc.isAvailable()) {
+                dc.process("run");
+            }
+        });
+        threads.setOnAction((e) -> {
+            if (dc.isAvailable()) {
+                dc.process("threads");
+            }
+        });
+        suspend.setOnAction((e) -> {
+            if (dc.isAvailable()) {
+                dc.process("suspend");
+            }
+        });
+        resume.setOnAction((e) -> {
+            if (dc.isAvailable()) {
+                dc.process("resume");
+            }
+        });
+        list.setOnAction((e) -> {
+            if (dc.isAvailable()) {
+                dc.process("list");
+            }
+        });
+        classpath.setOnAction((e) -> {
+            if (dc.isAvailable()) {
+                dc.process("classpath");
+            }
+        });
+        monitor.setOnAction((e) -> {
+            if (dc.isAvailable()) {
+                dc.process("monitor");
+            }
         });
         run.setDisable(true);
+        threads.setDisable(true);
+        suspend.setDisable(true);
+        resume.setDisable(true);
+        list.setDisable(true);
+        classpath.setDisable(true);
+        monitor.setDisable(true);
         close.setDisable(true);
         controller.outputProperty().addListener((ob, older, newer) -> {
             Platform.runLater(() -> {
@@ -58,9 +103,21 @@ public class DebuggerConsole extends BorderPane {
                     status.setText("Debugger is Running");
                     run.setDisable(false);
                     close.setDisable(false);
+                    threads.setDisable(false);
+                    suspend.setDisable(false);
+                    resume.setDisable(false);
+                    list.setDisable(false);
+                    classpath.setDisable(false);
+                    monitor.setDisable(false);
                 } else {
                     status.setText("Debugger has terminated");
                     run.setDisable(true);
+                    threads.setDisable(true);
+                    suspend.setDisable(true);
+                    resume.setDisable(true);
+                    list.setDisable(true);
+                    classpath.setDisable(true);
+                    monitor.setDisable(true);
                 }
             });
         });

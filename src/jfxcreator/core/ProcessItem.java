@@ -28,7 +28,7 @@ public class ProcessItem {
         consoleProperty = new SimpleObjectProperty<>(con);
         isCancelled = new SimpleBooleanProperty(false);
     }
-    
+
     public BooleanProperty isCancelledProperty() {
         return isCancelled;
     }

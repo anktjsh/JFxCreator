@@ -126,24 +126,24 @@ public class Writer extends BorderPane {
         source = new Menu("Source");
         help = new Menu("Help");
         bar.getMenus().addAll(file, edit, launch, debug, deploy, settings, source, help);
-        file.getItems().addAll(nFile = new MenuItem("New File"),
-                nProject = new MenuItem("New Project"),
-                oFile = new MenuItem("Open File"),
-                oProject = new MenuItem("Open Project"),
-                cProject = new MenuItem("Close Project"),
+        file.getItems().addAll(nFile = new MenuItem("New File\t\t\t\tCtrl+N"),
+                nProject = new MenuItem("New Project\t\tCtrl+Shift+N"),
+                oFile = new MenuItem("Open File\t\t\t\tCtrl+O"),
+                oProject = new MenuItem("Open Project\t\tCtrl+Shift+O"),
+                cProject = new MenuItem("Close Project\t\tCtrl+Shift+C"),
                 closeAll = new MenuItem("Close All Projects"),
-                save = new MenuItem("Save"),
-                saveAll = new MenuItem("Save All"),
+                save = new MenuItem("Save\t\t\t\t\tCtrl+S"),
+                saveAll = new MenuItem("Save All\t\tCtrl+Shift+S"),
                 property = new MenuItem("Project Properties"),
                 print = new MenuItem("Print"),
                 fullsc = new MenuItem("Toggle FullScreen"),
-                close = new MenuItem("Close "));
-        edit.getItems().addAll(undo = new MenuItem("Undo"),
-                redo = new MenuItem("Redo"),
-                cut = new MenuItem("Cut"),
-                copy = new MenuItem("Copy"),
-                paste = new MenuItem("Paste"),
-                selectAll = new MenuItem("Select All"));
+                close = new MenuItem("Exit"));
+        edit.getItems().addAll(undo = new MenuItem("Undo\t\tCtrl+Z"),
+                redo = new MenuItem("Redo\t\tCtrl+Y"),
+                cut = new MenuItem("Cut\t\t\tCtrl+X"),
+                copy = new MenuItem("Copy\t\tCtrl+C"),
+                paste = new MenuItem("Paste\t\tCtrl+V"),
+                selectAll = new MenuItem("Select All\t\tCtrl+A"));
         launch.getItems().addAll(build = new MenuItem("Build"),
                 clean = new MenuItem("Clean and Build"),
                 run = new MenuItem("Run"),
@@ -667,11 +667,18 @@ public class Writer extends BorderPane {
         setBottom(bottom);
         bottom.setCenter(console);
         bottom.setPadding(new Insets(5, 10, 5, 10));
-//        Label ll;
-//        Tab b = new Tab("Welcome", new BorderPane(ll = new Label("Welcome to JFxCreator!")));
-//        ll.setFont(new Font(30));
-//        tabPane.getTabs().add(0, b);
-//        tabPane.getSelectionModel().select(b);
+        tabPane.getTabs().add(0, new Welcome());
+        tabPane.getSelectionModel().select(0);
+    }
+
+    private class Welcome extends Tab {
+
+        public Welcome() {
+            setText("Start Page");
+            Label ll;
+            setContent(new BorderPane(ll = new Label("Welcome to JFxCreator!")));
+            ll.setFont(new Font(30));
+        }
     }
 
     private void loadTemplate(String temp, Window st) {
@@ -969,42 +976,32 @@ public class Writer extends BorderPane {
                 } catch (IOException ef) {
                 }
                 System.out.println(type);
-                if (type != null) {
-                    if (type.contains("text")) {
-                        Editor ed;
-                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                        tabPane.getTabs().add(ed = new Editor(pro, parent));
-                        tabPane.getSelectionModel().select(ed);
-                    } else if (type.contains("image")) {
-                        Viewer vi;
-                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                        tabPane.getTabs().add(vi = new Viewer(pro, parent));
-                        tabPane.getSelectionModel().select(vi);
-                    } else if (type.contains("fxml")) {
-                        FXMLTab tab;
-                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                        tabPane.getTabs().add(tab = new FXMLTab(pro, parent));
-                        tabPane.getSelectionModel().select(tab);
-                    } else {
-                        if (alert(f.getAbsolutePath())) {
-                            Editor vi;
+                if (fileSize(f)) {
+                    if (type != null) {
+                        if (type.contains("text")) {
                             Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                            tabPane.getTabs().add(vi = new Editor(pro, parent));
-                            tabPane.getSelectionModel().select(vi);
+                            addTab(new Editor(pro, parent));
+                        } else if (type.contains("image")) {
+                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                            addTab(new Viewer(pro, parent));
+                        } else if (type.contains("fxml")) {
+                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                            addTab(new FXMLTab(pro, parent));
+                        } else {
+                            if (alert(f.getAbsolutePath())) {
+                                Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                                addTab(new Editor(pro, parent));
+                            }
                         }
-                    }
-                } else {
-                    if (f.getName().endsWith(".pdf")) {
-                        PdfReader pd;
-                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                        tabPane.getTabs().add(pd = new PdfReader(pro, parent));
-                        tabPane.getSelectionModel().select(pd);
-                        System.out.println(tabPane.getTabs().size());
-                    } else if (alert(f.getAbsolutePath())) {
-                        Editor vi;
-                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                        tabPane.getTabs().add(vi = new Editor(pro, parent));
-                        tabPane.getSelectionModel().select(vi);
+                    } else {
+                        System.out.println(f.getName());
+                        if (f.getName().endsWith(".pdf")) {
+                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                            addTab(new PdfReader(pro, parent));
+                        } else if (alert(f.getAbsolutePath())) {
+                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                            addTab(new Editor(pro, parent));
+                        }
                     }
                 }
             }
@@ -1015,39 +1012,58 @@ public class Writer extends BorderPane {
             } catch (IOException ef) {
             }
             System.out.println(type);
-            if (type != null) {
-                if (type.contains("text")) {
-                    Editor ed;
-                    tabPane.getTabs().add(ed = new Editor(prog, prog.getProject()));
-                    tabPane.getSelectionModel().select(ed);
-                } else if (type.contains("image")) {
-                    Viewer vi;
-                    tabPane.getTabs().add(vi = new Viewer(prog, prog.getProject()));
-                    tabPane.getSelectionModel().select(vi);
-                } else if (type.contains("fxml")) {
-                    FXMLTab tab;
-                    tabPane.getTabs().add(tab = new FXMLTab(prog, prog.getProject()));
-                    tabPane.getSelectionModel().select(tab);
-                } else {
-                    if (alert(prog.getFile().toAbsolutePath().toString())) {
-                        Editor vi;
-                        tabPane.getTabs().add(vi = new Editor(prog, prog.getProject()));
-                        tabPane.getSelectionModel().select(vi);
+            if (fileSize(prog.getFile().toFile())) {
+                if (type != null) {
+                    if (type.contains("text")) {
+                        addTab(new Editor(prog, prog.getProject()));
+                    } else if (type.contains("image")) {
+                        addTab(new Viewer(prog, prog.getProject()));
+                    } else if (type.contains("fxml")) {
+                        addTab(new FXMLTab(prog, prog.getProject()));
+                    } else {
+                        if (alert(prog.getFile().toAbsolutePath().toString())) {
+                            addTab(new Editor(prog, prog.getProject()));
+                        }
                     }
-                }
-            } else {
-                if (prog.getFile().toString().endsWith(".pdf")) {
-                    PdfReader pd;
-                    Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                    tabPane.getTabs().add(pd = new PdfReader(pro, parent));
-                    tabPane.getSelectionModel().select(pd);
-                } else if (alert(prog.getFile().toAbsolutePath().toString())) {
-                    Editor vi;
-                    tabPane.getTabs().add(vi = new Editor(prog, prog.getProject()));
-                    tabPane.getSelectionModel().select(vi);
+                } else {
+                    if (prog.getFile().toString().endsWith(".pdf")) {
+                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                        addTab(new PdfReader(pro, parent));
+                    } else if (alert(prog.getFile().toAbsolutePath().toString())) {
+                        addTab(new Editor(prog, prog.getProject()));
+                    }
                 }
             }
         }
+    }
+
+    private boolean fileSize(File f) {
+        if (f.length() > (1024 * 1024)) {
+            Alert al = new Alert(AlertType.CONFIRMATION);
+            al.initOwner(getScene().getWindow());
+            al.setTitle("File Size");
+            al.setHeaderText(f.getName() + "'s file size is " + getFileSize(f.length()) + " MB."
+                    + "\nIf you continue, JFxCreator may throw an OutOfMemoryException\n"
+                    + "and become unusable");
+            Optional<ButtonType> show = al.showAndWait();
+            if (show.isPresent()) {
+                if (show.get() == ButtonType.OK) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private double getFileSize(long l) {
+        return l / (double) (1024 * 1024);
+    }
+
+    private void addTab(EnvironmentTab tab) {
+        tabPane.getTabs().add(tab);
+        tabPane.getSelectionModel().select(tab);
     }
 
     private void loadFile(File f, Project parent) {
@@ -1370,16 +1386,16 @@ public class Writer extends BorderPane {
             (new Thread(tk)).start();
         }
     }
-    
+
     public final void debug() {
         saveAll();
-        if (getCurrentProject()!=null) {
+        if (getCurrentProject() != null) {
             ProcessItem pro = new ProcessItem(null, null, new Console(getCurrentProject()));
             addConsoleWindow(pro);
             DebuggerController con = new DebuggerController();
             DebuggerConsole debugCon = new DebuggerConsole(this, con);
             setRight(debugCon);
-            Task<Void> tk = new Task<Void>(){
+            Task<Void> tk = new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
                     getCurrentProject().debugProject(pro, con);
@@ -1645,26 +1661,17 @@ public class Writer extends BorderPane {
     private void evaluate(KeyEvent kc) {
         if (kc.isControlDown()) {
             if (kc.isShiftDown()) {
-                if (kc.isAltDown()) {
-                    if (kc.getCode() == KeyCode.P) {
-                        print.fire();
-                    }
-                    if (kc.getCode() == KeyCode.C) {
-                        closeAll.fire();
-                    }
-                } else {
-                    if (kc.getCode() == KeyCode.N) {
-                        nProject.fire();
-                    }
-                    if (kc.getCode() == KeyCode.O) {
-                        oProject.fire();
-                    }
-                    if (kc.getCode() == KeyCode.S) {
-                        saveAll.fire();
-                    }
-                    if (kc.getCode() == KeyCode.C) {
-                        cProject.fire();
-                    }
+                if (kc.getCode() == KeyCode.N) {
+                    nProject.fire();
+                }
+                if (kc.getCode() == KeyCode.O) {
+                    oProject.fire();
+                }
+                if (kc.getCode() == KeyCode.S) {
+                    saveAll.fire();
+                }
+                if (kc.getCode() == KeyCode.C) {
+                    cProject.fire();
                 }
             } else {
                 if (kc.getCode() == KeyCode.N) {
@@ -1690,12 +1697,6 @@ public class Writer extends BorderPane {
                 }
                 if (kc.getCode() == KeyCode.O) {
                     oFile.fire();
-                }
-                if (kc.getCode() == KeyCode.J) {
-                    jar.fire();
-                }
-                if (kc.getCode() == KeyCode.D) {
-                    zip.fire();
                 }
                 if (kc.getCode() == KeyCode.A) {
                     selectAll.fire();

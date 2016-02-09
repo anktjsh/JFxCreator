@@ -90,7 +90,7 @@ public class Analyzer {
         for (Program p : edit.getScript().getProject().getPrograms()) {
             if (!prog.contains(p)) {
                 prog.add(p);
-                objs.add(new DynamicJavaSourceCodeObject(p.getClassName(), p.getCode()));
+                objs.add(new DynamicJavaSourceCodeObject(p.getClassName(), p.getLastCode()));
             }
         }
         for (JavaFileObject obj : objs) {

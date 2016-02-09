@@ -261,7 +261,26 @@ public class ConsoleWindow extends Tab {
         });
         setOnCloseRequest((e) -> {
             if (console.getProcess().isAlive()) {
-                cancel.fire();
+                Alert al = new Alert(AlertType.CONFIRMATION);
+                al.setTitle("End Process");
+                al.setHeaderText("Are you sure you want to end the process?");
+                al.initOwner(getTabPane().getScene().getWindow());
+                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(JFxCreator.icon);
+                Optional<ButtonType> show = al.showAndWait();
+                if (show.isPresent()) {
+                    if (show.get() == ButtonType.OK) {
+                        console.getConsole().log("Build Deliberately Stopped");
+                        console.cancel();
+                        cancel.setDisable(true);
+                        if (timer.isAlive()) {
+                            timer.stop();
+                        }
+                    } else {
+                        e.consume();
+                    }
+                } else {
+                    e.consume();
+                }
             } else {
                 if (timer.isAlive()) {
                     timer.stop();
@@ -340,7 +359,7 @@ public class ConsoleWindow extends Tab {
     }
 
     private void addStackTrace(String s) {
-        if (s.contains("at")) {
+        if (s.trim().startsWith("at")) {
             int index = s.indexOf("at");
             if (index == -1) {
                 index = 0;

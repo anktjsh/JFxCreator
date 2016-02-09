@@ -82,7 +82,7 @@ public class Compiler {
             objs.add(new DynamicJavaSourceCodeObject(ed.getScript().getClassName(), ed.getCodeArea().getText()));
         });
         allPrograms.stream().forEach((p) -> {
-            objs.add(new DynamicJavaSourceCodeObject(p.getClassName(), p.getCode()));
+            objs.add(new DynamicJavaSourceCodeObject(p.getClassName(), p.getLastCode()));
         });
         JavaCompiler.CompilationTask task = compiler.getTask(null, standard, diag, compilerOptions, null, objs);
         HashMap<String, TreeMap<Long, String>> map = new HashMap<>();

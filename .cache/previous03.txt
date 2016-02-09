@@ -1,2 +1,0 @@
-Project : C:\Users\Aniket\Documents\JFxCreatorProjects\JavaProject4 : com.example.aniket.MainClass
-Project : C:\Users\Aniket\Documents\JFxCreatorProjects\JavaProject2 : com.HelloWorld

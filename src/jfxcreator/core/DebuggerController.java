@@ -17,36 +17,36 @@ import javafx.beans.property.SimpleObjectProperty;
  * @author Aniket
  */
 public class DebuggerController {
-    
+
     private final ObjectProperty<PrintStream> out;
     private final BooleanProperty available;
-    
+
     public DebuggerController() {
         out = new SimpleObjectProperty<>();
         available = new SimpleBooleanProperty();
     }
-    
+
     public boolean isAvailable() {
         return available.get();
     }
-    
+
     public void process(String s) {
         out.get().println(s);
         out.get().flush();
     }
-    
+
     public ObjectProperty<PrintStream> outputProperty() {
         return out;
     }
-    
+
     public void finished() {
         available.set(false);
         out.set(null);
     }
-    
+
     public void setOutputStream(OutputStream oos) {
         available.set(true);
         out.set(new PrintStream(oos));
     }
-    
+
 }

@@ -62,6 +62,7 @@ public class Details {
     public static Stage getDetails(Stage w, Path p) {
         Stage stage = new Stage();
         stage.initOwner(w);
+        stage.setResizable(false);
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.setTitle("Details");
         stage.getIcons().addAll(w.getIcons());
@@ -76,7 +77,7 @@ public class Details {
                 ret += countSize(fa);
             }
         } else {
-            ret += Files.readAllBytes(f.toPath()).length;
+            ret += f.length();
         }
         return ret;
     }

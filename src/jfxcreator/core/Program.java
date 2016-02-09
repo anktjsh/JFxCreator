@@ -13,8 +13,10 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Scanner;
 import java.util.TreeMap;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -30,7 +32,7 @@ public class Program {
     public static final int JAVA = 0, RESOURCE = 1;
 
     private final Path file;
-    private List<String> lastCode;
+    private String lastCode;
     private final Project project;
     private final int type;
     private String className;
@@ -42,7 +44,7 @@ public class Program {
     public Program(int t, String name, Path p, List<String> cod, Project pro) {
         type = t;
         file = p;
-        lastCode = cod;
+        lastCode = convertToString(cod);
         project = pro;
         className = name;
         if (t == JAVA) {
@@ -53,6 +55,14 @@ public class Program {
         programs = FXCollections.observableArrayList();
         hasErrors = new SimpleBooleanProperty(false);
         initProgram(cod);
+    }
+    
+    private String convertToString(List<String> cod) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : cod) {
+            sb.append(s).append("\n");
+        }
+        return sb.toString();
     }
 
     public Program(int t, Path p, List<String> cod, Project pro) {
@@ -116,7 +126,7 @@ public class Program {
         lastCode = readCode();
     }
 
-    public boolean canSave(List<String> code) {
+    public boolean canSave(String code) {
         return !code.equals(lastCode);
     }
 
@@ -167,7 +177,7 @@ public class Program {
         return al;
     }
 
-    public void save(List<String> code) {
+    public void save(String code) {
         if (getProject() != null) {
             try {
                 Path get = Paths.get(".cache" + File.separator
@@ -176,23 +186,27 @@ public class Program {
                 if (!Files.exists(get)) {
                     Files.createDirectories(get.getParent());
                 }
-                Files.write(get, getLastCode());
+                Files.write(get, Arrays.asList(getLastCode().split("\n")));
             } catch (IOException e) {
             }
         }
         try {
-            Files.write(file, code);
+            Files.write(file, Arrays.asList(getLastCode().split("\n")));
         } catch (IOException ex) {
         }
         lastCode = code;
     }
 
-    private List<String> readCode() {
+    private String readCode() {
+        StringBuilder sb = new StringBuilder();
         try {
-            return Files.readAllLines(getFile());
-        } catch (IOException ex) {
+            Scanner in = new Scanner(getFile());
+            while (in.hasNextLine()) {
+                sb.append(in.nextLine()).append("\n");
+            }
+        } catch (IOException e) {
         }
-        return new ArrayList<>();
+        return sb.toString();
     }
 
     @Override
@@ -210,16 +224,8 @@ public class Program {
         return file;
     }
 
-    public List<String> getLastCode() {
+    public String getLastCode() {
         return lastCode;
-    }
-
-    public String getCode() {
-        StringBuilder sb = new StringBuilder();
-        for (String s : getLastCode()) {
-            sb.append(s).append("\n");
-        }
-        return sb.toString();
     }
 
     public Project getProject() {

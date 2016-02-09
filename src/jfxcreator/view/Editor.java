@@ -35,7 +35,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -56,18 +55,12 @@ import org.fxmisc.richtext.PopupAlignment;
 public class Editor extends EnvironmentTab {
 
     private final BooleanProperty canBeSaved = new SimpleBooleanProperty();
-
     private final CodeArea area;
-
     private final Popup popup;
     private final ListView<Option> options;
-
     private final ObservableMap<Long, String> errorLines;
-
     private final BorderPane main, bottom;
     private HistoryPane hPane;
-
-    private boolean applyingErrors;
 
     public Editor(Program sc, Project pro) {
         super(sc, pro);
@@ -186,11 +179,9 @@ public class Editor extends EnvironmentTab {
             }
         });
         area.textProperty().addListener((ob, older, newer) -> {
-            canBeSaved.set(getScript().canSave(Arrays.asList(newer.split("\n"))));
+            canBeSaved.set(getScript().canSave(newer));
             if (getScript().getType() == Program.JAVA) {
-                if (!applyingErrors) {
-                    ConcurrentCompiler.getInstance().compile(this);
-                }
+                ConcurrentCompiler.getInstance().compile(this);
             }
         });
         errorLines.addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
@@ -429,9 +420,11 @@ public class Editor extends EnvironmentTab {
         String spl[] = area.getText().split("\n");
         int count = 0;
         for (int x = 0; x < spl.length; x++) {
-            count += spl[x].length() + 1;
-            if (caret <= count) {
+            count += (spl[x].length() + 1);
+            if (caret < count) {
                 return new int[]{x + 1, count - spl[x].length() - 1};
+            } else if (caret == count) {
+                return new int[]{x + 2, count - spl[x].length() - 1};
             }
         }
         return new int[]{-1, -1};
@@ -460,10 +453,7 @@ public class Editor extends EnvironmentTab {
     }
 
     private void readFromScript() {
-        List<String> read = getScript().getLastCode();
-        read.stream().forEach((s) -> {
-            area.appendText(s + "\n");
-        });
+        area.appendText(getScript().getLastCode());
     }
 
     public void reload() {
@@ -477,16 +467,14 @@ public class Editor extends EnvironmentTab {
     }
 
     public final void save() {
-        List<String> asList = Arrays.asList(area.getText().split("\n"));
-        if (getScript().canSave(asList)) {
-            getScript().save(asList);
+        if (getScript().canSave(area.getText())) {
+            getScript().save(area.getText());
         }
         canBeSaved.set(false);
     }
 
     public final boolean canSave() {
-        List<String> asList = Arrays.asList(area.getText().split("\n"));
-        return getScript().canSave(asList);
+        return getScript().canSave(area.getText());
     }
 
     public void undo() {

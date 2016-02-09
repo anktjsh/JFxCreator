@@ -18,7 +18,12 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.Image;
 import jfxcreator.view.Dependencies;
+import net.sf.image4j.codec.ico.ICOEncoder;
+import org.apache.commons.imaging.ImageWriteException;
+import org.apache.commons.imaging.Imaging;
 
 /**
  *
@@ -60,7 +65,8 @@ public class TaskManager {
         String one = "\"" + getJavaHomeLocation() + File.separator + "javac\""
                 + project.getFileList() + " -d "
                 + project.getBuild().toAbsolutePath().toString()
-                + (project.getAllLibs().isEmpty() ? "" : (" -classpath" + project.getLibsList()));
+                + (project.getAllLibs().isEmpty() ? "" : (" -classpath" + project.getLibsList()))
+                + project.getCompileList();
         return new ProcessBuilder(one.split(" "));
     }
 
@@ -69,7 +75,8 @@ public class TaskManager {
                 + project.getFileList()
                 + " -d "
                 + project.getBuild().toAbsolutePath().toString()
-                + (project.getAllLibs().isEmpty() ? "" : (" -classpath" + project.getLibsList()));
+                + (project.getAllLibs().isEmpty() ? "" : (" -classpath" + project.getLibsList()))
+                + project.getCompileList();
         return new ProcessBuilder(one.split(" "));
     }
 
@@ -118,10 +125,6 @@ public class TaskManager {
     public void run(ProcessItem pro) {
         build(pro);
         String os = System.getProperty("os.name").toLowerCase();
-        try {
-            Thread.sleep(250);
-        } catch (InterruptedException ex) {
-        }
         if (!pro.isCancelled()) {
             ProcessBuilder pb;
             if (os.contains("win")) {
@@ -147,7 +150,7 @@ public class TaskManager {
     private ProcessBuilder getWindowsRunString() {
         String one = "\"" + getJavaHomeLocation()
                 + File.separator + "java\"" + " -jar " + project.getDist().getFileName().toString()
-                + File.separator + project.getProjectName() + ".jar"
+                + File.separator + project.getProjectName() + ".jar" + (project.getRuntimeList())
                 + (project.getAllLibs().isEmpty() ? "" : (" -classpath" + project.getLibsList()));
         return new ProcessBuilder(one.split(" "));
     }
@@ -155,7 +158,7 @@ public class TaskManager {
     private ProcessBuilder getMacRunString() {
         String one = getJavaHomeLocation()
                 + File.separator + "java" + " -jar " + project.getDist().getFileName().toString()
-                + File.separator + project.getProjectName() + ".jar"
+                + File.separator + project.getProjectName() + ".jar" + (project.getRuntimeList())
                 + (project.getAllLibs().isEmpty() ? "" : (" -classpath" + project.getLibsList()));
         return new ProcessBuilder(one.split(" "));
     }
@@ -334,9 +337,9 @@ public class TaskManager {
         if (!pro.isCancelled()) {
             ProcessBuilder pb;
             if (os.contains("win")) {
-                pb = getWindowsExectuableString();
+                pb = getWindowsExecutableString();
             } else {
-                pb = getMacExectuableString();
+                pb = getMacExecutableString();
             }
             pb.directory(project.getDist().toFile());
             try {
@@ -352,20 +355,77 @@ public class TaskManager {
         }
     }
 
-    private ProcessBuilder getWindowsExectuableString() {
-        String ico = null;
+    private ProcessBuilder getWindowsExecutableString() {
+        String ico = getIconPath();
         String a = "\"" + getJavaHomeLocation() + File.separator + "javapackager\"" + " -deploy -native exe " + (ico == null ? "" : " -Bicon=" + ico) + " -outdir " + project.getDist().toAbsolutePath().toString()
                 + " -outfile " + project.getProjectName() + " -srcdir " + project.getDist().toAbsolutePath().toString() + " -srcFiles " + project.getProjectName()
                 + ".jar " + " -appclass " + project.getMainClassName() + " -name " + project.getProjectName() + " -title " + project.getProjectName() + " -v";
         return new ProcessBuilder(a.split(" "));
     }
 
-    private ProcessBuilder getMacExectuableString() {
-        String ico = null;
+    private ProcessBuilder getMacExecutableString() {
+        String ico = getIconPath();
         String a = getJavaHomeLocation() + File.separator + "javapackager -deploy -native dmg" + (ico == null ? "" : " -Bicon=" + ico) + " -outdir " + project.getDist().toAbsolutePath().toString()
                 + " -outfile " + project.getProjectName() + " -srcdir " + project.getDist().toAbsolutePath().toString() + " -srcFiles " + project.getProjectName()
                 + ".jar " + "-appclass " + project.getMainClassName() + " -name " + project.getProjectName() + " -title " + project.getProjectName() + " mac.CFBundleName=" + project.getProjectName() + " -v";
         return new ProcessBuilder(Arrays.asList(a.split(" ")));
+    }
+
+    private String getIconPath() {
+        String OS = System.getProperty("os.name").toLowerCase();
+        if (project.getFileIconPath().isEmpty()) {
+            return null;
+        }
+        if (OS.contains("win")) {
+            if (project.getFileIconPath().endsWith(".ico")) {
+                return project.getFileIconPath();
+            } else {
+                File f = new File(project.getFileIconPath());
+                if (f.exists()) {
+                    File to = new File(project.getDist().toAbsolutePath().toString() + File.separator + getFilename(f) + ".ico");
+                    if (!to.exists()) {
+                        try {
+                            Image im = new Image(f.toURI().toString(), 256, 256, true, true);
+                            ICOEncoder.write(SwingFXUtils.fromFXImage(im, null), to);
+                            if (to.exists()) {
+                                return to.getAbsolutePath();
+                            }
+                        } catch (IOException ex) {
+                        }
+                    } else {
+                        return to.getAbsolutePath();
+                    }
+                }
+            }
+        } else {
+            if (project.getFileIconPath().endsWith(".icns")) {
+                return project.getFileIconPath();
+            } else {
+                File f = new File(project.getFileIconPath());
+                if (f.exists()) {
+                    File to = new File(project.getDist().toAbsolutePath().toString() + File.separator + getFilename(f) + ".icns");
+                    if (!to.exists()) {
+                        try {
+                            Image im = new Image(f.toURI().toString());
+                            Imaging.writeImage(SwingFXUtils.fromFXImage(im, null), f, null, null);
+                            return to.getAbsolutePath();
+                        } catch (IOException | ImageWriteException ex) {
+                        }
+                    } else {
+                        return to.getAbsolutePath();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private String getFilename(File f) {
+        String s = f.getName();
+        if (s.contains(".")) {
+            s = s.substring(0, s.indexOf("."));
+        }
+        return s;
     }
 
     public void debugProject(ProcessItem pro, DebuggerController controller) {

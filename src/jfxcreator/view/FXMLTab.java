@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import javafx.application.Platform;
 import javafx.scene.control.Button;
 import javafx.scene.control.Separator;
-import jfxcreator.core.ProcessPool;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 
@@ -29,10 +28,10 @@ public class FXMLTab extends Editor {
         top.getItems().addAll(new Separator(),
                 open = new Button("Open in Scene Builder"));
         open.setOnAction((e) -> {
-            File f = new File("SceneBuilder.jar");
+            File f = new File("SceneBuilder-8.1.1.jar");
             if (!f.exists()) {
                 try {
-                    Files.copy(getClass().getResourceAsStream("scenebuilder/SceneBuilder.jar"), f.toPath());
+                    Files.copy(getClass().getResourceAsStream("scenebuilder/SceneBuilder-8.1.1.jar"), f.toPath());
                 } catch (IOException ex) {
                 }
             }
@@ -59,7 +58,7 @@ public class FXMLTab extends Editor {
 
     private void launchWindowsSceneBuilder() {
         String JAVA_HOME = Dependencies.localVersionProperty.get();
-        String one = "\"" + JAVA_HOME + File.separator + "java\"" + " -jar SceneBuilder.jar " + getScript().getFile().toAbsolutePath().toString();
+        String one = "\"" + JAVA_HOME + File.separator + "java\"" + " -jar SceneBuilder-8.1.1.jar " + getScript().getFile().toAbsolutePath().toString();
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         try {
             Process start = pb.start();
@@ -73,7 +72,7 @@ public class FXMLTab extends Editor {
 
     private void launchMacSceneBuilder() {
         String JAVA_HOME = Dependencies.localVersionProperty.get();
-        String one = JAVA_HOME + File.separator + "java" + " -jar SceneBuilder.jar " + getScript().getFile().toAbsolutePath().toString();
+        String one = JAVA_HOME + File.separator + "java" + " -jar SceneBuilder-8.1.1.jar " + getScript().getFile().toAbsolutePath().toString();
         ProcessBuilder pb = new ProcessBuilder(one.split(" "));
         try {
             Process start = pb.start();

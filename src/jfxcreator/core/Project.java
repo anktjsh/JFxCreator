@@ -32,6 +32,7 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 import java.util.zip.ZipEntry;
@@ -39,7 +40,6 @@ import java.util.zip.ZipInputStream;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import jfxcreator.view.Dependencies;
 import jfxcreator.view.FileWizard;
 import jfxcreator.view.LibraryTreeItem.LibraryListener;
 
@@ -58,8 +58,11 @@ public class Project {
     private LibraryListener ll;
     private final Task<Void> task;
     private final ObservableList<JavaLibrary> allLibs;
+    private final HashMap<String, String> compileArguments;
+    private final ArrayList<String> runtimeArguments;
     private final TaskManager manager;
     private String mainClassName;
+    private String iconFilePath;
 
     public Project(Path src, String mcn, boolean isNew, int... conf) {
         rootDirectory = src;
@@ -101,6 +104,8 @@ public class Project {
         }
 
         allLibs = FXCollections.observableArrayList();
+        compileArguments = new HashMap<>();
+        runtimeArguments = new ArrayList<>();
 
         programs = new ArrayList<>();
         listeners = FXCollections.observableArrayList();
@@ -310,6 +315,35 @@ public class Project {
         });
     }
 
+    public HashMap<String, String> getCompileTimeArguments() {
+        return compileArguments;
+    }
+
+    public ArrayList<String> getRuntimeArguments() {
+        return runtimeArguments;
+    }
+
+    public String getFileIconPath() {
+        if (iconFilePath == null) {
+            iconFilePath = "";
+        }
+        return iconFilePath;
+    }
+
+    public void setFileIconPath(String s) {
+        iconFilePath = s;
+    }
+
+    public void setCompileTimeArguments(HashMap<String, String> map) {
+        compileArguments.clear();
+        compileArguments.putAll(map);
+    }
+
+    public void setRuntimeArguments(List<String> map) {
+        runtimeArguments.clear();
+        runtimeArguments.addAll(map);
+    }
+
     public List<JavaLibrary> getAllLibs() {
         return allLibs;
     }
@@ -338,7 +372,11 @@ public class Project {
         try {
             Files.write(config,
                     FXCollections.observableArrayList(mainClassName,
-                            "Libs : " + allLibs));
+                            "Libs : " + allLibs,
+                            compileArguments.toString(),
+                            runtimeArguments.toString(),
+                            iconFilePath == null ? "" : iconFilePath
+                    ));
         } catch (IOException e) {
         }
     }
@@ -350,15 +388,61 @@ public class Project {
         } catch (IOException ex) {
         }
         if (al.size() >= 2) {
-            String spl[] = al.get(1).split(" : ");
-            String liberator = spl[1].substring(1, spl[1].length() - 1);
-            List<String> list = Arrays.asList(liberator.split(", "));
-            for (String s : list) {
-                if (!s.isEmpty()) {
-                    allLibs.add(new JavaLibrary(s));
+            if (!al.get(1).isEmpty()) {
+                String spl[] = al.get(1).split(" : ");
+                String liberator = spl[1].substring(1, spl[1].length() - 1);
+                List<String> list = Arrays.asList(liberator.split(", "));
+                for (String s : list) {
+                    if (!s.isEmpty()) {
+                        allLibs.add(new JavaLibrary(s));
+                    }
                 }
             }
         }
+        if (al.size() >= 3) {
+            if (!al.get(2).isEmpty()) {
+                String check = al.get(2).substring(1, al.get(2).length() - 1);
+                List<String> list = Arrays.asList(check.split(", "));
+                for (String s : list) {
+                    String spl[] = s.split("=");
+                    if (spl.length == 2) {
+                        compileArguments.put(spl[0], spl[1]);
+                    }
+                }
+            }
+        }
+        if (al.size() >= 4) {
+            if (!al.get(3).isEmpty()) {
+                String check = al.get(3).substring(1, al.get(3).length() - 1);
+                List<String> list = Arrays.asList(check.split(", "));
+                if (!list.isEmpty()) {
+                    if (!list.get(0).isEmpty()) {
+                        runtimeArguments.addAll(list);
+                    }
+                }
+            }
+        }
+        if (al.size() >= 5) {
+            if (!al.get(4).isEmpty()) {
+                iconFilePath = al.get(4);
+            }
+        }
+    }
+
+    public String getCompileList() {
+        StringBuilder sb = new StringBuilder();
+        for (String s : compileArguments.keySet()) {
+            sb.append(" ").append(s).append(":").append(compileArguments.get(s));
+        }
+        return sb.toString();
+    }
+
+    public String getRuntimeList() {
+        StringBuilder sb = new StringBuilder();
+        for (String s : runtimeArguments) {
+            sb.append(" ").append(s);
+        }
+        return sb.toString();
     }
 
     public String serialize() {
@@ -523,7 +607,7 @@ public class Project {
     public void nativeExecutable(ProcessItem pro) {
         manager.nativeExecutable(pro);
     }
-    
+
     public void debugProject(ProcessItem pro, DebuggerController con) {
         manager.debugProject(pro, con);
     }

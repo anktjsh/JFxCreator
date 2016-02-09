@@ -310,7 +310,7 @@ public class Dependencies {
         Button cancel, confirm;
         HBox h;
         box.getChildren().addAll(new Label("Select Java Platform"),
-                new Label("Current Platform is : " + Dependencies.localVersionProperty),
+                new Label("Current Platform is : " + Dependencies.localVersionProperty.get()),
                 choice = new ChoiceBox<>(),
                 field = new TextField(),
                 h = new HBox(10,
