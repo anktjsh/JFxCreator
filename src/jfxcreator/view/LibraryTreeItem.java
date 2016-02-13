@@ -41,12 +41,12 @@ public class LibraryTreeItem extends TreeItem<String> {
                 if (next.isDirectory()) {
                     continue;
                 }
-                if (next.getName().endsWith(File.separator) && next.getName().substring(0, next.getName().length() - 1).contains(File.separator)) {
+                if (next.getName().endsWith("\\") && next.getName().substring(0, next.getName().length() - 1).contains("\\")) {
                     add(next.getName(), zf, next);
-                } else if (!next.getName().endsWith(File.separator) && next.getName().contains(File.separator)) {
+                } else if (!next.getName().endsWith("\\") && next.getName().contains("\\")) {
                     add(next.getName(), zf, next);
                 } else {
-                    getChildren().add(new BinaryTreeItem(project, replaceAll(next.getName(), File.separator, ""), library, next));
+                    getChildren().add(new BinaryTreeItem(project, replaceAll(next.getName(), "\\", ""), library, next));
                 }
             }
         } catch (Exception e) {

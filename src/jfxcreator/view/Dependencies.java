@@ -243,12 +243,15 @@ public class Dependencies {
         } catch (IOException ex) {
         }
         try {
-            Object hidden = Files.getAttribute(p, "dos:hidden", LinkOption.NOFOLLOW_LINKS);
-            if (hidden != null) {
-                if (hidden instanceof Boolean) {
-                    Boolean bool = (Boolean) hidden;
-                    if (!bool) {
-                        Files.setAttribute(p, "dos:hidden", Boolean.TRUE, LinkOption.NOFOLLOW_LINKS);
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+                Object hidden = Files.getAttribute(p, "dos:hidden", LinkOption.NOFOLLOW_LINKS);
+                if (hidden != null) {
+                    if (hidden instanceof Boolean) {
+                        Boolean bool = (Boolean) hidden;
+                        if (!bool) {
+                            Files.setAttribute(p, "dos:hidden", Boolean.TRUE, LinkOption.NOFOLLOW_LINKS);
+                        }
                     }
                 }
             }
