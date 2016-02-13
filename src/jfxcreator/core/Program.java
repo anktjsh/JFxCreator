@@ -56,7 +56,7 @@ public class Program {
         hasErrors = new SimpleBooleanProperty(false);
         initProgram(cod);
     }
-    
+
     private String convertToString(List<String> cod) {
         StringBuilder sb = new StringBuilder();
         for (String s : cod) {
@@ -191,7 +191,7 @@ public class Program {
             }
         }
         try {
-            Files.write(file, Arrays.asList(getLastCode().split("\n")));
+            Files.write(file, Arrays.asList(code.split("\n")));
         } catch (IOException ex) {
         }
         lastCode = code;

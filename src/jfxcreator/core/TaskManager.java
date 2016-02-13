@@ -466,7 +466,42 @@ public class TaskManager {
         return new ProcessBuilder(s.split(" "));
     }
 
-    private String getJavaHomeLocation() {
+    public static void launchJar(ProcessItem pro, File jar) {
+        String os = System.getProperty("os.name").toLowerCase();
+        if (!pro.isCancelled()) {
+            ProcessBuilder pb;
+            if (os.contains("win")) {
+                pb = getWindowsLauncherString(jar);
+            } else {
+                pb = getMacLauncherString(jar);
+            }
+            pb.directory(jar.getParentFile());
+            try {
+                Process start = pb.start();
+                pro.setName("Launch File " + jar.getAbsolutePath());
+                pro.setProcess(start);
+                ProcessPool.getPool().addItem(pro);
+                (new Thread(new Project.OutputReader(start.getInputStream(), pro.getConsole()))).start();
+                (new Thread(new Project.ErrorReader(start.getErrorStream(), pro.getConsole()))).start();
+                int waitFor = start.waitFor();
+            } catch (IOException | InterruptedException ex) {
+            }
+        }
+    }
+
+    private static ProcessBuilder getWindowsLauncherString(File f) {
+        String s = "\"" + getJavaHomeLocation() + File.separator
+                + "java\" -jar " + f.getAbsolutePath();
+        return new ProcessBuilder(s.split(" "));
+    }
+
+    private static ProcessBuilder getMacLauncherString(File f) {
+        String s = getJavaHomeLocation() + File.separator
+                + "java -jar " + f.getAbsolutePath();
+        return new ProcessBuilder(s.split(" "));
+    }
+
+    private static String getJavaHomeLocation() {
         return Dependencies.localVersionProperty.get();
     }
 

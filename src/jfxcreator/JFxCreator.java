@@ -18,6 +18,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import jfxcreator.core.ProjectTree;
+import jfxcreator.memory.Monitor;
 import jfxcreator.view.Dependencies;
 import jfxcreator.view.Writer;
 
@@ -34,6 +35,7 @@ public class JFxCreator extends Application {
     @Override
     public void start(Stage env) {
         host = getHostServices();
+        Monitor.initialize(env);
         Writer script;
         env.setScene(new Scene(script = new Writer()));
         env.getScene().getStylesheets().add(getClass().getResource("java-keywords.css").toExternalForm());
@@ -68,11 +70,6 @@ public class JFxCreator extends Application {
             });
         }
         env.getIcons().add(icon);
-        env.showingProperty().addListener((ob, older, newer) -> {
-            if (newer) {
-                script.setCurrentProject();
-            }
-        });
         env.show();
         setMenuBar(script);
         Dependencies.load(env);

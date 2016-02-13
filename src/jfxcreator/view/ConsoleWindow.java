@@ -114,7 +114,7 @@ public class ConsoleWindow extends Tab {
         area.addEventHandler(MouseOverTextEvent.MOUSE_OVER_TEXT_BEGIN, e -> {
             int chIdx = e.getCharacterIndex();
             Collection<String> stlye = area.getStyleAtPosition(chIdx);
-            if (stlye.contains("red") && stlye.contains("stacktrace")) {
+            if (stlye.contains("stacktrace")) {
                 Point2D pos = e.getScreenPosition();
                 popupMsg.setText("Click to go to Source");
                 popup.show(area, pos.getX(), pos.getY() + 10);
@@ -127,7 +127,7 @@ public class ConsoleWindow extends Tab {
         area.setOnMouseClicked((e) -> {
             int chIdx = area.getCaretPosition();
             Collection<String> stlye = area.getStyleAtPosition(chIdx);
-            if (stlye.contains("red") && stlye.contains("stacktrace")) {
+            if (stlye.contains("stacktrace")) {
                 try {
                     String text = area.getParagraph(getRow(chIdx)).toString().trim();
                     String[] arr = (text.split(" "));
@@ -194,8 +194,7 @@ public class ConsoleWindow extends Tab {
                             }
                         }
                     }
-                } catch (Exception fde) {
-
+                } catch (NumberFormatException fde) {
                 }
             }
         });
@@ -368,12 +367,11 @@ public class ConsoleWindow extends Tab {
                 if (temp == -1) {
                     temp = 0;
                 } else {
-                    errorOutput.put(area.getText().length() + currentText.length() + index, area.getText().length() + currentText.length() + index + temp + 1);
-                    errorOutput.put(area.getText().length() + currentText.length() + s.length() - 1, area.getText().length() + currentText.length() + s.length());
+                    errorOutput.put(area.getText().length() + currentText.length() + index - 1, area.getText().length() + currentText.length() + index + temp);
                 }
                 index += temp;
             }
-            stackTraces.put(area.getText().length() + currentText.length() + index + 1, area.getText().length() + currentText.length() + s.length() - 1);
+            stackTraces.put(area.getText().length() + currentText.length() + index, area.getText().length() + currentText.length() + s.length());
         } else {
             stackTraces.put(area.getText().length() + currentText.length(),
                     area.getText().length() + currentText.length() + s.length());
@@ -424,8 +422,7 @@ public class ConsoleWindow extends Tab {
             while (iterator.hasNext()) {
                 Map.Entry<Integer, Integer> entry = iterator.next();
                 if (area.getLength() >= entry.getValue()) {
-                    area.setStyle(entry.getKey(), entry.getValue(), FXCollections.observableArrayList("red",
-                            "stacktrace"));
+                    area.setStyle(entry.getKey(), entry.getValue(), FXCollections.observableArrayList("stacktrace"));
                 }
             }
             fullStack.putAll(stackTraces);
@@ -552,8 +549,7 @@ public class ConsoleWindow extends Tab {
         while (iterator.hasNext()) {
             Map.Entry<Integer, Integer> entry = iterator.next();
             if (area.getLength() >= entry.getValue()) {
-                area.setStyle(entry.getKey(), entry.getValue(), FXCollections.observableArrayList("red",
-                        "stacktrace"));
+                area.setStyle(entry.getKey(), entry.getValue(), FXCollections.observableArrayList("stacktrace"));
             }
         }
     }

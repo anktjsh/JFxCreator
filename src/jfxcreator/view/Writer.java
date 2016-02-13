@@ -79,8 +79,10 @@ import jfxcreator.core.ProcessPool;
 import jfxcreator.core.Program;
 import jfxcreator.core.Project;
 import jfxcreator.core.ProjectTree;
+import jfxcreator.core.TaskManager;
 import jfxcreator.core.Template;
 import jfxcreator.core.ZipUtils;
+import jfxcreator.memory.Monitor;
 import jfxcreator.view.FileWizard.FileDescription;
 import org.fxmisc.richtext.Paragraph;
 
@@ -96,13 +98,14 @@ public class Writer extends BorderPane {
 
     private final TabPane tabPane;
     private final MenuBar bar;
-    private final Menu file, edit, launch, debug, deploy, settings, help, source;
+    private final Menu file, edit, launch, debug, deploy, settings, help, source, memory;
     private final MenuItem nFile, nProject, print, oFile, close, property, oProject, cProject, closeAll, save, saveAll, fullsc,
             undo, redo, cut, copy, paste, selectAll,
-            build, clean, run, runF,
+            build, clean, run, runF, launchJar,
             debugP,
             jar, zip, dNative,
             jPlatforms, pDirectory, view,
+            monitor,
             examples,
             request, report, information;
     private final Menu templates, about;
@@ -116,6 +119,10 @@ public class Writer extends BorderPane {
         tabPane = new TabPane();
         setCenter(tabPane);
         setTop(top = new BorderPane(bar = new MenuBar()));
+        String OS = System.getProperty("os.name").toLowerCase();
+        if (OS.contains("mac")) {
+            bar.setUseSystemMenuBar(true);
+        }
         top.setBottom(new EnvironmentToolBar(this));
         file = new Menu("File");
         edit = new Menu("Edit");
@@ -124,8 +131,9 @@ public class Writer extends BorderPane {
         deploy = new Menu("Deploy");
         settings = new Menu("Settings");
         source = new Menu("Source");
+        memory = new Menu("Memory");
         help = new Menu("Help");
-        bar.getMenus().addAll(file, edit, launch, debug, deploy, settings, source, help);
+        bar.getMenus().addAll(file, edit, launch, debug, deploy, settings, source, memory, help);
         file.getItems().addAll(nFile = new MenuItem("New File\t\t\t\tCtrl+N"),
                 nProject = new MenuItem("New Project\t\tCtrl+Shift+N"),
                 oFile = new MenuItem("Open File\t\t\t\tCtrl+O"),
@@ -147,7 +155,8 @@ public class Writer extends BorderPane {
         launch.getItems().addAll(build = new MenuItem("Build"),
                 clean = new MenuItem("Clean and Build"),
                 run = new MenuItem("Run"),
-                runF = new MenuItem("Run File"));
+                runF = new MenuItem("Run File"),
+                launchJar = new MenuItem("Launch Jar File"));
         debug.getItems().addAll(debugP = new MenuItem("Debug Project"));
         deploy.getItems().addAll(jar = new MenuItem("Deploy Jar"),
                 zip = new MenuItem("Deploy Zip"),
@@ -157,6 +166,7 @@ public class Writer extends BorderPane {
                 view = new MenuItem("View"));
         source.getItems().addAll(templates = new Menu("Templates"),
                 examples = new MenuItem("Examples"));
+        memory.getItems().addAll(monitor = new MenuItem("Memory Monitor"));
         templates.getItems().addAll(newTemplate = new MenuItem("New Template"),
                 selectTemplate = new MenuItem("Select Template"));
         help.getItems().add(about = new Menu("About"));
@@ -179,6 +189,9 @@ public class Writer extends BorderPane {
         });
         cProject.setOnAction((e) -> {
             closeProject();
+        });
+        monitor.setOnAction((e) -> {
+            Monitor.show();
         });
         closeAll.setOnAction((e) -> {
             closeAllProjects();
@@ -236,6 +249,9 @@ public class Writer extends BorderPane {
         });
         runF.setOnAction((e) -> {
             runFile();
+        });
+        launchJar.setOnAction((e) -> {
+            launchJar();
         });
         debugP.setOnAction((e) -> {
             debug();
@@ -492,12 +508,12 @@ public class Writer extends BorderPane {
                             if (entry.getName().endsWith(".class")) {
                                 InputStream is = ((BinaryTreeItem) sel).sourceInputStream();
                                 if (is != null) {
-                                    addClassReader(((BinaryTreeItem) sel).getProject(), entry.getName().replace(".class", ""), is, 0);
+                                    addClassReader(((BinaryTreeItem) sel).getProject(), entry.getName().replace(".class", ""), is, -1);
                                 }
                             } else {
                                 InputStream is = ((BinaryTreeItem) sel).getInputStream();
                                 if (is != null) {
-                                    addClassReader(((BinaryTreeItem) sel).getProject(), entry.getName().replace(".class", ""), is, 0);
+                                    addClassReader(((BinaryTreeItem) sel).getProject(), entry.getName().replace(".class", ""), is, -1);
                                 }
                             }
                         }
@@ -1482,6 +1498,27 @@ public class Writer extends BorderPane {
         }
     }
 
+    public final void launchJar() {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Select Jar File");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Jar File", "*.jar"));
+        File id = fc.showOpenDialog(getScene().getWindow());
+        if (id != null) {
+            ProcessItem pro = new ProcessItem(null, null, new Console(getCurrentProject()));
+            addConsoleWindow(pro);
+            Task<Void> tk = new Task<Void>() {
+
+                @Override
+                protected Void call() throws Exception {
+                    TaskManager.launchJar(pro, id);
+                    return null;
+                }
+
+            };
+            (new Thread(tk)).start();
+        }
+    }
+
     private void closeProject(Project pro) {
         ProjectTree.getTree().removeProject(pro);
     }
@@ -1545,9 +1582,9 @@ public class Writer extends BorderPane {
         String out = getCurrentProject().getDist().toAbsolutePath().toString()
                 + File.separator + getCurrentProject().getProjectName() + ".zip";
         ZipUtils appZip = new ZipUtils();
-        String source = getCurrentProject().getSource().toAbsolutePath().toString();
-        appZip.generateFileList(new File(source), source);
-        appZip.zipIt(source, out);
+        String sourceFile = getCurrentProject().getSource().toAbsolutePath().toString();
+        appZip.generateFileList(new File(sourceFile), sourceFile);
+        appZip.zipIt(sourceFile, out);
         Alert al = new Alert(Alert.AlertType.INFORMATION);
         al.initOwner(getScene().getWindow());
         al.setTitle("Zip Deploy");
@@ -1647,17 +1684,6 @@ public class Writer extends BorderPane {
         console.getSelectionModel().select(con);
     }
 
-    public final void setCurrentProject() {
-        if (tabPane.getSelectionModel().getSelectedItem() != null) {
-            Tab b = tabPane.getSelectionModel().getSelectedItem();
-            if (b instanceof Editor) {
-                currentProject.set(((Editor) b).getProject());
-            } else if (b instanceof Viewer) {
-                currentProject.set(((Viewer) b).getProject());
-            }
-        }
-    }
-
     private void evaluate(KeyEvent kc) {
         if (kc.isControlDown()) {
             if (kc.isShiftDown()) {
@@ -1737,13 +1763,29 @@ public class Writer extends BorderPane {
             }
             if (cr == null) {
                 cr = new ClassReader(null, pro, name + ".class", stream);
+                tabPane.getTabs().add(cr);
             }
-            tabPane.getTabs().add(cr);
             tabPane.getSelectionModel().select(cr);
+            if (line != -1) {
+                select(cr, line);
+            }
         }
     }
 
     private void select(Editor ed, int line) {
+        int caret = 0;
+        int selectFinal = 0;
+        for (int x = 0; x < line - 1; x++) {
+            Paragraph<Collection<String>> pcs = ed.getCodeArea().getParagraph(x);
+            caret += pcs.toString().length() + 1;
+        }
+        selectFinal += caret;
+        selectFinal += ed.getCodeArea().getParagraph(line - 1).toString().length();
+        ed.getCodeArea().selectRange(caret, selectFinal);
+        ed.getCodeArea().requestFocus();
+    }
+
+    private void select(ClassReader ed, int line) {
         int caret = 0;
         int selectFinal = 0;
         for (int x = 0; x < line - 1; x++) {

@@ -55,10 +55,12 @@ public class ClassReader extends EnvironmentTab {
     }
 
     private void readInput(InputStream is) {
+        StringBuilder sb = new StringBuilder();
         Scanner in = new Scanner(is);
         while (in.hasNextLine()) {
-            area.appendText(in.nextLine() + "\n");
+            sb.append(in.nextLine()).append("\n");
         }
+        area.appendText(sb.toString());
     }
 
     public CodeArea getCodeArea() {
