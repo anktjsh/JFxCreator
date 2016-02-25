@@ -291,9 +291,11 @@ public class Project {
 
     private boolean addProgram(Program pro) {
         try {
-            if (!Files.isHidden(pro.getFile())) {
-                programs.add(pro);
-                return true;
+            if (!programs.contains(pro)) {
+                if (!Files.isHidden(pro.getFile())) {
+                    programs.add(pro);
+                    return true;
+                }
             }
         } catch (IOException ex) {
         }

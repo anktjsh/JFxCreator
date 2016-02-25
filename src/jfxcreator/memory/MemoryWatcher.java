@@ -18,21 +18,28 @@ import javafx.util.Pair;
  */
 public class MemoryWatcher implements Runnable {
 
-    private final LongProperty freeMemory, usedMemory, totalMemory;
+    private final LongProperty freeMemory, usedMemory, totalMemory, maxMemory;
     private final ObservableList<Pair<LocalTime, Long>> previousFree, previousUsed, previousTotal;
+    private final ObservableList<ThreadStatus> status;
     private boolean running;
 
     public MemoryWatcher() {
         freeMemory = new SimpleLongProperty(Runtime.getRuntime().freeMemory());
         usedMemory = new SimpleLongProperty(Runtime.getRuntime().totalMemory() - freeMemory.get());
         totalMemory = new SimpleLongProperty(Runtime.getRuntime().totalMemory());
+        maxMemory = new SimpleLongProperty(Runtime.getRuntime().maxMemory());
         previousFree = FXCollections.observableArrayList();
         previousUsed = FXCollections.observableArrayList();
         previousTotal = FXCollections.observableArrayList();
+        status = FXCollections.observableArrayList();
         running = false;
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             cancel();
         }));
+    }
+
+    ObservableList<ThreadStatus> getStatusList() {
+        return status;
     }
 
     public ObservableList<Pair<LocalTime, Long>> freeList() {
@@ -59,16 +66,24 @@ public class MemoryWatcher implements Runnable {
         return totalMemory;
     }
 
+    public LongProperty maxMemoryProperty() {
+        return maxMemory;
+    }
+
     public long getFreeMemory() {
         return freeMemory.get();
     }
 
-    public long getMaxMemory() {
+    public long getUsedMemory() {
         return usedMemory.get();
     }
 
     public long getTotalMemory() {
         return totalMemory.get();
+    }
+
+    public long getMaxMemory() {
+        return maxMemory.get();
     }
 
     private void cancel() {
@@ -93,13 +108,19 @@ public class MemoryWatcher implements Runnable {
     public void run() {
         running = true;
         while (running) {
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-            }
+            waitOneSecond();
+            checkThreads();
+            waitOneSecond();
+            checkThreads();
+            waitOneSecond();
+            checkThreads();
+            waitOneSecond();
+            checkThreads();
+            waitOneSecond();
             long freeMemory1 = Runtime.getRuntime().freeMemory();
             long usedMemory1 = Runtime.getRuntime().totalMemory() - freeMemory1;
             long totalMemory1 = Runtime.getRuntime().totalMemory();
+            long maxMemory1 = Runtime.getRuntime().maxMemory();
             if (freeMemory1 != freeMemory.get()) {
                 freeMemory.set(freeMemory1);
                 log(0, freeMemory1);
@@ -112,6 +133,52 @@ public class MemoryWatcher implements Runnable {
                 totalMemory.set(totalMemory1);
                 log(2, totalMemory1);
             }
+            if (maxMemory1 != maxMemory.get()) {
+                maxMemory.set(maxMemory1);
+            }
+            checkThreads();
+        }
+    }
+
+    private void waitOneSecond() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
+    }
+
+    private void checkThreads() {
+        for (Thread t : Thread.getAllStackTraces().keySet()) {
+            if (!isStatusContainsThread(t)) {
+                status.add(new ThreadStatus(t));
+            }
+        }
+    }
+
+    private boolean isStatusContainsThread(Thread t) {
+        for (ThreadStatus ts : status) {
+            if (ts.getThread().equals(t)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    class ThreadStatus {
+
+        private final Thread thr;
+
+        public ThreadStatus(Thread th) {
+            thr = th;
+        }
+
+        public Thread getThread() {
+            return thr;
+        }
+
+        @Override
+        public String toString() {
+            return thr.getName() + " : " + (thr.isAlive() ? "Alive" : "Terminated");
         }
     }
 

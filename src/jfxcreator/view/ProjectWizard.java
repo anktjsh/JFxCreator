@@ -27,6 +27,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import static jfxcreator.JFxCreator.icon;
+import jfxcreator.core.Highlighter;
 import jfxcreator.core.Project;
 
 /**
@@ -167,7 +168,24 @@ public class ProjectWizard {
                 return false;
             }
         }
+        for (String s : hardSplit(packageName, ".")) {
+            for (String sa : Highlighter.JAVA_KEYWORDS) {
+                if (sa.equals(s)) {
+                    return false;
+                }
+            }
+        }
         return true;
+    }
+
+    public List<String> hardSplit(String s, String a) {
+        ArrayList<String> al = new ArrayList<>();
+        while (s.contains(a)) {
+            String one = s.substring(0, s.indexOf(a));
+            s = s.substring(s.indexOf(a) + 1);
+            al.add(one);
+        }
+        return al;
     }
 
     private void cancel() {

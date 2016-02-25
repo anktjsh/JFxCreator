@@ -81,7 +81,7 @@ public class ConsoleWindow extends Tab {
         setContextMenu(new ContextMenu());
         console = c;
         if (console != null) {
-            console.getConsole().setConsoleWindow(this);
+            console.getConsole().setConsoleWindow(ConsoleWindow.this);
         }
         if (c.getProcess() == null) {
             c.processProperty().addListener((ob, older, newer) -> {
@@ -94,7 +94,7 @@ public class ConsoleWindow extends Tab {
         getContextMenu().getItems().addAll(new MenuItem("Close"),
                 new MenuItem("Close All"));
         getContextMenu().getItems().get(0).setOnAction((e) -> {
-            getTabPane().getTabs().remove(this);
+            getTabPane().getTabs().remove(ConsoleWindow.this);
         });
         getContextMenu().getItems().get(1).setOnAction((e) -> {
             getTabPane().getTabs().clear();
@@ -414,19 +414,19 @@ public class ConsoleWindow extends Tab {
                 Map.Entry<Integer, Integer> entry = iterator.next();
                 if (area.getLength() >= entry.getValue()) {
                     area.setStyle(entry.getKey(), entry.getValue(), FXCollections.observableArrayList("red"));
+                    fullError.put(entry.getKey(), entry.getValue());
+                    iterator.remove();
                 }
             }
-            fullError.putAll(errorOutput);
-            errorOutput.clear();
             iterator = stackTraces.entrySet().iterator();
             while (iterator.hasNext()) {
                 Map.Entry<Integer, Integer> entry = iterator.next();
                 if (area.getLength() >= entry.getValue()) {
                     area.setStyle(entry.getKey(), entry.getValue(), FXCollections.observableArrayList("stacktrace"));
+                    fullStack.put(entry.getKey(), entry.getValue());
+                    iterator.remove();
                 }
             }
-            fullStack.putAll(stackTraces);
-            stackTraces.clear();
         }
 
     }
@@ -480,15 +480,7 @@ public class ConsoleWindow extends Tab {
                         next = new Button("Next"));
                 fi.setPromptText("Find");
                 fi.setOnAction((ea) -> {
-                    if (area.getSelectedText() == null || area.getSelectedText().length() == 0) {
-                        String a = fi.getText();
-                        int index = area.getText().indexOf(a);
-                        if (index != -1) {
-                            area.selectRange(index, index + a.length());
-                        }
-                    } else {
-                        next.fire();
-                    }
+                    next.fire();
                 });
                 prev.setOnAction((efd) -> {
                     int start = area.getSelection().getStart();
@@ -499,12 +491,20 @@ public class ConsoleWindow extends Tab {
                     }
                 });
                 next.setOnAction((sdfsdfsd) -> {
-                    int end = area.getSelection().getEnd();
-                    String a = area.getText().substring(end);
-                    int index = a.indexOf(fi.getText());
-                    if (index != -1) {
-                        index += end;
-                        area.selectRange(index, index + fi.getText().length());
+                    if (area.getSelectedText() == null || area.getSelectedText().length() == 0) {
+                        String a = fi.getText();
+                        int index = area.getText().indexOf(a);
+                        if (index != -1) {
+                            area.selectRange(index, index + a.length());
+                        }
+                    } else {
+                        int end = area.getSelection().getEnd();
+                        String a = area.getText().substring(end);
+                        int index = a.indexOf(fi.getText());
+                        if (index != -1) {
+                            index += end;
+                            area.selectRange(index, index + fi.getText().length());
+                        }
                     }
                 });
                 Button close;

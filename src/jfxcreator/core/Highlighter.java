@@ -44,15 +44,31 @@ public class Highlighter {
     private static boolean isSupported(String s) {
         return s.endsWith(".js")
                 || s.endsWith(".c")
-                || s.endsWith(".h");
+                || s.endsWith(".h")
+                || s.endsWith(".java");
     }
 
     private static String[] getKeywords(String s) {
-        if (s.endsWith(".js")) {
+        if (s.endsWith(".java")) {
+            return JAVA_KEYWORDS;
+        } else if (s.endsWith(".js")) {
             return JAVASCRIPT_KEYWORDS;
         }
         return null;
     }
+
+    public static final String[] JAVA_KEYWORDS = new String[]{
+        "abstract", "assert", "boolean", "break", "byte",
+        "case", "catch", "char", "class", "const",
+        "continue", "default", "do", "double", "else",
+        "enum", "extends", "final", "finally", "float",
+        "for", "goto", "if", "implements", "import",
+        "instanceof", "int", "interface", "long", "native",
+        "new", "package", "private", "protected", "public",
+        "return", "short", "static", "strictfp", "super",
+        "switch", "synchronized", "this", "throw", "throws",
+        "transient", "try", "void", "volatile", "while"
+    };
 
     private static final String[] JAVASCRIPT_KEYWORDS = new String[]{
         "abstract", "arguments", "boolean", "break", "byte",

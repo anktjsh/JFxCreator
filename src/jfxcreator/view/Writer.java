@@ -29,7 +29,7 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.print.PrinterJob;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -40,6 +40,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
@@ -73,6 +74,7 @@ import static jfxcreator.JFxCreator.icon;
 import jfxcreator.contact.EmailPicker;
 import jfxcreator.core.Console;
 import jfxcreator.core.DebuggerController;
+import jfxcreator.core.Examples;
 import jfxcreator.core.JavaLibrary;
 import jfxcreator.core.ProcessItem;
 import jfxcreator.core.ProcessPool;
@@ -108,9 +110,9 @@ public class Writer extends BorderPane {
             monitor,
             examples,
             request, report, information;
-    private final Menu templates, about;
+    private final Menu templates;
     private final MenuItem newTemplate, selectTemplate;
-    private final TreeView<String> tree;
+    private final ProjectsView projects;
     private final BorderPane top;
     private final BorderPane bottom;
     private final TabPane console;
@@ -141,7 +143,7 @@ public class Writer extends BorderPane {
                 cProject = new MenuItem("Close Project\t\tCtrl+Shift+C"),
                 closeAll = new MenuItem("Close All Projects"),
                 save = new MenuItem("Save\t\t\t\t\tCtrl+S"),
-                saveAll = new MenuItem("Save All\t\tCtrl+Shift+S"),
+                saveAll = new MenuItem("Save All\t\t\tCtrl+Shift+S"),
                 property = new MenuItem("Project Properties"),
                 print = new MenuItem("Print"),
                 fullsc = new MenuItem("Toggle FullScreen"),
@@ -166,15 +168,13 @@ public class Writer extends BorderPane {
                 view = new MenuItem("View"));
         source.getItems().addAll(templates = new Menu("Templates"),
                 examples = new MenuItem("Examples"));
-        memory.getItems().addAll(monitor = new MenuItem("Memory Monitor"));
+        memory.getItems().addAll(monitor = new MenuItem("Monitor"));
         templates.getItems().addAll(newTemplate = new MenuItem("New Template"),
                 selectTemplate = new MenuItem("Select Template"));
-        help.getItems().add(about = new Menu("About"));
-        about.getItems().addAll(
-                information = new MenuItem("Information"),
+        help.getItems().addAll(
+                information = new MenuItem("About"),
                 report = new MenuItem("Report a Bug"),
                 request = new MenuItem("Request a Feature"));
-
         nFile.setOnAction((e) -> {
             newFile();
         });
@@ -377,14 +377,14 @@ public class Writer extends BorderPane {
                 st.showAndWait();
             }
         });
-        examples.setDisable(true);
         examples.setOnAction((e) -> {
+            examples();
         });
         information.setOnAction((e) -> {
             Alert al = new Alert(Alert.AlertType.INFORMATION);
             al.setTitle("About");
             ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-            al.setHeaderText("JFxCreator v1.0");
+            al.setHeaderText("JFxCreator v1.0.0");
             al.setContentText("Created by Aniket Joshi");
             al.initOwner(getScene().getWindow());
             al.showAndWait();
@@ -396,8 +396,10 @@ public class Writer extends BorderPane {
             sendEmail("Report Bug");
         });
 
-        tree = new TreeView<>();
-        setLeft(tree);
+        projects = new ProjectsView();
+        setLeft(projects);
+        DragResizeMod.makeResizable(projects.getTreeView());
+        TreeView<String> tree = projects.getTreeView();
         tree.setRoot(new TreeItem<>("Projects"));
         tree.getRoot().setExpanded(true);
         ProjectTree.getTree().addListener(new ProjectTree.ProjectTreeListener() {
@@ -472,7 +474,7 @@ public class Writer extends BorderPane {
             }
         });
 
-        tree.setOnMouseClicked((e) -> {
+        projects.getTreeView().setOnMouseClicked((e) -> {
             if (e.getClickCount() == 2) {
                 if (e.getClickCount() == 2) {
                     TreeItem<String> sel = tree.getSelectionModel().getSelectedItem();
@@ -541,12 +543,12 @@ public class Writer extends BorderPane {
                         currentProject.set(pti.getProject());
                     }
                 } else {
-
+                    currentProject.set(null);
                 }
             }
         });
         tree.setContextMenu(new ContextMenu());
-        tree.setOnContextMenuRequested((e) -> {
+        projects.getTreeView().setOnContextMenuRequested((e) -> {
             TreeItem<String> select = tree.getSelectionModel().getSelectedItem();
             if (select instanceof ProgramTreeItem) {
                 ProgramTreeItem sti = (ProgramTreeItem) select;
@@ -658,11 +660,11 @@ public class Writer extends BorderPane {
             resize(bar, "-fx-font-size:" + newer.getSize());
         });
         tabPane.getSelectionModel().selectedItemProperty().addListener((ob, older, newer) -> {
-            if (newer instanceof Editor) {
-                Editor ed = ((Editor) newer);
-                currentProject.set(ed.getScript().getProject());
-            } else if (newer instanceof Viewer) {
-                currentProject.set(((Viewer) newer).getScript().getProject());
+            if (newer instanceof EnvironmentTab) {
+                EnvironmentTab et = (EnvironmentTab) newer;
+                currentProject.set(et.getScript().getProject());
+            } else {
+                currentProject.set(null);
             }
         });
         openPreviousProjects();
@@ -689,11 +691,50 @@ public class Writer extends BorderPane {
 
     private class Welcome extends Tab {
 
+        private final Label center, top;
+        private final VBox options;
+        private final Hyperlink newProject, openProject, openFile, aboutApp;
+
         public Welcome() {
             setText("Start Page");
-            Label ll;
-            setContent(new BorderPane(ll = new Label("Welcome to JFxCreator!")));
-            ll.setFont(new Font(30));
+            setContent(new BorderPane(center = new Label("Welcome to JFxCreator!"),
+                    null,
+                    null,
+                    null,
+                    options = new VBox(15)));
+            options.getChildren().addAll(
+                    top = new Label("Options"),
+                    newProject = new Hyperlink("New Project"),
+                    openProject = new Hyperlink("Open Project"),
+                    openFile = new Hyperlink("Open File"),
+                    aboutApp = new Hyperlink("About JFxCreator"));
+            options.setPadding(new Insets(5, 10, 5, 10));
+            options.setAlignment(Pos.TOP_CENTER);
+            top.setFont(new Font(20));
+            options.setStyle("-fx-background-color:white;");
+            for (Node n : options.getChildren()) {
+                if (n instanceof Hyperlink) {
+                    Hyperlink h = (Hyperlink) n;
+                    h.setFont(new Font(20));
+                }
+            }
+            newProject.setOnAction((e) -> {
+                Writer.this.nProject.fire();
+                newProject.setVisited(false);
+            });
+            openProject.setOnAction((e) -> {
+                Writer.this.oProject.fire();
+                openProject.setVisited(false);
+            });
+            openFile.setOnAction((e) -> {
+                Writer.this.oFile.fire();
+                openFile.setVisited(false);
+            });
+            aboutApp.setOnAction((e) -> {
+                Writer.this.information.fire();
+                aboutApp.setVisited(false);
+            });
+            center.setFont(new Font(30));
         }
     }
 
@@ -788,6 +829,53 @@ public class Writer extends BorderPane {
         } else {
             confirmSend(subject);
         }
+    }
+
+    public final void examples() {
+        Stage st = new Stage();
+        st.initOwner(getScene().getWindow());
+        st.initModality(Modality.APPLICATION_MODAL);
+        st.setTitle("Examples");
+        st.getIcons().add(JFxCreator.icon);
+        st.setResizable(false);
+        ListView<String> lv = new ListView<>();
+        BorderPane main = new BorderPane();
+        main.setTop(new Label("Select a Sample"));
+        BorderPane.setAlignment(main.getTop(), Pos.CENTER);
+        st.setScene(new Scene(main));
+        main.setPadding(new Insets(5, 10, 5, 10));
+        main.setCenter(lv);
+        lv.getItems().addAll(Examples.getExamples().getAllExamples());
+        lv.setOnMouseClicked((ex) -> {
+            if (ex.getClickCount() == 2) {
+                if (lv.getSelectionModel().getSelectedItem() != null) {
+                    String temp = lv.getSelectionModel().getSelectedItem();
+                    st.close();
+                    (new Thread(() -> {
+                        try {
+                            Thread.sleep(250);
+                        } catch (InterruptedException ef) {
+                        }
+                        Platform.runLater(() -> {
+                            loadSample(temp, getScene().getWindow(), lv.getItems().indexOf(temp));
+                        });
+                    })).start();
+                }
+            }
+        });
+        st.showAndWait();
+    }
+
+    private void loadSample(String example, Window w, int index) {
+        File f = new File(Dependencies.workplace_location + File.separator + example);
+        int x = 1;
+        while (f.exists()) {
+            f = new File(Dependencies.workplace_location + File.separator + example + x);
+            x++;
+        }
+        Project pro = new Project(f.toPath(), "web.browser.Launcher", true, 0);
+        pro.getPrograms().get(0).save(Examples.getExamples().getCode(index));
+        ProjectTree.getTree().addProject(pro);
     }
 
     private void unableToSend() {
@@ -1173,14 +1261,14 @@ public class Writer extends BorderPane {
             resizeMenuItems(m.getItems(), style);
             m.setStyle(style);
         });
-        tree.setStyle(style);
+        projects.getTreeView().setStyle(style);
     }
 
     private void resizeMenuItems(ObservableList<MenuItem> me, String style) {
         me.stream().forEach((m) -> {
             m.setStyle(style);
         });
-        tree.setStyle(style);
+        projects.getTreeView().setStyle(style);
     }
 
     public boolean processCheck() {
@@ -1259,26 +1347,12 @@ public class Writer extends BorderPane {
 
     private void print() {
         if (getSelectedTab() != null) {
-            PrinterJob job = PrinterJob.createPrinterJob();
-            if (job != null) {
-                if (job.showPrintDialog(getScene().getWindow())) {
-                    boolean suc = job.printPage(getSelectedTab().getContent());
-                    if (suc) {
-                        job.endJob();
-                        Alert al = new Alert(Alert.AlertType.INFORMATION);
-                        al.setTitle("Printer");
-                        al.initOwner(getScene().getWindow());
-                        al.setHeaderText("Print Complete");
-                        ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-                        al.showAndWait();
-                    }
-                }
-            } else {
-                Alert al = new Alert(AlertType.ERROR);
-                al.setTitle("Printer");
+            boolean b = new PrinterDialog(getScene().getWindow(), getSelectedTab().getContent()).showAndWait();
+            if (b) {
+                Alert al = new Alert(AlertType.INFORMATION);
+                al.setTitle("Print Successful!");
                 al.initOwner(getScene().getWindow());
-                al.setHeaderText("No Printers Found!");
-                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+                al.setHeaderText("Print Starting!");
                 al.showAndWait();
             }
         }
@@ -1521,6 +1595,7 @@ public class Writer extends BorderPane {
 
     private void closeProject(Project pro) {
         ProjectTree.getTree().removeProject(pro);
+        currentProject.set(null);
     }
 
     public final void closeAllProjects() {
@@ -1628,7 +1703,7 @@ public class Writer extends BorderPane {
         }
         Path f = Paths.get(".cache" + File.separator + "previous03.txt");
         ArrayList<String> al = new ArrayList<>();
-        ObservableList<TreeItem<String>> children = tree.getRoot().getChildren();
+        ObservableList<TreeItem<String>> children = projects.getTreeView().getRoot().getChildren();
         children.stream().filter((tre) -> (tre instanceof ProjectTreeItem)).map((tre) -> (ProjectTreeItem) tre).forEach((pti) -> {
             al.add(pti.getProject().serialize());
         });

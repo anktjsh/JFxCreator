@@ -11,6 +11,7 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import jfxcreator.memory.Monitor;
 
 /**
  *
@@ -20,7 +21,8 @@ public class EnvironmentToolBar extends ToolBar {
 
     private final Button newF, newP, openP;
     private final Button saveAll, undo, redo;
-    private final Button build, clean, run;
+    private final Button cut, copy, debug, paste;
+    private final Button build, clean, run, monitor;
 
     public EnvironmentToolBar(Writer sw) {
         getItems().addAll(newF = new Button("New File"),
@@ -30,10 +32,17 @@ public class EnvironmentToolBar extends ToolBar {
                 new Separator(),
                 undo = new Button("Undo"),
                 redo = new Button("Redo"),
+                cut = new Button("Cut"),
+                copy = new Button("Copy"),
+                paste = new Button("Paste"),
                 new Separator(),
                 build = new Button("Build"),
                 clean = new Button("Clean"),
-                run = new Button("Run"));
+                run = new Button("Run"),
+                new Separator(),
+                debug = new Button("Debug"),
+                new Separator(),
+                monitor = new Button("Monitor"));
         getItems().stream().filter((n) -> (n instanceof Button)).map((n) -> (Button) n).forEach((b) -> {
             b.setText("");
         });
@@ -46,6 +55,11 @@ public class EnvironmentToolBar extends ToolBar {
         build.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/build.png"), 25, 25, true, true)));
         clean.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/clean.png"), 25, 25, true, true)));
         run.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/run.png"), 25, 25, true, true)));
+        cut.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/cut.png"), 25, 25, true, true)));
+        copy.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/copy.png"), 25, 25, true, true)));
+        paste.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/paste.png"), 25, 25, true, true)));
+        debug.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/debug.png"), 25, 25, true, true)));
+        monitor.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/monitor.png"), 25, 25, true, true)));
 
         Tooltip a = new Tooltip("New File");
         Tooltip b = new Tooltip("New Project");
@@ -56,6 +70,11 @@ public class EnvironmentToolBar extends ToolBar {
         Tooltip g = new Tooltip("Build");
         Tooltip h = new Tooltip("Clean and Build");
         Tooltip i = new Tooltip("Run Project");
+        Tooltip j = new Tooltip("Cut");
+        Tooltip k = new Tooltip("Copy");
+        Tooltip l = new Tooltip("Paste");
+        Tooltip m = new Tooltip("Debug");
+        Tooltip n = new Tooltip("Memory Monitor");
         Tooltip.install(newF, a);
         Tooltip.install(newP, b);
         Tooltip.install(openP, c);
@@ -65,6 +84,11 @@ public class EnvironmentToolBar extends ToolBar {
         Tooltip.install(build, g);
         Tooltip.install(clean, h);
         Tooltip.install(run, i);
+        Tooltip.install(cut, j);
+        Tooltip.install(copy, k);
+        Tooltip.install(paste, l);
+        Tooltip.install(debug, m);
+        Tooltip.install(monitor, n);
 
         newF.setOnAction((e) -> {
             sw.newFile();
@@ -92,6 +116,21 @@ public class EnvironmentToolBar extends ToolBar {
         });
         run.setOnAction((e) -> {
             sw.run();
+        });
+        cut.setOnAction((e) -> {
+            sw.cut();
+        });
+        copy.setOnAction((e) -> {
+            sw.copy();
+        });
+        paste.setOnAction((e) -> {
+            sw.paste();
+        });
+        debug.setOnAction((e) -> {
+            sw.debug();
+        });
+        monitor.setOnAction((e) -> {
+            Monitor.show();
         });
     }
 

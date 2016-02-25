@@ -5,8 +5,6 @@
  */
 package jfxcreator.view;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -80,7 +78,6 @@ public class Editor extends EnvironmentTab {
                 Writer.currentProject.set(pro);
             }
         });
-
         popup = new Popup();
         popup.setHideOnEscape(true);
         popup.getContent().add(options = new ListView<>());
@@ -104,7 +101,6 @@ public class Editor extends EnvironmentTab {
                 popup.hide();
             }
         });
-
         main = new BorderPane();
         main.setCenter(area);
         getCenter().setCenter(main);
@@ -143,7 +139,8 @@ public class Editor extends EnvironmentTab {
                 new MenuItem("Redo"),
                 new MenuItem("Cut"),
                 new MenuItem("Copy"),
-                new MenuItem("Paste"));
+                new MenuItem("Paste"),
+                new MenuItem("Select All"));
         area.getContextMenu().getItems().get(0).setOnAction((e) -> {
             if (area.isUndoAvailable()) {
                 area.undo();
@@ -163,6 +160,9 @@ public class Editor extends EnvironmentTab {
         area.getContextMenu().getItems().get(4).setOnAction((e) -> {
             area.paste();
         });
+        area.getContextMenu().getItems().get(5).setOnAction((E) -> {
+            area.selectAll();
+        });
         area.getContextMenu().getItems().stream().forEach((mi) -> {
             mi.setStyle("-fx-font-size:" + Writer.fontSize.get().getSize());
         });
@@ -181,7 +181,7 @@ public class Editor extends EnvironmentTab {
         area.textProperty().addListener((ob, older, newer) -> {
             canBeSaved.set(getScript().canSave(newer));
             if (getScript().getType() == Program.JAVA) {
-                ConcurrentCompiler.getInstance().compile(this);
+                ConcurrentCompiler.getInstance().compile(Editor.this);
             }
         });
         errorLines.addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
@@ -231,6 +231,17 @@ public class Editor extends EnvironmentTab {
                     hbox.setAlignment(Pos.CENTER_LEFT);
                     return hbox;
                 });
+        area.setOnKeyReleased((e) -> {
+            if (e.getCode() == KeyCode.OPEN_BRACKET && e.isShiftDown()) {
+                String ab = getTabMinusOneText(getCurrentRow(area.getCaretPosition()));
+                area.insertText(area.getCaretPosition(), "\n"
+                        + getTabText(getCurrentRow(area.getCaretPosition()))
+                        + "\n"
+                        + ab + "}");
+                area.positionCaret(area.getCaretPosition() - 1 - (ab.length() + 1));
+                area.insertText(area.getCaretPosition(), "");
+            }
+        });
         area.setOnKeyPressed((e) -> {
             if (e.getCode() == KeyCode.SPACE && (e.isControlDown())) {
                 if (popup.isShowing()) {
@@ -259,18 +270,10 @@ public class Editor extends EnvironmentTab {
                     area.deleteText(area.getSelection());
                     int n = area.getCaretPosition();
                     if (n != 0) {
-                        String spl[] = area.getText().split("\n");
-                        int count = 0;
-                        for (String spl1 : spl) {
-                            count += spl1.length() + 1;
-                            if (n <= count) {
-                                String tabs = "\n" + getTabText(spl1);
-                                area.insertText(n, tabs);
-                                area.positionCaret(n + tabs.length());
-                                e.consume();
-                                break;
-                            }
-                        }
+                        String tabs = "\n" + getTabText(getCurrentRow(n));
+                        area.insertText(n, tabs);
+                        area.positionCaret(n + tabs.length());
+                        e.consume();
                     }
                 }
                 if (e.getCode() == KeyCode.TAB) {
@@ -280,7 +283,7 @@ public class Editor extends EnvironmentTab {
                     for (String spl1 : spl) {
                         count += spl1.length() + 1;
                         if (n <= count) {
-                            String b = area.getText().substring(n);
+//                            String b = area.getText().substring(n);
                             area.insertText(n, "    ");
                             area.positionCaret(n + 4);
                             e.consume();
@@ -300,15 +303,7 @@ public class Editor extends EnvironmentTab {
                             next = new Button("Next"));
                     fi.setPromptText("Find");
                     fi.setOnAction((ea) -> {
-                        if (area.getSelection().getLength() == 0) {
-                            String a = fi.getText();
-                            int index = area.getText().indexOf(a);
-                            if (index != -1) {
-                                area.selectRange(index, index + a.length());
-                            }
-                        } else {
-                            next.fire();
-                        }
+                        next.fire();
                     });
                     prev.setOnAction((efd) -> {
                         int start = area.getSelection().getStart();
@@ -319,12 +314,20 @@ public class Editor extends EnvironmentTab {
                         }
                     });
                     next.setOnAction((sdfsdfsd) -> {
-                        int end = area.getSelection().getEnd();
-                        String a = area.getText().substring(end);
-                        int index = a.indexOf(fi.getText());
-                        if (index != -1) {
-                            index += end;
-                            area.selectRange(index, index + fi.getText().length());
+                        if (area.getSelection().getLength() == 0) {
+                            String a = fi.getText();
+                            int index = area.getText().indexOf(a);
+                            if (index != -1) {
+                                area.selectRange(index, index + a.length());
+                            }
+                        } else {
+                            int end = area.getSelection().getEnd();
+                            String a = area.getText().substring(end);
+                            int index = a.indexOf(fi.getText());
+                            if (index != -1) {
+                                index += end;
+                                area.selectRange(index, index + fi.getText().length());
+                            }
                         }
                     });
                     Button close;
@@ -358,16 +361,9 @@ public class Editor extends EnvironmentTab {
                             reAll = new Button("Replace All"));
                     replace.setPromptText("Replace");
                     fi.setOnAction((ea) -> {
-                        if (area.getSelection().getLength() == 0) {
-                            String a = fi.getText();
-                            int index = area.getText().indexOf(a);
-                            if (index != -1) {
-                                area.selectRange(index, index + a.length());
-                            }
-                        } else {
-                            next.fire();
-                        }
+                        next.fire();
                     });
+
                     replace.setOnAction((es) -> {
                         rep.fire();
                     });
@@ -380,12 +376,20 @@ public class Editor extends EnvironmentTab {
                         }
                     });
                     next.setOnAction((sdfsdfsd) -> {
-                        int end = area.getSelection().getEnd();
-                        String a = area.getText().substring(end);
-                        int index = a.indexOf(fi.getText());
-                        if (index != -1) {
-                            index += end;
-                            area.selectRange(index, index + fi.getText().length());
+                        if (area.getSelection().getLength() == 0) {
+                            String a = fi.getText();
+                            int index = area.getText().indexOf(a);
+                            if (index != -1) {
+                                area.selectRange(index, index + a.length());
+                            }
+                        } else {
+                            int end = area.getSelection().getEnd();
+                            String a = area.getText().substring(end);
+                            int index = a.indexOf(fi.getText());
+                            if (index != -1) {
+                                index += end;
+                                area.selectRange(index, index + fi.getText().length());
+                            }
                         }
                     });
                     rep.setOnAction((sdfsdfsd) -> {
@@ -416,6 +420,18 @@ public class Editor extends EnvironmentTab {
         });
     }
 
+    public String getCurrentRow(int n) {
+        String spl[] = area.getText().split("\n");
+        int count = 0;
+        for (String spl1 : spl) {
+            count += spl1.length() + 1;
+            if (n <= count) {
+                return spl1;
+            }
+        }
+        return "";
+    }
+
     private int[] getRow(int caret) {
         String spl[] = area.getText().split("\n");
         int count = 0;
@@ -428,6 +444,28 @@ public class Editor extends EnvironmentTab {
             }
         }
         return new int[]{-1, -1};
+    }
+
+    private String getTabMinusOneText(String s) {
+        int count = 0;
+        for (int x = 0; x < s.length(); x += 4) {
+            if (s.length() > x + 3) {
+                if (s.substring(x, x + 4).equals("    ")) {
+                    count++;
+                }
+            } else {
+                break;
+            }
+        }
+        String ret = "";
+        String temp = s.trim();
+        if (temp.endsWith(")") || temp.endsWith("{")) {
+            count++;
+        }
+        for (int x = 0; x < count - 1; x++) {
+            ret += "    ";
+        }
+        return ret;
     }
 
     private String getTabText(String s) {

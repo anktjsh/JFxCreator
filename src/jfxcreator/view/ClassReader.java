@@ -82,15 +82,7 @@ public class ClassReader extends EnvironmentTab {
                         next = new Button("Next"));
                 fi.setPromptText("Find");
                 fi.setOnAction((ea) -> {
-                    if (area.getSelection().getLength() == 0) {
-                        String a = fi.getText();
-                        int index = area.getText().indexOf(a);
-                        if (index != -1) {
-                            area.selectRange(index, index + a.length());
-                        }
-                    } else {
-                        next.fire();
-                    }
+                    next.fire();
                 });
                 prev.setOnAction((efd) -> {
                     int start = area.getSelection().getStart();
@@ -101,12 +93,20 @@ public class ClassReader extends EnvironmentTab {
                     }
                 });
                 next.setOnAction((sdfsdfsd) -> {
-                    int end = area.getSelection().getEnd();
-                    String a = area.getText().substring(end);
-                    int index = a.indexOf(fi.getText());
-                    if (index != -1) {
-                        index += end;
-                        area.selectRange(index, index + fi.getText().length());
+                    if (area.getSelection().getLength() == 0) {
+                        String a = fi.getText();
+                        int index = area.getText().indexOf(a);
+                        if (index != -1) {
+                            area.selectRange(index, index + a.length());
+                        }
+                    } else {
+                        int end = area.getSelection().getEnd();
+                        String a = area.getText().substring(end);
+                        int index = a.indexOf(fi.getText());
+                        if (index != -1) {
+                            index += end;
+                            area.selectRange(index, index + fi.getText().length());
+                        }
                     }
                 });
                 Button close;

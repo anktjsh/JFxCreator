@@ -15,7 +15,7 @@ import javafx.collections.FXCollections;
 public class Examples {
 
     private final List<String> all = FXCollections.observableArrayList(
-            "WebBrowser", "MediaPlayer");
+            "WebBrowser"/*, "MediaPlayer"*/);
 
     private Examples() {
 
@@ -23,15 +23,6 @@ public class Examples {
 
     public List<String> getAllExamples() {
         return all;
-    }
-
-    public int getIndex(String s) {
-        for (int x = 0; x < all.size(); x++) {
-            if (all.get(x).equals(s)) {
-                return x;
-            }
-        }
-        return -1;
     }
 
     public String getCode(int n) {
@@ -43,14 +34,47 @@ public class Examples {
 
     private static Examples examples;
 
-    public Examples getExamples() {
+    public static Examples getExamples() {
         if (examples == null) {
             examples = new Examples();
         }
         return examples;
     }
 
-    private final String webBrowserLauncherCode = "public class Launcher extends Application {\n"
+    private final String webBrowserLauncherCode
+            = "\n"
+            + "package web.browser;\n"
+            + "\n"
+            + "import java.io.PrintWriter;\n"
+            + "import java.io.StringWriter;\n"
+            + "import java.util.Optional;\n"
+            + "import javafx.application.Application;\n"
+            + "import static javafx.application.Application.launch;\n"
+            + "import javafx.geometry.Insets;\n"
+            + "import javafx.scene.Scene;\n"
+            + "import javafx.scene.control.Alert;\n"
+            + "import javafx.scene.control.Button;\n"
+            + "import javafx.scene.control.ButtonType;\n"
+            + "import javafx.scene.control.ContextMenu;\n"
+            + "import javafx.scene.control.Label;\n"
+            + "import javafx.scene.control.MenuItem;\n"
+            + "import javafx.scene.control.ProgressIndicator;\n"
+            + "import javafx.scene.control.Separator;\n"
+            + "import javafx.scene.control.TextArea;\n"
+            + "import javafx.scene.control.TextField;\n"
+            + "import javafx.scene.control.TextInputDialog;\n"
+            + "import javafx.scene.control.ToolBar;\n"
+            + "import javafx.scene.input.Clipboard;\n"
+            + "import javafx.scene.input.ClipboardContent;\n"
+            + "import javafx.scene.layout.BorderPane;\n"
+            + "import javafx.scene.layout.GridPane;\n"
+            + "import javafx.scene.layout.Priority;\n"
+            + "import javafx.scene.web.PopupFeatures;\n"
+            + "import javafx.scene.web.WebEngine;\n"
+            + "import javafx.scene.web.WebView;\n"
+            + "import javafx.stage.Stage;\n"
+            + "\n"
+            + "public class Launcher extends Application {\n"
             + "\n"
             + "    private static Browser web;\n"
             + "\n"
@@ -90,7 +114,7 @@ public class Examples {
             + "                    refresh = new Button(\"Refresh\"),\n"
             + "                    new Separator(),\n"
             + "                    name = new TextField(),\n"
-            + "                    go = new Button(\"->\")\n"
+            + "                    go = new Button(\"Go\")\n"
             + "            );\n"
             + "            name.setMaxWidth(400);\n"
             + "            name.setMinWidth(400);\n"
