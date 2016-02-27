@@ -56,7 +56,7 @@
              minus the .jar extension. It should not have spaces.
              <property name="store.jar.name" value="MyJarName"/>
         -->
-        <property name="store.jar.name" value="package"/>
+        <property name="store.jar.name" value="Tachyon"/>
 
 
         <!-- don't edit below this line -->
@@ -74,7 +74,7 @@
             <zipgroupfileset dir="dist/lib" includes="*.jar"/>
 
             <manifest>
-                <attribute name="Main-Class" value="jfxcreator.JFxCreator"/>
+                <attribute name="Main-Class" value="tachyon.Tachyon"/>
             </manifest>
         </jar>
 
