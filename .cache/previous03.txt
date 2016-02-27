@@ -1,2 +1,0 @@
-Project : C:\Users\Aniket\Documents\JFxCreatorProjects\JavaProject6 : go.What
-Project : C:\Users\Aniket\Documents\JFxCreatorProjects\JavaProject7 : ok.hello.integer.HelloWorld
