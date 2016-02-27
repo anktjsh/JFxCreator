@@ -68,13 +68,7 @@ public class Dependencies {
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.setOnCloseRequest((e) -> {
             e.consume();
-            Alert al = new Alert(Alert.AlertType.CONFIRMATION);
-            al.setTitle("Exit");
-            al.setHeaderText("Are you sure you want to exit?");
-            al.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
-            al.initOwner(stage);
-            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-            Optional<ButtonType> show = al.showAndWait();
+            Optional<ButtonType> show = Writer.showAlert(Alert.AlertType.CONFIRMATION, stage, "Exit", "Are you sure you want to exit?", "");
             if (show.isPresent()) {
                 if (show.get() == ButtonType.OK) {
                     Platform.exit();
@@ -90,10 +84,8 @@ public class Dependencies {
         options.getItems().addAll(getAvailableOptions());
         link = new Hyperlink("Click to Download Latest Version of JDK");
         link.setOnAction((e) -> {
-            Alert al = new Alert(Alert.AlertType.INFORMATION);
-            al.setHeaderText("Download the latest JDK and click Refresh at the top");
-            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-            al.showAndWait();
+            Writer.showAlert(Alert.AlertType.INFORMATION, stage, "", "Download the latest JDK and click Refresh at the top",
+                    "");
             String s = "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html";
             Tachyon.host.showDocument(s);
         });
@@ -125,12 +117,8 @@ public class Dependencies {
         confirm.setOnAction((e) -> {
             String s = options.getValue();
             if (getVersion(s).compareTo(CURRENT_VERSION) < 0) {
-                Alert al = new Alert(Alert.AlertType.WARNING);
-                al.setHeaderText("This version of Java is outdated.\nIf you continue to use it, some features of Tachyon may not work.\nDo you want to continue?");
-                al.getButtonTypes().add(ButtonType.CANCEL);
-                al.initOwner(stage);
-                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-                Optional<ButtonType> show = al.showAndWait();
+                Optional<ButtonType> show = Writer.showAlert(Alert.AlertType.WARNING, stage, "", "This version of Java is outdated.\nIf you continue to use it, some features of Tachyon may not work.\nDo you want to continue?",
+                        "");
                 if (show.isPresent()) {
                     if (show.get() == ButtonType.OK) {
                     } else {
@@ -140,13 +128,8 @@ public class Dependencies {
                     return;
                 }
             }
-            Alert al = new Alert(Alert.AlertType.INFORMATION);
-            al.setTitle("Configuration Set");
-            al.setHeaderText("Settings Applied");
-            al.initOwner(stage);
-            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-            al.showAndWait();
-
+            Writer.showAlert(Alert.AlertType.INFORMATION,stage,"Configuration Set",
+                    "Settings Applied","");            
             stage.close();
 
         });
@@ -284,13 +267,9 @@ public class Dependencies {
         }
         Path p = Paths.get(localVersionProperty.get());
         if (!Files.exists(p)) {
-            Alert al = new Alert(AlertType.ERROR);
-            al.setTitle("Java Platform");
-            al.initOwner(w);
-            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-            al.setHeaderText("Previous JDK Files no longer exist");
-            al.setContentText("Click on Settings and Select a new JDK Version or some features of Tachyon may not work properly");
-            al.showAndWait();
+            Writer.showAlert(AlertType.ERROR, w, "Java Platform",
+                    "Previous JDK Files no longer exist",
+                    "Click on Settings and Select a new JDK Version or some features of Tachyon may not work properly");
         }
         System.setProperty("java.home", Dependencies.localVersionProperty.get().replace("bin", "jre"));
     }
@@ -334,13 +313,8 @@ public class Dependencies {
             String sa = field.getText();
 
             if (getVersion(sa).compareTo(CURRENT_VERSION) < 0) {
-                Alert al = new Alert(Alert.AlertType.WARNING);
-                al.setHeaderText("This version of Java is outdated.\nIf you continue to use it, some features of Tachyon may not work.\nDo you want to continue?\n"
-                        + "(Optimal Version is jdk1.8.0_45)");
-                al.getButtonTypes().add(ButtonType.CANCEL);
-                al.initOwner(s);
-                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-                Optional<ButtonType> show = al.showAndWait();
+                Optional<ButtonType> show = Writer.showAlert(Alert.AlertType.WARNING, s, "", "This version of Java is outdated.\nIf you continue to use it, some features of Tachyon may not work.\nDo you want to continue?\n"
+                        + "(Optimal Version is jdk1.8.0_45)", "");
                 if (show.isPresent()) {
                     if (show.get() == ButtonType.OK) {
                         Dependencies.localVersionProperty.set(sa);
@@ -353,13 +327,8 @@ public class Dependencies {
             } else {
                 Dependencies.localVersionProperty.set(sa);
             }
-            Alert al = new Alert(Alert.AlertType.INFORMATION);
-            al.setTitle("Configuration Set");
-            al.setHeaderText("Settings Applied");
-            al.initOwner(s);
-            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-            al.showAndWait();
-
+            Writer.showAlert(Alert.AlertType.INFORMATION, s, "Configuration Set", 
+                    "Settings Applied","");
             s.close();
         });
         s.showAndWait();
@@ -396,17 +365,10 @@ public class Dependencies {
                 defau = new Button("Select Default Directory")
         ));
         defau.setOnAction((e) -> {
-            Alert al = new Alert(AlertType.CONFIRMATION);
-            al.initOwner(s);
-            al.setTitle("Settings");
-            al.setHeaderText("Project Workplace Location");
-
             String home = System.getProperty("user.home");
             home = home + File.separator + "Documents"
                     + File.separator + "TachyonProjects";
-            al.setContentText("Select " + home + "\nAs your project directory?");
-            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-            Optional<ButtonType> show = al.showAndWait();
+            Optional<ButtonType> show = Writer.showAlert(AlertType.CONFIRMATION,s,"Settings","Project Workplace Location", "Select " + home + "\nAs your project directory?");
             if (show.isPresent()) {
                 if (show.get() == ButtonType.OK) {
                     dir.setText(home);
@@ -427,13 +389,7 @@ public class Dependencies {
         });
         save.setOnAction((E) -> {
             workplace_location = dir.getText();
-            Alert al = new Alert(Alert.AlertType.INFORMATION);
-            al.setTitle("Settings");
-            al.initOwner(s);
-            al.setHeaderText("Project Workplace Location");
-            al.setContentText("Configurations Saved");
-            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-            al.showAndWait();
+            Writer.showAlert(Alert.AlertType.INFORMATION, s, "Settings", "Project Workplace Location", "Configurations Saved");
             s.close();
         });
         s.showAndWait();

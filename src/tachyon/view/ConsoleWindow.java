@@ -242,12 +242,7 @@ public class ConsoleWindow extends Tab {
         (timer = new TextTimer()).start();
         cancel.setOnAction((e) -> {
             if (console.getProcess().isAlive()) {
-                Alert al = new Alert(AlertType.CONFIRMATION);
-                al.setTitle("End Process");
-                al.setHeaderText("Are you sure you want to end the process?");
-                al.initOwner(getTabPane().getScene().getWindow());
-                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-                Optional<ButtonType> show = al.showAndWait();
+                Optional<ButtonType> show = Writer.showAlert(AlertType.CONFIRMATION, getTabPane().getScene().getWindow(), "End Process", "Are you sure you want to end the process?", "");
                 if (show.isPresent()) {
                     if (show.get() == ButtonType.OK) {
                         console.getConsole().log("Build Deliberately Stopped");
@@ -267,12 +262,7 @@ public class ConsoleWindow extends Tab {
         });
         setOnCloseRequest((e) -> {
             if (console.getProcess().isAlive()) {
-                Alert al = new Alert(AlertType.CONFIRMATION);
-                al.setTitle("End Process");
-                al.setHeaderText("Are you sure you want to end the process?");
-                al.initOwner(getTabPane().getScene().getWindow());
-                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-                Optional<ButtonType> show = al.showAndWait();
+                Optional<ButtonType> show = Writer.showAlert(AlertType.CONFIRMATION, getTabPane().getScene().getWindow(), "End Process", "Are you sure you want to end the process?", "");
                 if (show.isPresent()) {
                     if (show.get() == ButtonType.OK) {
                         console.getConsole().log("Build Deliberately Stopped");

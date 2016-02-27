@@ -8,7 +8,6 @@ package tachyon.view;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
@@ -17,7 +16,6 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import tachyon.Tachyon;
 import static tachyon.Tachyon.icon;
 
 /**
@@ -71,12 +69,7 @@ public class ProjectOptions {
                 ret = list.getItems().indexOf(list.getSelectionModel().getSelectedItem());
                 finish();
             } else {
-                Alert al = new Alert(AlertType.ERROR);
-                al.initOwner(stage);
-                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-                al.setTitle("Error");
-                al.setHeaderText("You must select a Project Configuration");
-                al.showAndWait();
+                Writer.showAlert(AlertType.ERROR, stage, "Error", "You must select a Project Configuration", "");
             }
         });
 

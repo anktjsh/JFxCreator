@@ -29,6 +29,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import tachyon.Tachyon;
+import tachyon.view.Writer;
 
 /**
  *
@@ -160,11 +161,7 @@ public class EmailPicker {
                                         LocalTime.now().toString()));
                     } catch (IOException ex) {
                     }
-                    Alert al = new Alert(AlertType.INFORMATION);
-                    al.initOwner(stage);
-                    al.setTitle("Email Sent");
-                    al.setHeaderText("Email Sent");
-                    al.showAndWait();
+                    Writer.showAlert(AlertType.INFORMATION,stage,"Email Sent","Email Sent","");
                     stage.close();
                 }
 
@@ -174,10 +171,6 @@ public class EmailPicker {
     }
 
     private void error(String message) {
-        Alert al = new Alert(AlertType.ERROR);
-        al.initOwner(stage);
-        al.setTitle("Error Sending");
-        al.setHeaderText(message);
-        al.showAndWait();
+        Writer.showAlert(AlertType.ERROR, stage, "Error Sending", message, "");
     }
 }

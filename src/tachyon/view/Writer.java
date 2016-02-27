@@ -70,7 +70,6 @@ import javafx.stage.Window;
 import javafx.stage.WindowEvent;
 import javafx.util.Pair;
 import tachyon.Tachyon;
-import static tachyon.Tachyon.icon;
 import tachyon.contact.EmailPicker;
 import tachyon.core.Console;
 import tachyon.core.DebuggerController;
@@ -154,10 +153,10 @@ public class Writer extends BorderPane {
                 copy = new MenuItem("Copy\t\tCtrl+C"),
                 paste = new MenuItem("Paste\t\tCtrl+V"),
                 selectAll = new MenuItem("Select All\t\tCtrl+A"));
-        launch.getItems().addAll(build = new MenuItem("Build"),
-                clean = new MenuItem("Clean and Build"),
-                run = new MenuItem("Run"),
-                runF = new MenuItem("Run File"),
+        launch.getItems().addAll(build = new MenuItem("Build\t\t\t\tF6"),
+                clean = new MenuItem("Clean and Build\tShift+F6"),
+                run = new MenuItem("Run\t\t\t\t\tF5"),
+                runF = new MenuItem("Run File\t\t\tShift+F5"),
                 launchJar = new MenuItem("Launch Jar File"));
         debug.getItems().addAll(debugP = new MenuItem("Debug Project"));
         deploy.getItems().addAll(jar = new MenuItem("Deploy Jar"),
@@ -773,10 +772,10 @@ public class Writer extends BorderPane {
                 System.out.println("Total : " + totalPath);
                 File f = new File(totalPath);
                 if (f.exists()) {
-                    showAlert(AlertType.WARNING, 
-                            getScene().getWindow(), 
-                            "File Exists", 
-                            "Unfortunately this file already exists", 
+                    showAlert(AlertType.WARNING,
+                            getScene().getWindow(),
+                            "File Exists",
+                            "Unfortunately this file already exists",
                             "");
                 } else {
                     Program pro = new Program(Program.JAVA, cName, f.toPath(), Template.getTemplateCode(temp, result.get().getKey(), result.get().getValue()), getCurrentProject());
@@ -873,7 +872,7 @@ public class Writer extends BorderPane {
     }
 
     private void unableToSend() {
-        showAlert(AlertType.ERROR, getScene().getWindow(), "Unable to Send", 
+        showAlert(AlertType.ERROR, getScene().getWindow(), "Unable to Send",
                 "Cannot send another email so soon after the last one!", "");
     }
 
@@ -1140,9 +1139,9 @@ public class Writer extends BorderPane {
             return true;
         }
         if (f.length() > (1024 * 1024)) {
-            Optional<ButtonType> show = showAlert(AlertType.CONFIRMATION,getScene().getWindow(),"File Size",f.getName() + "'s file size is " + getFileSize(f.length()) + " MB."
+            Optional<ButtonType> show = showAlert(AlertType.CONFIRMATION, getScene().getWindow(), "File Size", f.getName() + "'s file size is " + getFileSize(f.length()) + " MB."
                     + "\nIf you continue, Tachyon may throw an OutOfMemoryException\n"
-                    + "and become unusable","");            
+                    + "and become unusable", "");
             if (show.isPresent()) {
                 if (show.get() == ButtonType.OK) {
                     return true;
@@ -1230,7 +1229,7 @@ public class Writer extends BorderPane {
         if (getScene().getWindow() == null) {
             return true;
         }
-        Optional<ButtonType> show =showAlert(AlertType.ERROR,getScene().getWindow(),"File Type","Tachyon is unable to read this type of File","Would you still like to open this File?");
+        Optional<ButtonType> show = showAlert(AlertType.ERROR, getScene().getWindow(), "File Type", "Tachyon is unable to read this type of File", "Would you still like to open this File?");
         if (show.isPresent()) {
             if (show.get() == ButtonType.OK) {
                 return true;
@@ -1263,7 +1262,7 @@ public class Writer extends BorderPane {
         if (size == 0) {
             return true;
         } else {
-            Optional<ButtonType> show = showAlert(Alert.AlertType.CONFIRMATION,getScene().getWindow(),"Running Processes",ProcessPool.getPool().getAccumulatedText(),
+            Optional<ButtonType> show = showAlert(Alert.AlertType.CONFIRMATION, getScene().getWindow(), "Running Processes", ProcessPool.getPool().getAccumulatedText(),
                     "These processes are currently running!\n"
                     + "Would you like to cancel all of the processes?");
             if (show.isPresent()) {
@@ -1331,7 +1330,7 @@ public class Writer extends BorderPane {
         if (getSelectedTab() != null) {
             boolean b = new PrinterDialog(getScene().getWindow(), getSelectedTab().getContent()).showAndWait();
             if (b) {
-                showAlert(AlertType.INFORMATION,getScene().getWindow(), "Print Successful!","Print Starting!", "");
+                showAlert(AlertType.INFORMATION, getScene().getWindow(), "Print Successful!", "Print Starting!", "");
             }
         }
     }
@@ -1847,6 +1846,21 @@ public class Writer extends BorderPane {
                 }
             }
         } else {
+            if (kc.isShiftDown()) {
+                if (kc.getCode()==KeyCode.F6){
+                    clean.fire();
+                }
+                if (kc.getCode()==KeyCode.F5) {
+                    runF.fire();
+                }
+            } else {
+                if (kc.getCode()==KeyCode.F6){
+                    build.fire();
+                }
+                if (kc.getCode()==KeyCode.F5) {
+                    run.fire();
+                }
+            }
         }
     }
 
@@ -1922,6 +1936,9 @@ public class Writer extends BorderPane {
         ale.setTitle(title);
         ale.setHeaderText(head);
         ale.setContentText(cont);
+        if (((Stage) ale.getDialogPane().getScene().getWindow()).getIcons().size() == 0) {
+            ((Stage) ale.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
+        }
         return ale.showAndWait();
     }
 

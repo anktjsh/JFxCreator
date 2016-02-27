@@ -119,12 +119,7 @@ public class Editor extends EnvironmentTab {
         readFromScript();
         setOnCloseRequest((e) -> {
             if (canSave()) {
-                Alert al = new Alert(Alert.AlertType.CONFIRMATION);
-                al.setHeaderText("Would you like to save before closing?");
-                al.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL, ButtonType.NO);
-                al.initOwner(getTabPane().getScene().getWindow());
-                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
-                Optional<ButtonType> show = al.showAndWait();
+                Optional<ButtonType> show = Writer.showAlert(Alert.AlertType.CONFIRMATION, getTabPane().getScene().getWindow(), "", "Would you like to save before closing?", "");
                 if (show.isPresent()) {
                     if (show.get() == ButtonType.OK) {
                         save();

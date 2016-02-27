@@ -89,23 +89,13 @@ public class FileWizard {
                 if (options.getSelectionModel().getSelectedItem() != null) {
                     switchtoComplete();
                 } else {
-                    Alert al = new Alert(Alert.AlertType.WARNING);
-                    al.initOwner(stage);
-                    al.setHeaderText("You must select a file type first");
-                    ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-                    al.showAndWait();
+                    Writer.showAlert(Alert.AlertType.WARNING, stage, "", "You must select a file type first", "");
                 }
             } else {
                 if (destination.getText().length() > 0) {
                     finish();
                 } else {
-                    Alert al = new Alert(Alert.AlertType.ERROR);
-                    al.setTitle("Error");
-                    al.initOwner(stage);
-                    al.setHeaderText("File");
-                    ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-                    al.setContentText("File name cannot be empty!");
-                    al.showAndWait();
+                    Writer.showAlert(Alert.AlertType.ERROR, stage, "Error", "File", "File name cannot be empty");
                 }
             }
         });
@@ -216,13 +206,7 @@ public class FileWizard {
         String temp = destination.getText();
         Path f = Paths.get(temp);
         if (Files.exists(f)) {
-            Alert al = new Alert(Alert.AlertType.ERROR);
-            al.setTitle("New File");
-            al.setHeaderText("File : " + temp);
-            al.setContentText("File already exists!");
-            al.initOwner(stage);
-            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-            al.showAndWait();
+            Writer.showAlert(Alert.AlertType.ERROR, stage, "New File", "File : " + temp, "File already exists!");
         } else {
             newName = packageName.getText().isEmpty() ? "" : (packageName.getText() + ".") + filename.getText();
             stage.close();

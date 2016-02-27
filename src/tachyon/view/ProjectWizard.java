@@ -16,7 +16,6 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -109,47 +108,19 @@ public class ProjectWizard {
                                 confirmed = true;
                                 stage.close();
                             } else {
-                                Alert al = new Alert(AlertType.ERROR);
-                                al.setTitle("Package Name");
-                                al.setHeaderText("Package name is not valid!");
-                                al.initOwner(stage);
-                                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-                                al.showAndWait();
+                                Writer.showAlert(AlertType.ERROR, stage, "Package Name","Package name is not valid!","");
                             }
                         } else {
-                            Alert al = new Alert(AlertType.ERROR);
-                            al.setTitle("Main-Class Name");
-                            al.setHeaderText("Main Class cannot contain character \".\"");
-                            al.initOwner(stage);
-                            ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-                            al.showAndWait();
+                            Writer.showAlert(AlertType.ERROR, stage, "Main-Class Name", "Main Class cannot contain character \".\"", "");
                         }
                     } else {
-                        Alert al = new Alert(Alert.AlertType.ERROR);
-                        al.setTitle("Error");
-                        al.setHeaderText("Project");
-                        al.initOwner(stage);
-                        al.setContentText("Main-Class Name cannot be empty!");
-                        ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-                        al.showAndWait();
+                        Writer.showAlert(AlertType.ERROR, stage, "Error", "Project", "Main-Class Name cannot be empty!");
                     }
                 } else {
-                    Alert al = new Alert(Alert.AlertType.ERROR);
-                    al.setTitle("New Project");
-                    al.initOwner(stage);
-                    al.setHeaderText("Project : " + projectName.getText());
-                    al.setContentText("Project already exists!");
-                    ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-                    al.showAndWait();
+                    Writer.showAlert(AlertType.ERROR, stage, "New Project", "Project : " + projectName.getText(), "Project already exists!");
                 }
             } else {
-                Alert al = new Alert(Alert.AlertType.ERROR);
-                al.setTitle("Error");
-                al.setHeaderText("Project");
-                al.initOwner(stage);
-                al.setContentText("Project name cannot be empty!");
-                ((Stage) al.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-                al.showAndWait();
+                Writer.showAlert(AlertType.ERROR, stage, "Error", "Project", "Project name cannot be empty!");
             }
         });
     }
