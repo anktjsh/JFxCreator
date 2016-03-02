@@ -7,6 +7,7 @@ package tachyon.view;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.TreeMap;
 import javafx.application.Platform;
 import javafx.scene.control.TreeItem;
@@ -37,20 +38,29 @@ public class ProgramTreeItem extends TreeItem<String> {
         graphic = new HBox();
         graphic.getChildren().add(new ImageView(getIconImage()));
         setGraphic(graphic);
-        script.addProgramListener((Program pro1, TreeMap<Long, String> errors) -> {
-            Platform.runLater(() -> {
-                if (errors.isEmpty()) {
-                    if (graphic.getChildren().get(0) instanceof Text) {
-                        graphic.getChildren().remove(0);
+        script.addProgramListener(new Program.ProgramListener() {
+
+            @Override
+            public void hasErrors(Program pro, TreeMap<Long, String> errors) {
+                Platform.runLater(() -> {
+                    if (errors.isEmpty()) {
+                        if (graphic.getChildren().get(0) instanceof Text) {
+                            graphic.getChildren().remove(0);
+                        }
+                    } else {
+                        if (!(graphic.getChildren().get(0) instanceof Text)) {
+                            Text t;
+                            graphic.getChildren().add(0, t = new Text("X"));
+                            t.setFill(Color.RED);
+                        }
                     }
-                } else {
-                    if (!(graphic.getChildren().get(0) instanceof Text)) {
-                        Text t;
-                        graphic.getChildren().add(0, t = new Text("X"));
-                        t.setFill(Color.RED);
-                    }
-                }
-            });
+                });
+            }
+
+            @Override
+            public void hasBreakPoints(Program pro, List<Long> points) {
+
+            }
         });
     }
 

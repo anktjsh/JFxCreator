@@ -5,9 +5,13 @@
  */
 package tachyon.view;
 
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 
 /**
  *
@@ -16,9 +20,24 @@ import javafx.scene.layout.BorderPane;
 public class ProjectsView extends BorderPane {
 
     private final TreeView<String> tree;
+    private final Button collapse;
+    private final VBox box;
 
     public ProjectsView() {
-        setCenter(tree = new TreeView<>());
+        collapse = new Button("Projects");
+        collapse.setRotate(270);
+        setLeft(box = new VBox(new Label(), new Label(), new Label(), collapse));
+        box.setStyle("-fx-background-color:white;");
+        box.setAlignment(Pos.TOP_CENTER);
+        setCenter(null);
+        tree = new TreeView<>();
+        collapse.setOnAction((e) -> {
+            if (getCenter() == null) {
+                setCenter(tree);
+            } else {
+                setCenter(null);
+            }
+        });
         BorderPane.setAlignment(tree, Pos.TOP_CENTER);
     }
 

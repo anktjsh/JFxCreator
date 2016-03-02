@@ -11,5 +11,8 @@
             <attribute name="catch.umbrella.types" value="java.io.IOException, java.sql.SqlException"/>
             <attribute name="enabled" value="true"/>
         </node>
+        <node name="Imports_UNUSED">
+            <attribute name="enabled" value="false"/>
+        </node>
     </tool>
 </configuration>

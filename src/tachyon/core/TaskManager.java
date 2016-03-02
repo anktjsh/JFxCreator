@@ -193,6 +193,9 @@ public class TaskManager {
     private static String getName(Program f) {
         String total = f.getLastCode();
         int packIndex = total.indexOf("package");
+        if (packIndex == -1) {
+            return f.getFile().getFileName().toString().replace(".java", "");
+        }
         int previousCount = 0;
         while (frequency(total.substring(0, packIndex), "/*") != frequency(total.substring(0, packIndex), "*/")) {
             previousCount += packIndex + "package".length();
@@ -201,9 +204,9 @@ public class TaskManager {
         }
         String one = total.substring(0, packIndex);
         String two = total.substring(packIndex);
-        two = two.substring(0, two.indexOf(";")+1);
-        String packName = total.substring(packIndex + "package".length() + 1, one.length() + two.indexOf(";")).trim().replaceAll(" ", "")+"." +
-                f.getFile().getFileName().toString().replace(".java", "");
+        two = two.substring(0, two.indexOf(";") + 1);
+        String packName = total.substring(packIndex + "package".length() + 1, one.length() + two.indexOf(";")).trim().replaceAll(" ", "") + "."
+                + f.getFile().getFileName().toString().replace(".java", "");
         return packName;
     }
 

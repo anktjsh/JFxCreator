@@ -23,7 +23,7 @@ public class DebuggerConsole extends BorderPane {
 
     private final DebuggerController controller;
     private final VBox box;
-    private final Button run, close, threads, suspend, resume, list,
+    private final Button run, close, threads, suspend, resume, list, brea,
             classpath, monitor;
     private final Label status;
     private final Label title;
@@ -39,6 +39,7 @@ public class DebuggerConsole extends BorderPane {
         controller = dc;
         box.getChildren().addAll(status = new Label("Debugger is Initializing"),
                 run = new Button("Run"),
+                brea = new Button("Set Breakpoints"),
                 threads = new Button("Threads"),
                 suspend = new Button("Suspend"),
                 resume = new Button("Resume"),
@@ -89,6 +90,11 @@ public class DebuggerConsole extends BorderPane {
                 dc.process("monitor");
             }
         });
+        brea.setOnAction((E) -> {
+            if (dc.isAvailable()) {
+                dc.setBreakpoints();
+            }
+        });
         run.setDisable(true);
         threads.setDisable(true);
         suspend.setDisable(true);
@@ -97,12 +103,14 @@ public class DebuggerConsole extends BorderPane {
         classpath.setDisable(true);
         monitor.setDisable(true);
         close.setDisable(true);
+        brea.setDisable(true);
         controller.outputProperty().addListener((ob, older, newer) -> {
             Platform.runLater(() -> {
                 if (newer != null) {
                     status.setText("Debugger is Running");
                     run.setDisable(false);
                     close.setDisable(false);
+                    brea.setDisable(false);
                     threads.setDisable(false);
                     suspend.setDisable(false);
                     resume.setDisable(false);
@@ -113,6 +121,7 @@ public class DebuggerConsole extends BorderPane {
                     status.setText("Debugger has terminated");
                     run.setDisable(true);
                     threads.setDisable(true);
+                    brea.setDisable(true);
                     suspend.setDisable(true);
                     resume.setDisable(true);
                     list.setDisable(true);

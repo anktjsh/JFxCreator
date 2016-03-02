@@ -38,7 +38,8 @@ public class Program {
     private String className;
     private final ObservableList<ProgramListener> programs;
     private final BooleanProperty hasErrors;
-
+    private final ObservableList<Long> breaks;
+    private final TreeMap<Long, String> errors;
     private final HashMap<String, List<String>> previous = new HashMap<>();
 
     public Program(int t, String name, Path p, List<String> cod, Project pro) {
@@ -53,6 +54,8 @@ public class Program {
             }
         }
         programs = FXCollections.observableArrayList();
+        breaks = FXCollections.observableArrayList();
+        errors = new TreeMap<>();
         hasErrors = new SimpleBooleanProperty(false);
         initProgram(cod);
     }
@@ -236,15 +239,43 @@ public class Program {
         return type;
     }
 
+    public void addBreakPoint(long l) {
+        if (!breaks.contains(l)) {
+            breaks.add(l);
+            for (ProgramListener pl : getProgramListeners()) {
+                pl.hasBreakPoints(this, breaks);
+            }
+        }
+    }
+
+    public void removeBreakPoint(long l) {
+        if (breaks.contains(l)) {
+            breaks.remove(l);
+            for (ProgramListener pl : getProgramListeners()) {
+                pl.hasBreakPoints(this, breaks);
+            }
+        }
+    }
+
     public void hasErrors(TreeMap<Long, String> lines) {
         if (lines.isEmpty()) {
             hasErrors.set(false);
         } else {
             hasErrors.set(true);
         }
+        errors.clear();
+        errors.putAll(lines);
         for (ProgramListener ps : getProgramListeners()) {
-            ps.hasErrors(this, lines);
+            ps.hasErrors(this, errors);
         }
+    }
+
+    public ObservableList<Long> getBreakPoints() {
+        return breaks;
+    }
+
+    public TreeMap<Long, String> getErrors() {
+        return errors;
     }
 
     public void addProgramListener(ProgramListener ps) {
@@ -258,5 +289,7 @@ public class Program {
     public interface ProgramListener {
 
         public void hasErrors(Program pro, TreeMap<Long, String> errors);
+
+        public void hasBreakPoints(Program pro, List<Long> points);
     }
 }

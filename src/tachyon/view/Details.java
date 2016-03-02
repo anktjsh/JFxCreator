@@ -70,7 +70,7 @@ public class Details {
         return stage;
     }
 
-    private static long countSize(File f) throws IOException {
+    public static long countSize(File f) throws IOException {
         long ret = 0;
         if (f.isDirectory()) {
             for (File fa : f.listFiles()) {

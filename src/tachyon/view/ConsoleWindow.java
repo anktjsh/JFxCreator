@@ -22,7 +22,6 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -36,13 +35,11 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Popup;
-import javafx.stage.Stage;
 import tachyon.Tachyon;
 import tachyon.core.Console;
 import tachyon.core.JavaPlatform;
 import tachyon.core.ProcessItem;
 import tachyon.core.Program;
-import tachyon.core.Project;
 import static tachyon.view.Writer.fontSize;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.MouseOverTextEvent;
@@ -63,6 +60,8 @@ public class ConsoleWindow extends Tab {
     private final TextTimer timer;
     private final CodeArea area;
     private String currentText = "";
+    private final TreeMap<Integer, Integer> ide;
+    private final TreeMap<Integer, Integer> totalIDE;
     private final TreeMap<Integer, Integer> errorOutput;
     private final TreeMap<Integer, Integer> stackTraces;
     private final TreeMap<Integer, Integer> fullError;
@@ -287,6 +286,8 @@ public class ConsoleWindow extends Tab {
         stackTraces = new TreeMap<>();
         fullError = new TreeMap<>();
         fullStack = new TreeMap<>();
+        ide = new TreeMap<>();
+        totalIDE = new TreeMap<>();
     }
 
     public static String getEntryPath(String className) {
@@ -352,6 +353,12 @@ public class ConsoleWindow extends Tab {
         errorOutput.put(area.getText().length() + currentText.length(),
                 area.getText().length() + currentText.length() + s.length());
         currentText += s;
+    }
+
+    public void complete(String process) {
+        String temp = "\n" + process + " Complete\n";
+        ide.put(area.getText().length() + currentText.length(), area.getText().length() + currentText.length() + temp.length());
+        currentText += temp;
     }
 
     private void addStackTrace(String s) {
@@ -424,14 +431,17 @@ public class ConsoleWindow extends Tab {
                     iterator.remove();
                 }
             }
+            iterator = ide.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<Integer, Integer> entry = iterator.next();
+                if (area.getLength() >= entry.getValue()) {
+                    area.setStyle(entry.getKey(), entry.getValue(), FXCollections.observableArrayList("ide"));
+                    totalIDE.put(entry.getKey(), entry.getValue());
+                    iterator.remove();
+                }
+            }
         }
 
-    }
-
-    public void complete(String process) {
-        Platform.runLater(() -> {
-            append("\n" + process + " Complete\n");
-        });
     }
 
     private void append(String s) {

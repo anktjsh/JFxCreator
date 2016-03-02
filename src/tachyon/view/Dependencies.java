@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -30,7 +32,9 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -46,7 +50,7 @@ import tachyon.Tachyon;
  */
 public class Dependencies {
 
-    public static final String CURRENT_VERSION = "1.8.0_45";
+    public static final String CURRENT_VERSION = "1.8.0_72";
 
     private final Stage stage;
     private final VBox box;
@@ -84,14 +88,14 @@ public class Dependencies {
         options.getItems().addAll(getAvailableOptions());
         link = new Hyperlink("Click to Download Latest Version of JDK");
         link.setOnAction((e) -> {
-            Writer.showAlert(Alert.AlertType.INFORMATION, stage, "", "Download the latest JDK and click Refresh at the top",
-                    "");
             String s = "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html";
             Tachyon.host.showDocument(s);
+            Writer.showAlert(Alert.AlertType.INFORMATION, stage, "", "Download the latest JDK and click Refresh at the top", "");
         });
         refresh = new Button("Refresh");
         refresh.setOnAction((e) -> {
-            options.getItems().setAll(getAvailableOptions());
+            options.getItems().clear();
+            options.getItems().addAll(getAvailableOptions());
         });
         box.getChildren().addAll(new Label("Select the appropriate JDK Version"), refresh, options, field, link, confirm = new Button("Confirm"));
         options.valueProperty().addListener((ob, older, newer) -> {
@@ -128,8 +132,8 @@ public class Dependencies {
                     return;
                 }
             }
-            Writer.showAlert(Alert.AlertType.INFORMATION,stage,"Configuration Set",
-                    "Settings Applied","");            
+            Writer.showAlert(Alert.AlertType.INFORMATION, stage, "Configuration Set",
+                    "Settings Applied", "");
             stage.close();
 
         });
@@ -271,7 +275,6 @@ public class Dependencies {
                     "Previous JDK Files no longer exist",
                     "Click on Settings and Select a new JDK Version or some features of Tachyon may not work properly");
         }
-        System.setProperty("java.home", Dependencies.localVersionProperty.get().replace("bin", "jre"));
     }
 
     public static void platform(Window w) {
@@ -291,14 +294,27 @@ public class Dependencies {
         TextField field;
         Button cancel, confirm;
         HBox h;
+        Button refresh = new Button("Refresh");
+        Hyperlink link = new Hyperlink("Click to Download Latest Version of JDK");
+        link.setOnAction((e) -> {
+            String sa = "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html";
+            Tachyon.host.showDocument(sa);
+            Writer.showAlert(Alert.AlertType.INFORMATION, s, "", "Download the latest JDK and click Refresh at the top", "");
+        });
         box.getChildren().addAll(new Label("Select Java Platform"),
+                refresh,
                 new Label("Current Platform is : " + Dependencies.localVersionProperty.get()),
                 choice = new ChoiceBox<>(),
                 field = new TextField(),
                 h = new HBox(10,
                         cancel = new Button("Cancel"),
-                        confirm = new Button("Confirm")));
-        choice.getItems().setAll(getAvailableOptions());
+                        confirm = new Button("Confirm")),
+                link);
+        refresh.setOnAction((e) -> {
+            choice.getItems().clear();
+            choice.getItems().addAll(getAvailableOptions());
+        });
+        choice.getItems().addAll(getAvailableOptions());
         field.setPromptText("Java Platform");
         h.setAlignment(Pos.CENTER);
         field.setText(Dependencies.localVersionProperty.get());
@@ -314,7 +330,7 @@ public class Dependencies {
 
             if (getVersion(sa).compareTo(CURRENT_VERSION) < 0) {
                 Optional<ButtonType> show = Writer.showAlert(Alert.AlertType.WARNING, s, "", "This version of Java is outdated.\nIf you continue to use it, some features of Tachyon may not work.\nDo you want to continue?\n"
-                        + "(Optimal Version is jdk1.8.0_45)", "");
+                        + "(Optimal Version is jdk1.8.0_72)", "");
                 if (show.isPresent()) {
                     if (show.get() == ButtonType.OK) {
                         Dependencies.localVersionProperty.set(sa);
@@ -327,8 +343,8 @@ public class Dependencies {
             } else {
                 Dependencies.localVersionProperty.set(sa);
             }
-            Writer.showAlert(Alert.AlertType.INFORMATION, s, "Configuration Set", 
-                    "Settings Applied","");
+            Writer.showAlert(Alert.AlertType.INFORMATION, s, "Configuration Set",
+                    "Settings Applied", "");
             s.close();
         });
         s.showAndWait();
@@ -368,7 +384,7 @@ public class Dependencies {
             String home = System.getProperty("user.home");
             home = home + File.separator + "Documents"
                     + File.separator + "TachyonProjects";
-            Optional<ButtonType> show = Writer.showAlert(AlertType.CONFIRMATION,s,"Settings","Project Workplace Location", "Select " + home + "\nAs your project directory?");
+            Optional<ButtonType> show = Writer.showAlert(AlertType.CONFIRMATION, s, "Settings", "Project Workplace Location", "Select " + home + "\nAs your project directory?");
             if (show.isPresent()) {
                 if (show.get() == ButtonType.OK) {
                     dir.setText(home);

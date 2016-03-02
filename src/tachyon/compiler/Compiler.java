@@ -24,7 +24,6 @@ import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
-import javax.tools.ToolProvider;
 import tachyon.core.JavaLibrary;
 import tachyon.core.Program;
 import tachyon.core.Project;
@@ -36,8 +35,15 @@ import tachyon.view.Editor;
  */
 public class Compiler {
 
-    private static final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    private static JavaCompiler compiler;
 
+    static {
+        try {
+            compiler = (JavaCompiler) Class.forName("com.sun.tools.javac.api.JavacTool").newInstance();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+            ex.printStackTrace();
+        }
+    }
     private final Project total;
     private final ObservableList<Editor> allEditors;
     private final ObservableList<Program> allPrograms;
@@ -60,7 +66,6 @@ public class Compiler {
                         allEditors.add(ed);
                     }
                 }
-
             }
         }
         for (Program p : total.getPrograms()) {
@@ -77,13 +82,15 @@ public class Compiler {
     }
 
     public void prepare() {
-        ObservableList<JavaFileObject> objs = FXCollections.observableArrayList();
+        ObservableList<DynamicJavaSourceCodeObject> objs = FXCollections.observableArrayList();
         allEditors.stream().forEach((ed) -> {
             objs.add(new DynamicJavaSourceCodeObject(ed.getScript().getClassName(), ed.getCodeArea().getText()));
         });
-        allPrograms.stream().forEach((p) -> {
+        for (Program p : allPrograms) {
             objs.add(new DynamicJavaSourceCodeObject(p.getClassName(), p.getLastCode()));
-        });
+        }
+        System.out.println(allPrograms.size());
+        System.out.println(objs.size());
         JavaCompiler.CompilationTask task = compiler.getTask(null, standard, diag, compilerOptions, null, objs);
         HashMap<String, TreeMap<Long, String>> map = new HashMap<>();
         boolean status = task.call();

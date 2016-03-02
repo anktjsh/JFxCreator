@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -322,14 +323,18 @@ public class Writer extends BorderPane {
                         try {
                             String s = getSelectedEditor().getCodeArea().getText();
                             int packIndex = s.indexOf("package");
-                            String one = s.substring(0, packIndex);
-                            String two = s.substring(packIndex);
-                            two = two.substring(two.indexOf(";") + 1);
-                            int classIndex = two.indexOf("public class");
-                            String three = two.substring(classIndex);
-                            three = three.substring(three.indexOf("{"));
-                            two = two.substring(0, classIndex);
-                            list = FXCollections.observableArrayList(one, two, three);
+                            if (packIndex == -1) {
+
+                            } else {
+                                String one = s.substring(0, packIndex);
+                                String two = s.substring(packIndex);
+                                two = two.substring(two.indexOf(";") + 1);
+                                int classIndex = two.indexOf("public class");
+                                String three = two.substring(classIndex);
+                                three = three.substring(three.indexOf("{"));
+                                two = two.substring(0, classIndex);
+                                list = FXCollections.observableArrayList(one, two, three);
+                            }
                         } catch (Exception eg) {
                         }
                         if (list != null) {
@@ -338,7 +343,7 @@ public class Writer extends BorderPane {
                             showAlert(AlertType.ERROR,
                                     getScene().getWindow(),
                                     "New Template",
-                                    "Error in Creating New Template", "");
+                                    "Error Parsing Code for Template", "");
                         }
                     }
                 }
@@ -685,7 +690,7 @@ public class Writer extends BorderPane {
 
         public Welcome() {
             setText("Start Page");
-            setContent(new BorderPane(center = new Label("Welcome to Tachyon!"),
+            setContent(new BorderPane(center = new Label("Welcome to Tachyon IDE!"),
                     null,
                     null,
                     null,
@@ -1153,8 +1158,9 @@ public class Writer extends BorderPane {
         }
     }
 
-    private double getFileSize(long l) {
-        return l / (double) (1024 * 1024);
+    private String getFileSize(long l) {
+        DecimalFormat df = new DecimalFormat("00.0000");
+        return df.format(l / (double) (1024 * 1024));
     }
 
     private void addTab(EnvironmentTab tab) {
@@ -1344,7 +1350,11 @@ public class Writer extends BorderPane {
 
     public final void openProject() {
         DirectoryChooser dc = new DirectoryChooser();
-        dc.setInitialDirectory(new File(Dependencies.workplace_location));
+        File fc = new File(Dependencies.workplace_location);
+        if (!fc.exists()) {
+            fc.mkdirs();
+        }
+        dc.setInitialDirectory(fc);
         File show = dc.showDialog(getScene().getWindow());
         if (show != null) {
             Project pro = Project.loadProject(show.toPath(), false);
@@ -1509,7 +1519,7 @@ public class Writer extends BorderPane {
         if (getCurrentProject() != null) {
             ProcessItem pro = new ProcessItem(null, null, new Console(getCurrentProject()));
             addConsoleWindow(pro);
-            DebuggerController con = new DebuggerController();
+            DebuggerController con = new DebuggerController(getCurrentProject());
             DebuggerConsole debugCon = new DebuggerConsole(this, con);
             setRight(debugCon);
             Task<Void> tk = new Task<Void>() {
@@ -1847,17 +1857,17 @@ public class Writer extends BorderPane {
             }
         } else {
             if (kc.isShiftDown()) {
-                if (kc.getCode()==KeyCode.F6){
+                if (kc.getCode() == KeyCode.F6) {
                     clean.fire();
                 }
-                if (kc.getCode()==KeyCode.F5) {
+                if (kc.getCode() == KeyCode.F5) {
                     runF.fire();
                 }
             } else {
-                if (kc.getCode()==KeyCode.F6){
+                if (kc.getCode() == KeyCode.F6) {
                     build.fire();
                 }
-                if (kc.getCode()==KeyCode.F5) {
+                if (kc.getCode() == KeyCode.F5) {
                     run.fire();
                 }
             }

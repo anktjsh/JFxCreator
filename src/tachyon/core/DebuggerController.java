@@ -7,6 +7,7 @@ package tachyon.core;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -20,8 +21,10 @@ public class DebuggerController {
 
     private final ObjectProperty<PrintStream> out;
     private final BooleanProperty available;
+    private final Project project;
 
-    public DebuggerController() {
+    public DebuggerController(Project p) {
+        project = p;
         out = new SimpleObjectProperty<>();
         available = new SimpleBooleanProperty();
     }
@@ -33,6 +36,24 @@ public class DebuggerController {
     public void process(String s) {
         out.get().println(s);
         out.get().flush();
+    }
+
+    public void setBreakpoints() {
+        ArrayList<String> brea = getBreakpoints(project);
+        for (String s : brea) {
+            out.get().println(s);
+            out.get().flush();
+        }
+    }
+
+    private ArrayList<String> getBreakpoints(Project pro) {
+        ArrayList<String> sb = new ArrayList<>();
+        for (Program pr : pro.getPrograms()) {
+            for (Long l : pr.getBreakPoints()) {
+                sb.add("stop at " + pr.getClassName() + ":" + l.toString());
+            }
+        }
+        return sb;
     }
 
     public ObjectProperty<PrintStream> outputProperty() {

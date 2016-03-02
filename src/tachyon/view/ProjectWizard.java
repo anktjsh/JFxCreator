@@ -108,7 +108,7 @@ public class ProjectWizard {
                                 confirmed = true;
                                 stage.close();
                             } else {
-                                Writer.showAlert(AlertType.ERROR, stage, "Package Name","Package name is not valid!","");
+                                Writer.showAlert(AlertType.ERROR, stage, "Package Name", "Package name is not valid!", "");
                             }
                         } else {
                             Writer.showAlert(AlertType.ERROR, stage, "Main-Class Name", "Main Class cannot contain character \".\"", "");

@@ -161,7 +161,7 @@ public class EmailPicker {
                                         LocalTime.now().toString()));
                     } catch (IOException ex) {
                     }
-                    Writer.showAlert(AlertType.INFORMATION,stage,"Email Sent","Email Sent","");
+                    Writer.showAlert(AlertType.INFORMATION, stage, "Email Sent", "Email Sent", "");
                     stage.close();
                 }
 

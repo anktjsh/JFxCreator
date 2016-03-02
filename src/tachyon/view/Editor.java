@@ -5,15 +5,20 @@
  */
 package tachyon.view;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.IntFunction;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
@@ -35,8 +40,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Popup;
-import javafx.stage.Stage;
-import tachyon.Tachyon;
 import tachyon.analyze.Analyzer.Option;
 import tachyon.compiler.ConcurrentCompiler;
 import tachyon.core.Highlighter;
@@ -51,21 +54,25 @@ import org.fxmisc.richtext.PopupAlignment;
  * @author Aniket
  */
 public class Editor extends EnvironmentTab {
-
+    
     private final BooleanProperty canBeSaved = new SimpleBooleanProperty();
     private final CodeArea area;
     private final Popup popup;
     private final ListView<Option> options;
     private final ObservableMap<Long, String> errorLines;
+    private final ObservableList<Long> breakpoints;
     private final BorderPane main, bottom;
+    private final IntegerProperty rowPosition;
     private HistoryPane hPane;
-
+    
     public Editor(Program sc, Project pro) {
         super(sc, pro);
         area = new CodeArea();
         area.setContextMenu(new ContextMenu());
         errorLines = FXCollections.observableMap(new TreeMap<>());
-        bindMouseListeners();
+        breakpoints = FXCollections.observableArrayList();
+        rowPosition = new SimpleIntegerProperty();
+        bindKeyListeners();
         area.setStyle("-fx-font-size:" + Writer.fontSize.get().getSize() + ";");
         Writer.fontSize.addListener((ob, older, newer) -> {
             area.setStyle("-fx-font-size:" + newer.getSize() + ";");
@@ -114,12 +121,18 @@ public class Editor extends EnvironmentTab {
         Text caret;
         hb.getChildren().add(caret = new Text(""));
         area.caretPositionProperty().addListener((ob, older, newer) -> {
-            caret.setText(getRow(area.getCaretPosition())[0] + ":" + area.getCaretColumn());
+            rowPosition.set(getRow(area.getCaretPosition())[0]);
+            caret.setText(rowPosition.get() + ":" + area.getCaretColumn());
         });
         readFromScript();
         setOnCloseRequest((e) -> {
             if (canSave()) {
-                Optional<ButtonType> show = Writer.showAlert(Alert.AlertType.CONFIRMATION, getTabPane().getScene().getWindow(), "", "Would you like to save before closing?", "");
+                Alert al = new Alert(Alert.AlertType.CONFIRMATION);
+                al.initOwner(getTabPane().getScene().getWindow());
+                al.setHeaderText("Would you like to save before closing?");
+                al.getButtonTypes().clear();
+                al.getButtonTypes().addAll(ButtonType.OK, ButtonType.NO, ButtonType.CANCEL);
+                Optional<ButtonType> show = al.showAndWait();
                 if (show.isPresent()) {
                     if (show.get() == ButtonType.OK) {
                         save();
@@ -129,6 +142,14 @@ public class Editor extends EnvironmentTab {
                 }
             }
         });
+        MenuItem AddBreakpoint = new MenuItem("Insert Breakpoint");
+        AddBreakpoint.setOnAction((e) -> {
+            getScript().addBreakPoint(rowPosition.get());
+        });
+        MenuItem removeB = new MenuItem("Remove Breakpoint");
+        removeB.setOnAction((e) -> {
+            getScript().removeBreakPoint(rowPosition.get());
+        });
         area.getContextMenu().getItems().addAll(
                 new MenuItem("Undo"),
                 new MenuItem("Redo"),
@@ -136,6 +157,43 @@ public class Editor extends EnvironmentTab {
                 new MenuItem("Copy"),
                 new MenuItem("Paste"),
                 new MenuItem("Select All"));
+        area.setOnContextMenuRequested((e) -> {
+            if (getProject() != null) {
+                int row = rowPosition.get();
+                if (getScript().getFile().getFileName().toString().endsWith(".java")) {
+                    if (breakpoints.contains((long) row)) {
+                        if (!area.getContextMenu().getItems().contains(removeB)) {
+                            area.getContextMenu().getItems().add(removeB);
+                        }
+                        if (area.getContextMenu().getItems().contains(AddBreakpoint)) {
+                            area.getContextMenu().getItems().remove(AddBreakpoint);
+                        }
+                    } else {
+                        if (!area.getContextMenu().getItems().contains(AddBreakpoint)) {
+                            area.getContextMenu().getItems().add(AddBreakpoint);
+                        }
+                        if (area.getContextMenu().getItems().contains(removeB)) {
+                            area.getContextMenu().getItems().remove(removeB);
+                        }
+                    }
+                    
+                } else {
+                    if (area.getContextMenu().getItems().contains(AddBreakpoint)) {
+                        area.getContextMenu().getItems().remove(AddBreakpoint);
+                    }
+                    if (area.getContextMenu().getItems().contains(removeB)) {
+                        area.getContextMenu().getItems().remove(removeB);
+                    }
+                }
+            } else {
+                if (area.getContextMenu().getItems().contains(AddBreakpoint)) {
+                    area.getContextMenu().getItems().remove(AddBreakpoint);
+                }
+                if (area.getContextMenu().getItems().contains(removeB)) {
+                    area.getContextMenu().getItems().remove(removeB);
+                }
+            }
+        });
         area.getContextMenu().getItems().get(0).setOnAction((e) -> {
             if (area.isUndoAvailable()) {
                 area.undo();
@@ -161,10 +219,14 @@ public class Editor extends EnvironmentTab {
         area.getContextMenu().getItems().stream().forEach((mi) -> {
             mi.setStyle("-fx-font-size:" + Writer.fontSize.get().getSize());
         });
+        AddBreakpoint.setStyle("-fx-font-size:" + Writer.fontSize.get().getSize());
+        removeB.setStyle("-fx-font-size:" + Writer.fontSize.get().getSize());
         Writer.fontSize.addListener((ob, older, newer) -> {
             area.getContextMenu().getItems().stream().forEach((mi) -> {
                 mi.setStyle("-fx-font-size:" + newer.getSize());
             });
+            AddBreakpoint.setStyle("-fx-font-size:" + newer.getSize());
+            removeB.setStyle("-fx-font-size:" + newer.getSize());
         });
         canBeSaved.addListener((ob, older, newer) -> {
             if (newer) {
@@ -187,45 +249,75 @@ public class Editor extends EnvironmentTab {
             } else {
                 Editor.this.getGraph().setGraphic(null);
             }
-            area.setParagraphGraphicFactory(
-                    line -> {
-                        HBox hbox = new HBox(numberFactory.apply(line), arrowFactory.apply(line));
-                        hbox.setAlignment(Pos.CENTER_LEFT);
-                        return hbox;
-                    });
+            placeFactory();
         });
-        sc.addProgramListener((Program pro1, TreeMap<Long, String> errors) -> {
-            if (Platform.isFxApplicationThread()) {
-                setErrorLines(errors);
-            } else {
-                Platform.runLater(() -> {
+        breakpoints.addListener((ListChangeListener.Change<? extends Long> c) -> {
+            c.next();
+            placeFactory();
+        });
+        sc.addProgramListener(new Program.ProgramListener() {
+            
+            @Override
+            public void hasErrors(Program pro, TreeMap<Long, String> errors) {
+                if (Platform.isFxApplicationThread()) {
                     setErrorLines(errors);
-                });
+                } else {
+                    Platform.runLater(() -> {
+                        setErrorLines(errors);
+                    });
+                }
+            }
+            
+            @Override
+            public void hasBreakPoints(Program pro, List<Long> points) {
+                if (Platform.isFxApplicationThread()) {
+                    setBreakpoints(points);
+                } else {
+                    Platform.runLater(() -> {
+                        setBreakpoints(points);
+                    });
+                }
             }
         });
         if (getScript().getProject() != null) {
             hPane = new HistoryPane(this);
         }
+        setBreakpoints(getScript().getBreakPoints());
     }
-
+    
     public final void setErrorLines(Map<Long, String> map) {
         errorLines.clear();
         errorLines.putAll(map);
     }
-
+    
+    public final void setBreakpoints(List<Long> map) {
+        breakpoints.clear();
+        breakpoints.addAll(map);
+    }
+    
     private IntFunction<Node> numberFactory;
     private IntFunction<Node> arrowFactory;
-
-    private void bindMouseListeners() {
-        Highlighter.highlight(area, this);
+    private IntFunction<Node> breakFactory;
+    
+    private void initFactory() {
         numberFactory = LineNumberFactory.get(area);
         arrowFactory = new ErrorFactory(errorLines);
+        breakFactory = new BreakPointFactory(breakpoints);
+    }
+    
+    private void placeFactory() {        
         area.setParagraphGraphicFactory(
                 line -> {
-                    HBox hbox = new HBox(numberFactory.apply(line), arrowFactory.apply(line));
+                    HBox hbox = new HBox(5, numberFactory.apply(line), breakFactory.apply(line), arrowFactory.apply(line));
                     hbox.setAlignment(Pos.CENTER_LEFT);
                     return hbox;
                 });
+    }
+    
+    private void bindKeyListeners() {
+        Highlighter.highlight(area, this);
+        initFactory();
+        placeFactory();
         area.setOnKeyReleased((e) -> {
             if (e.getCode() == KeyCode.OPEN_BRACKET && e.isShiftDown()) {
                 String ab = getTabMinusOneText(getCurrentRow(area.getCaretPosition()));
@@ -278,7 +370,6 @@ public class Editor extends EnvironmentTab {
                     for (String spl1 : spl) {
                         count += spl1.length() + 1;
                         if (n <= count) {
-//                            String b = area.getText().substring(n);
                             area.insertText(n, "    ");
                             area.positionCaret(n + 4);
                             e.consume();
@@ -358,7 +449,7 @@ public class Editor extends EnvironmentTab {
                     fi.setOnAction((ea) -> {
                         next.fire();
                     });
-
+                    
                     replace.setOnAction((es) -> {
                         rep.fire();
                     });
@@ -414,7 +505,7 @@ public class Editor extends EnvironmentTab {
             }
         });
     }
-
+    
     public String getCurrentRow(int n) {
         String spl[] = area.getText().split("\n");
         int count = 0;
@@ -426,7 +517,7 @@ public class Editor extends EnvironmentTab {
         }
         return "";
     }
-
+    
     private int[] getRow(int caret) {
         String spl[] = area.getText().split("\n");
         int count = 0;
@@ -440,7 +531,7 @@ public class Editor extends EnvironmentTab {
         }
         return new int[]{-1, -1};
     }
-
+    
     private String getTabMinusOneText(String s) {
         int count = 0;
         for (int x = 0; x < s.length(); x += 4) {
@@ -462,7 +553,7 @@ public class Editor extends EnvironmentTab {
         }
         return ret;
     }
-
+    
     private String getTabText(String s) {
         int count = 0;
         for (int x = 0; x < s.length(); x += 4) {
@@ -484,62 +575,62 @@ public class Editor extends EnvironmentTab {
         }
         return ret;
     }
-
+    
     private void readFromScript() {
         area.appendText(getScript().getLastCode());
     }
-
+    
     public void reload() {
         area.clear();
         readFromScript();
         save();
     }
-
+    
     public CodeArea getCodeArea() {
         return area;
     }
-
+    
     public final void save() {
         if (getScript().canSave(area.getText())) {
             getScript().save(area.getText());
         }
         canBeSaved.set(false);
     }
-
+    
     public final boolean canSave() {
         return getScript().canSave(area.getText());
     }
-
+    
     public void undo() {
         area.undo();
     }
-
+    
     public void redo() {
         area.redo();
     }
-
+    
     public void cut() {
         area.cut();
     }
-
+    
     public void copy() {
         area.copy();
     }
-
+    
     public void paste() {
         area.paste();
     }
-
+    
     public void selectAll() {
         area.selectAll();
     }
-
+    
     class TabToolbar extends ToolBar {
-
+        
         private final Button source, history, left, right,
                 comment, uncomment;
         private final Editor editor;
-
+        
         public TabToolbar(Editor edit) {
             editor = edit;
             setPadding(new Insets(5, 10, 5, 10));
@@ -591,7 +682,7 @@ public class Editor extends EnvironmentTab {
                 uncomment(editor);
             });
         }
-
+        
         public final void uncomment(Editor dt) {
             if (dt != null) {
                 String s = dt.getCodeArea().getSelectedText();
@@ -642,11 +733,11 @@ public class Editor extends EnvironmentTab {
                             break;
                         }
                     }
-
+                    
                 }
             }
         }
-
+        
         public final void comment(Editor dt) {
             if (dt != null) {
                 String s = dt.getCodeArea().getSelectedText();
@@ -687,11 +778,11 @@ public class Editor extends EnvironmentTab {
                             break;
                         }
                     }
-
+                    
                 }
             }
         }
-
+        
     }
-
+    
 }

@@ -1,3 +1,10 @@
-.red { -fx-fill: red; }
-.stacktrace { -fx-underline: true;
-              -fx-fill: blue;}
+.red { 
+    -fx-fill: red; 
+}
+.stacktrace { 
+    -fx-underline: true;
+    -fx-fill: blue;
+}
+.ide { 
+    -fx-fill:darkgreen;
+}

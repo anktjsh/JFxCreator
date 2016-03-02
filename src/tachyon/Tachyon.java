@@ -6,6 +6,7 @@
 package tachyon;
 
 import de.codecentric.centerdevice.MenuToolkit;
+import java.io.File;
 import java.util.Optional;
 import javafx.application.Application;
 import javafx.application.HostServices;
@@ -13,6 +14,7 @@ import javafx.application.Platform;
 import javafx.event.Event;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
 import javafx.scene.image.Image;
@@ -20,6 +22,7 @@ import javafx.stage.Stage;
 import tachyon.core.ProjectTree;
 import tachyon.memory.Monitor;
 import tachyon.view.Dependencies;
+import tachyon.view.Details;
 import tachyon.view.Writer;
 
 /**
@@ -94,7 +97,12 @@ public class Tachyon extends Application {
             return;
         }
         if (script.canSave()) {
-            Optional<ButtonType> show = Writer.showAlert(Alert.AlertType.CONFIRMATION,script.getScene().getWindow(),"", "Would you like to save before closing?","");
+            Alert al = new Alert(AlertType.CONFIRMATION);
+            al.initOwner(script.getScene().getWindow());
+            al.setHeaderText("Would you like to save before closing?");
+            al.getButtonTypes().clear();
+            al.getButtonTypes().addAll(ButtonType.OK, ButtonType.NO, ButtonType.CANCEL);
+            Optional<ButtonType> show = al.showAndWait();
             if (show.isPresent()) {
                 if (show.get() == ButtonType.OK) {
                     script.saveAll();
