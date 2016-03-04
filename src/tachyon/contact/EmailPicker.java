@@ -29,6 +29,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 import tachyon.view.Writer;
 
 /**
@@ -49,6 +51,9 @@ public class EmailPicker {
         stage.getIcons().add(Tachyon.icon);
         stage.setResizable(false);
         stage.setScene(new Scene(new EmailPane()));
+        if (applyCss.get()) {
+            stage.getScene().getStylesheets().add(css);
+        }
     }
 
     public void showAndWait() {

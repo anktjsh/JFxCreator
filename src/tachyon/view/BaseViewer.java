@@ -70,7 +70,7 @@ public class BaseViewer extends BorderPane {
     private Group group;
 
     // for the location of the pdf file
-    private Text fileLoc;
+    private Label fileLoc;
 
     private float scale = 1.0f;
 
@@ -131,7 +131,7 @@ public class BaseViewer extends BorderPane {
         /**
          * Sets the text to be displayed at the bottom of the FX Viewer*
          */
-        fileLoc = new Text("No PDF Selected");
+        fileLoc = new Label("No PDF Selected");
         fileLoc.setId("file_location");
         bottom.getChildren().add(fileLoc);
         return root;
@@ -473,7 +473,7 @@ public class BaseViewer extends BorderPane {
     private void showPasswordPrompt(final int passwordCount) {
 
         //Setup password prompt content
-        final Text titleText = new Text("Password Request");
+        final Label titleText = new Label("Password Request");
         final TextField inputPasswordField = new TextField("Please Enter Password");
 
         //If the user has attempted to enter the password more than once, change the text

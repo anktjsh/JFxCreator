@@ -18,6 +18,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 import tachyon.core.Program;
 import tachyon.core.Project;
 
@@ -105,6 +107,9 @@ public class WordCount {
         stage.setHeight(400);
         stage.getIcons().add(tachyon.Tachyon.icon);
         stage.setScene(new Scene(new BorderPane()));
+        if (applyCss.get()) {
+            stage.getScene().getStylesheets().add(css);
+        }
         return stage;
     }
 }

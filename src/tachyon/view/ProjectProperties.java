@@ -51,6 +51,8 @@ import tachyon.core.Project;
 import net.sf.image4j.codec.ico.ICODecoder;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.Imaging;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 
 /**
  *
@@ -121,6 +123,9 @@ public class ProjectProperties {
                                 confirm = new Button("Confirm")))
         ))
         );
+        if (applyCss.get()) {
+            stage.getScene().getStylesheets().add(css);
+        }
         for (Tab b : pane.getTabs()) {
             b.setClosable(false);
         }
@@ -232,6 +237,9 @@ public class ProjectProperties {
                         st.setTitle("Icon Preview");
                         st.getIcons().add(Tachyon.icon);
                         st.setScene(new Scene(new BorderPane(new ImageView(im))));
+                        if (applyCss.get()) {
+                            st.getScene().getStylesheets().add(css);
+                        }
                         st.showAndWait();
                     }
                 } else if (iconField.getText().endsWith(".icns")) {
@@ -245,6 +253,9 @@ public class ProjectProperties {
                             st.setTitle("Icon Preview");
                             st.getIcons().add(Tachyon.icon);
                             st.setScene(new Scene(new BorderPane(new ImageView(im))));
+                            if (applyCss.get()) {
+                                st.getScene().getStylesheets().add(css);
+                            }
                             st.showAndWait();
                         }
                     } catch (ImageReadException | IOException ex) {
@@ -257,6 +268,9 @@ public class ProjectProperties {
                     st.setTitle("Icon Preview");
                     st.getIcons().add(Tachyon.icon);
                     st.setScene(new Scene(new BorderPane(new ImageView(im))));
+                    if (applyCss.get()) {
+                        st.getScene().getStylesheets().add(css);
+                    }
                     st.showAndWait();
                 }
             }

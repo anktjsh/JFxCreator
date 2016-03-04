@@ -25,6 +25,9 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 import static tachyon.Tachyon.icon;
 import tachyon.core.Highlighter;
 import tachyon.core.Project;
@@ -70,6 +73,9 @@ public class ProjectWizard {
             cancel();
         });
         stage.setScene(new Scene(box = new VBox(10)));
+        if (applyCss.get()) {
+            stage.getScene().getStylesheets().add(css);
+        }
         box.setPadding(new Insets(5, 10, 5, 10));
         HBox hb;
         box.getChildren().addAll(new Label("New Project"),

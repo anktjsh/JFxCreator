@@ -26,6 +26,9 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 import static tachyon.Tachyon.icon;
 import tachyon.core.Project;
 import tachyon.core.Template;
@@ -63,6 +66,9 @@ public class FileWizard {
         box.getChildren().add(label = new Label("Choose your file type"));
         box.setAlignment(Pos.CENTER_LEFT);
         stage.setScene(new Scene(box));
+        if (applyCss.get()) {
+            stage.getScene().getStylesheets().add(css);
+        }
         options = new ListView<>();
         options.setItems(FXCollections.observableArrayList("Java Class",
                 "Java Main Class",

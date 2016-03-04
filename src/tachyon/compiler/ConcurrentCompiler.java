@@ -11,7 +11,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import tachyon.view.Dependencies;
 import tachyon.view.Editor;
 
 /**
@@ -43,23 +42,30 @@ public class ConcurrentCompiler {
         if (allowed.get()) {
             System.out.println("Preparing on " + Thread.currentThread().getName());
             allowed.set(false);
-            Compiler comp = new Compiler(edit);
-            File fi = new File(".cache" + File.separator + edit.getProject().getProjectName() + File.separator + "builds");
-            comp.setDirectory(fi);
-            if (edit.getProject().getNumLibs() != 0) {
-                comp.addToClassPath(edit.getProject().getAllLibs());
+            if (edit.getProject() == null) {
+                BasicCompiler comp = new BasicCompiler(edit);
+                File fi = new File(".cache" + File.separator + "builds");
+                comp.setDirectory(fi);
+                comp.prepare();
+            } else {
+                VisualCompiler comp = new VisualCompiler(edit);
+                File fi = new File(".cache" + File.separator + edit.getProject().getProjectName() + File.separator + "builds");
+                comp.setDirectory(fi);
+                if (edit.getProject().getNumLibs() != 0) {
+                    comp.addToClassPath(edit.getProject().getAllLibs());
+                }
+                comp.prepare();
             }
-            comp.prepare();
             lastCall.set(null);
         }
-        (new Thread(new Runner())).start();
+        (new Thread(new VisualRunner())).start();
     }
 
-    private static ArrayList<Runner> runners;
+    private static ArrayList<VisualRunner> runners;
 
-    private class Runner implements Runnable {
+    private class VisualRunner implements Runnable {
 
-        public Runner() {
+        public VisualRunner() {
             runners.add(this);
         }
 
@@ -76,7 +82,6 @@ public class ConcurrentCompiler {
                     compile(lastCall.get());
                 }
             }
-
         }
 
     }

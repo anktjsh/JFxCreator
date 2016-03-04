@@ -28,6 +28,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Separator;
@@ -45,6 +46,7 @@ import tachyon.compiler.ConcurrentCompiler;
 import tachyon.core.Highlighter;
 import tachyon.core.Program;
 import tachyon.core.Project;
+import tachyon.Tachyon;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
 import org.fxmisc.richtext.PopupAlignment;
@@ -54,7 +56,7 @@ import org.fxmisc.richtext.PopupAlignment;
  * @author Aniket
  */
 public class Editor extends EnvironmentTab {
-    
+
     private final BooleanProperty canBeSaved = new SimpleBooleanProperty();
     private final CodeArea area;
     private final Popup popup;
@@ -64,7 +66,7 @@ public class Editor extends EnvironmentTab {
     private final BorderPane main, bottom;
     private final IntegerProperty rowPosition;
     private HistoryPane hPane;
-    
+
     public Editor(Program sc, Project pro) {
         super(sc, pro);
         area = new CodeArea();
@@ -118,8 +120,8 @@ public class Editor extends EnvironmentTab {
         bottom = new BorderPane();
         main.setBottom(bottom);
         bottom.setCenter(hb);
-        Text caret;
-        hb.getChildren().add(caret = new Text(""));
+        Label caret;
+        hb.getChildren().add(caret = new Label(""));
         area.caretPositionProperty().addListener((ob, older, newer) -> {
             rowPosition.set(getRow(area.getCaretPosition())[0]);
             caret.setText(rowPosition.get() + ":" + area.getCaretColumn());
@@ -176,7 +178,7 @@ public class Editor extends EnvironmentTab {
                             area.getContextMenu().getItems().remove(removeB);
                         }
                     }
-                    
+
                 } else {
                     if (area.getContextMenu().getItems().contains(AddBreakpoint)) {
                         area.getContextMenu().getItems().remove(AddBreakpoint);
@@ -237,7 +239,7 @@ public class Editor extends EnvironmentTab {
         });
         area.textProperty().addListener((ob, older, newer) -> {
             canBeSaved.set(getScript().canSave(newer));
-            if (getScript().getType() == Program.JAVA) {
+            if (getScript().getFile().getFileName().toString().endsWith(".java")) {
                 ConcurrentCompiler.getInstance().compile(Editor.this);
             }
         });
@@ -256,7 +258,7 @@ public class Editor extends EnvironmentTab {
             placeFactory();
         });
         sc.addProgramListener(new Program.ProgramListener() {
-            
+
             @Override
             public void hasErrors(Program pro, TreeMap<Long, String> errors) {
                 if (Platform.isFxApplicationThread()) {
@@ -267,7 +269,7 @@ public class Editor extends EnvironmentTab {
                     });
                 }
             }
-            
+
             @Override
             public void hasBreakPoints(Program pro, List<Long> points) {
                 if (Platform.isFxApplicationThread()) {
@@ -283,29 +285,36 @@ public class Editor extends EnvironmentTab {
             hPane = new HistoryPane(this);
         }
         setBreakpoints(getScript().getBreakPoints());
+        selectedProperty().addListener((ob, older, newer) -> {
+            if (newer) {
+                if (getScript().getFile().getFileName().toString().endsWith(".java")) {
+                    ConcurrentCompiler.getInstance().compile(Editor.this);
+                }
+            }
+        });
     }
-    
+
     public final void setErrorLines(Map<Long, String> map) {
         errorLines.clear();
         errorLines.putAll(map);
     }
-    
+
     public final void setBreakpoints(List<Long> map) {
         breakpoints.clear();
         breakpoints.addAll(map);
     }
-    
+
     private IntFunction<Node> numberFactory;
     private IntFunction<Node> arrowFactory;
     private IntFunction<Node> breakFactory;
-    
+
     private void initFactory() {
         numberFactory = LineNumberFactory.get(area);
         arrowFactory = new ErrorFactory(errorLines);
         breakFactory = new BreakPointFactory(breakpoints);
     }
-    
-    private void placeFactory() {        
+
+    private void placeFactory() {
         area.setParagraphGraphicFactory(
                 line -> {
                     HBox hbox = new HBox(5, numberFactory.apply(line), breakFactory.apply(line), arrowFactory.apply(line));
@@ -313,7 +322,7 @@ public class Editor extends EnvironmentTab {
                     return hbox;
                 });
     }
-    
+
     private void bindKeyListeners() {
         Highlighter.highlight(area, this);
         initFactory();
@@ -449,7 +458,7 @@ public class Editor extends EnvironmentTab {
                     fi.setOnAction((ea) -> {
                         next.fire();
                     });
-                    
+
                     replace.setOnAction((es) -> {
                         rep.fire();
                     });
@@ -505,7 +514,7 @@ public class Editor extends EnvironmentTab {
             }
         });
     }
-    
+
     public String getCurrentRow(int n) {
         String spl[] = area.getText().split("\n");
         int count = 0;
@@ -517,7 +526,7 @@ public class Editor extends EnvironmentTab {
         }
         return "";
     }
-    
+
     private int[] getRow(int caret) {
         String spl[] = area.getText().split("\n");
         int count = 0;
@@ -531,7 +540,7 @@ public class Editor extends EnvironmentTab {
         }
         return new int[]{-1, -1};
     }
-    
+
     private String getTabMinusOneText(String s) {
         int count = 0;
         for (int x = 0; x < s.length(); x += 4) {
@@ -553,7 +562,7 @@ public class Editor extends EnvironmentTab {
         }
         return ret;
     }
-    
+
     private String getTabText(String s) {
         int count = 0;
         for (int x = 0; x < s.length(); x += 4) {
@@ -575,62 +584,62 @@ public class Editor extends EnvironmentTab {
         }
         return ret;
     }
-    
+
     private void readFromScript() {
         area.appendText(getScript().getLastCode());
     }
-    
+
     public void reload() {
         area.clear();
         readFromScript();
         save();
     }
-    
+
     public CodeArea getCodeArea() {
         return area;
     }
-    
+
     public final void save() {
         if (getScript().canSave(area.getText())) {
             getScript().save(area.getText());
         }
         canBeSaved.set(false);
     }
-    
+
     public final boolean canSave() {
         return getScript().canSave(area.getText());
     }
-    
+
     public void undo() {
         area.undo();
     }
-    
+
     public void redo() {
         area.redo();
     }
-    
+
     public void cut() {
         area.cut();
     }
-    
+
     public void copy() {
         area.copy();
     }
-    
+
     public void paste() {
         area.paste();
     }
-    
+
     public void selectAll() {
         area.selectAll();
     }
-    
+
     class TabToolbar extends ToolBar {
-        
+
         private final Button source, history, left, right,
                 comment, uncomment;
         private final Editor editor;
-        
+
         public TabToolbar(Editor edit) {
             editor = edit;
             setPadding(new Insets(5, 10, 5, 10));
@@ -642,6 +651,8 @@ public class Editor extends EnvironmentTab {
                     new Separator(),
                     comment = new Button("//-"),
                     uncomment = new Button("X-"));
+            source.setStyle("-fx-min-width:80");
+            history.setStyle("-fx-min-width:80");
             if (editor.getScript().getProject() == null || editor.getScript().getType() == Program.RESOURCE) {
                 source.setDisable(true);
                 history.setDisable(true);
@@ -682,7 +693,7 @@ public class Editor extends EnvironmentTab {
                 uncomment(editor);
             });
         }
-        
+
         public final void uncomment(Editor dt) {
             if (dt != null) {
                 String s = dt.getCodeArea().getSelectedText();
@@ -733,11 +744,11 @@ public class Editor extends EnvironmentTab {
                             break;
                         }
                     }
-                    
+
                 }
             }
         }
-        
+
         public final void comment(Editor dt) {
             if (dt != null) {
                 String s = dt.getCodeArea().getSelectedText();
@@ -778,11 +789,11 @@ public class Editor extends EnvironmentTab {
                             break;
                         }
                     }
-                    
+
                 }
             }
         }
-        
+
     }
-    
+
 }

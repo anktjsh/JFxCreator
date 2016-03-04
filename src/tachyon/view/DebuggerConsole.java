@@ -8,6 +8,7 @@ package tachyon.view;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
@@ -47,6 +48,9 @@ public class DebuggerConsole extends BorderPane {
                 classpath = new Button("Classpath"),
                 monitor = new Button("Monitor"),
                 close = new Button("Exit Debugger"));
+        for (Node n : box.getChildren()) {
+            n.setStyle("-fx-font-size:12");
+        }
         status.setStyle("-fx-text-fill:red;");
         setCenter(box);
         close.setOnAction((e) -> {

@@ -119,7 +119,7 @@ public class Template {
     }
 
     private static List<String> getLines(List<String> al, String pack, String clas) {
-        if (pack != null) {
+        if (pack != null && !pack.isEmpty()) {
             StringBuilder str = new StringBuilder();
             str.append(al.get(0));
             str.append("\npackage ").append(pack).append(";\n");
@@ -138,7 +138,7 @@ public class Template {
     }
 
     private static List<String> one(String pack, String clas) {
-        if (pack != null) {
+        if (pack != null && !pack.isEmpty()) {
             String list = "\n"
                     + "package " + pack + ";\n"
                     + "\n"
@@ -158,7 +158,7 @@ public class Template {
     }
 
     private static List<String> two(String pack, String clas) {
-        if (pack != null) {
+        if (pack != null && !pack.isEmpty()) {
             String list = "\n"
                     + "package " + pack + ";\n"
                     + "\n"
@@ -186,7 +186,7 @@ public class Template {
     }
 
     private static List<String> three(String pack, String clas) {
-        if (pack != null) {
+        if (pack != null && !pack.isEmpty()) {
             String list = "\n"
                     + "package " + pack + ";\n"
                     + "\n"
@@ -206,7 +206,7 @@ public class Template {
     }
 
     private static List<String> four(String pack, String clas) {
-        if (pack != null) {
+        if (pack != null && !pack.isEmpty()) {
             String list
                     = "package " + pack + ";\n"
                     + "\n"
@@ -286,7 +286,7 @@ public class Template {
     }
 
     private static List<String> five(String pack, String clas) {
-        if (pack != null) {
+        if (pack != null && !pack.isEmpty()) {
             String list
                     = "\n"
                     + "package " + pack + ";\n"

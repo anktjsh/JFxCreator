@@ -239,6 +239,7 @@ public class ConsoleWindow extends Tab {
         bottom.setPadding(new Insets(5, 10, 5, 10));
         bottom.setLeft(cancel = new Button("Cancel Process"));
         (timer = new TextTimer()).start();
+        cancel.setCancelButton(true);
         cancel.setOnAction((e) -> {
             if (console.getProcess().isAlive()) {
                 Optional<ButtonType> show = Writer.showAlert(AlertType.CONFIRMATION, getTabPane().getScene().getWindow(), "End Process", "Are you sure you want to end the process?", "");

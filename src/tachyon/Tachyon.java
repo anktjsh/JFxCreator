@@ -11,6 +11,8 @@ import java.util.Optional;
 import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.Event;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -34,6 +36,8 @@ public class Tachyon extends Application {
     public static final String OS = System.getProperty("os.name").toLowerCase();
     public static final Image icon = new Image(Tachyon.class.getResourceAsStream("icon.png"));
     public static HostServices host;
+    public static String css = Tachyon.class.getResource("material.css").toExternalForm();
+    public static BooleanProperty applyCss = new SimpleBooleanProperty(false);
 
     @Override
     public void start(Stage env) {
@@ -42,6 +46,16 @@ public class Tachyon extends Application {
         Writer script;
         env.setScene(new Scene(script = new Writer()));
         env.getScene().getStylesheets().add(getClass().getResource("java-keywords.css").toExternalForm());
+        if (applyCss.get()) {
+            env.getScene().getStylesheets().add(css);
+        }
+        applyCss.addListener((ob, older, newer) -> {
+            if (newer) {
+                env.getScene().getStylesheets().add(css);
+            } else {
+                env.getScene().getStylesheets().remove(css);
+            }
+        });
         env.setOnCloseRequest((e) -> {
             close(script, e);
         });

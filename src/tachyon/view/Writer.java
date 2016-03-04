@@ -87,6 +87,8 @@ import tachyon.core.ZipUtils;
 import tachyon.memory.Monitor;
 import tachyon.view.FileWizard.FileDescription;
 import org.fxmisc.richtext.Paragraph;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 
 /**
  *
@@ -282,18 +284,33 @@ public class Writer extends BorderPane {
             st.setTitle("View");
             VBox box;
             st.setScene(new Scene(box = new VBox(10)));
+            if (applyCss.get()) {
+                st.getScene().getStylesheets().add(css);
+            }
+            applyCss.addListener((ob, older, newer) -> {
+                if (newer) {
+                    st.getScene().getStylesheets().add(css);
+                } else {
+                    st.getScene().getStylesheets().remove(css);
+                }
+            });
             box.setAlignment(Pos.CENTER);
             box.setPadding(new Insets(5, 10, 5, 10));
-            CheckBox wrap;
+            CheckBox wrap, css;
             HBox hb;
             ComboBox<String> fontSizes;
-            box.getChildren().add(hb = new HBox(5, new Text("Modify Font Size"), fontSizes = new ComboBox<>()));
+            box.getChildren().add(hb = new HBox(5, new Label("Modify Font Size"), fontSizes = new ComboBox<>()));
             box.getChildren().add(wrap = new CheckBox("Wrap Text"));
+            box.getChildren().add(css = new CheckBox("Material Design"));
             Button hide;
             box.getChildren().add(hide = new Button("Close"));
+            css.setSelected(Tachyon.applyCss.get());
             wrap.setSelected(wrapText.get());
             wrap.setOnAction((e) -> {
                 wrapText.set(wrap.isSelected());
+            });
+            css.setOnAction((Ehji) -> {
+                Tachyon.applyCss.set(css.isSelected());
             });
             hb.setAlignment(Pos.CENTER);
             fontSizes.setValue("" + fontSize.get().getSize());
@@ -324,7 +341,13 @@ public class Writer extends BorderPane {
                             String s = getSelectedEditor().getCodeArea().getText();
                             int packIndex = s.indexOf("package");
                             if (packIndex == -1) {
-
+                                String one = "";
+                                String two = s.substring(s.indexOf("public"));
+                                int classIndex = two.indexOf("public class");
+                                String three = two.substring(classIndex);
+                                three = three.substring(three.indexOf("{"));
+                                two = s.substring(0, classIndex);
+                                list = FXCollections.observableArrayList(one, two, three);
                             } else {
                                 String one = s.substring(0, packIndex);
                                 String two = s.substring(packIndex);
@@ -356,6 +379,9 @@ public class Writer extends BorderPane {
                 st.initModality(Modality.APPLICATION_MODAL);
                 ListView<String> options = new ListView<>();
                 st.setScene(new Scene(options));
+                if (applyCss.get()) {
+                    st.getScene().getStylesheets().add(css);
+                }
                 st.initOwner(getScene().getWindow());
                 options.getItems().addAll(Template.getAvailableTemplates());
                 st.getIcons().add(Tachyon.icon);
@@ -704,7 +730,7 @@ public class Writer extends BorderPane {
             options.setPadding(new Insets(5, 10, 5, 10));
             options.setAlignment(Pos.TOP_CENTER);
             top.setFont(new Font(20));
-            options.setStyle("-fx-background-color:white;");
+            options.setStyle("-fx-background-color:#FFFAFA;");
             for (Node n : options.getChildren()) {
                 if (n instanceof Hyperlink) {
                     Hyperlink h = (Hyperlink) n;
@@ -835,6 +861,9 @@ public class Writer extends BorderPane {
         main.setTop(new Label("Select a Sample"));
         BorderPane.setAlignment(main.getTop(), Pos.CENTER);
         st.setScene(new Scene(main));
+        if (applyCss.get()) {
+            st.getScene().getStylesheets().add(css);
+        }
         main.setPadding(new Insets(5, 10, 5, 10));
         main.setCenter(lv);
         lv.getItems().addAll(Examples.getExamples().getAllExamples());
@@ -1433,7 +1462,7 @@ public class Writer extends BorderPane {
 
                 TextField username = new TextField();
                 username.setPromptText("Package");
-                TextField password = new TextField();
+                TextField password = new TextField(f.getName().replace(".java", ""));
                 password.setPromptText("Class");
 
                 grid.add(new Label("Package:"), 0, 0);
@@ -1683,6 +1712,9 @@ public class Writer extends BorderPane {
                 sta.getIcons().add(Tachyon.icon);
                 sta.initModality(Modality.APPLICATION_MODAL);
                 sta.setScene(new Scene(new NativeInformation()));
+                if (applyCss.get()) {
+                    sta.getScene().getStylesheets().add(css);
+                }
                 sta.showingProperty().addListener((ob, older, newer) -> {
                     if (newer) {
                         showAlert(AlertType.ERROR,

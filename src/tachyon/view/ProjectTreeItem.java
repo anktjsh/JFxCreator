@@ -17,7 +17,7 @@ import tachyon.core.Project;
  */
 public class ProjectTreeItem extends TreeItem<String> {
 
-    private static final Image proj = new Image(LibraryTreeItem.class.getResourceAsStream("tree/project.PNG"), 25, 25, true, true);
+    public static final Image proj = new Image(LibraryTreeItem.class.getResourceAsStream("tree/project.PNG"), 25, 25, true, true);
     private static final Image folder = new Image(LibraryTreeItem.class.getResourceAsStream("tree/folder.PNG"), 25, 25, true, true);
     private final Project project;
     private TreeItem<String> src, libs;

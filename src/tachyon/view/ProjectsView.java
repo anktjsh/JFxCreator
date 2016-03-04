@@ -10,6 +10,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TreeView;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
@@ -26,8 +27,9 @@ public class ProjectsView extends BorderPane {
     public ProjectsView() {
         collapse = new Button("Projects");
         collapse.setRotate(270);
+        collapse.setDefaultButton(true);
+        collapse.setGraphic(new ImageView(ProjectTreeItem.proj));
         setLeft(box = new VBox(new Label(), new Label(), new Label(), collapse));
-        box.setStyle("-fx-background-color:white;");
         box.setAlignment(Pos.TOP_CENTER);
         setCenter(null);
         tree = new TreeView<>();

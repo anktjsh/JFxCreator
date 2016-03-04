@@ -16,7 +16,6 @@ import java.util.Locale;
 import java.util.TreeMap;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.Tab;
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
@@ -27,13 +26,17 @@ import javax.tools.StandardLocation;
 import tachyon.core.JavaLibrary;
 import tachyon.core.Program;
 import tachyon.core.Project;
-import tachyon.view.Editor;
 
 /**
  *
  * @author Aniket
  */
-public class Compiler {
+public abstract class Compiler {
+
+    private final Project total;
+    private final ObservableList<String> compilerOptions;
+    private StandardJavaFileManager standard;
+    private final DiagnosticCollector<JavaFileObject> diag;
 
     private static JavaCompiler compiler;
 
@@ -44,86 +47,44 @@ public class Compiler {
             ex.printStackTrace();
         }
     }
-    private final Project total;
-    private final ObservableList<Editor> allEditors;
-    private final ObservableList<Program> allPrograms;
 
-    private final ObservableList<String> compilerOptions;
-    private StandardJavaFileManager standard;
-    private final DiagnosticCollector<JavaFileObject> diag;
-
-    public Compiler(Editor edit) {
-        total = edit.getProject();
-        allEditors = FXCollections.observableArrayList();
-        allPrograms = FXCollections.observableArrayList();
-        ArrayList<Program> al = new ArrayList<>();
-        for (Tab b : edit.getTabPane().getTabs()) {
-            if (b instanceof Editor) {
-                Editor ed = (Editor) b;
-                if (!al.contains(ed.getScript())) {
-                    if (ed.getScript().getType() == Program.JAVA) {
-                        al.add(ed.getScript());
-                        allEditors.add(ed);
-                    }
-                }
-            }
-        }
-        for (Program p : total.getPrograms()) {
-            if (!al.contains(p)) {
-                if (p.getType() == Program.JAVA) {
-                    allPrograms.add(p);
-                }
-            }
-        }
+    public Compiler(Project pro) {
+        total = pro;
 
         standard = compiler.getStandardFileManager(null, Locale.getDefault(), null);
         diag = new DiagnosticCollector<>();
         compilerOptions = FXCollections.observableArrayList();
     }
 
-    public void prepare() {
-        ObservableList<DynamicJavaSourceCodeObject> objs = FXCollections.observableArrayList();
-        allEditors.stream().forEach((ed) -> {
-            objs.add(new DynamicJavaSourceCodeObject(ed.getScript().getClassName(), ed.getCodeArea().getText()));
-        });
-        for (Program p : allPrograms) {
-            objs.add(new DynamicJavaSourceCodeObject(p.getClassName(), p.getLastCode()));
-        }
-        System.out.println(allPrograms.size());
-        System.out.println(objs.size());
-        JavaCompiler.CompilationTask task = compiler.getTask(null, standard, diag, compilerOptions, null, objs);
-        HashMap<String, TreeMap<Long, String>> map = new HashMap<>();
-        boolean status = task.call();
-        if (!status) {
-            for (Diagnostic c : diag.getDiagnostics()) {
-                if (map.containsKey(c.getSource().toString())) {
-                    map.get(c.getSource().toString()).put(c.getLineNumber() - 1, c.getMessage(Locale.getDefault()));
-                } else {
-                    map.put(c.getSource().toString(), new TreeMap<>());
-                    map.get(c.getSource().toString()).put(c.getLineNumber() - 1, c.getMessage(Locale.getDefault()));
-                }
-            }
-        }
-        ArrayList<Program> sent = new ArrayList<>();
-        for (String key : map.keySet()) {
-            Program p = getProgram(key);
-            if (p != null) {
-                sent.add(p);
-                p.hasErrors(map.get(key));
-            }
-        }
-        for (Program p : total.getPrograms()) {
-            if (!sent.contains(p)) {
-                p.hasErrors(new TreeMap<>());
-            }
-        }
+    public void recreateFileManager() {
         try {
             standard.close();
         } catch (IOException e) {
         }
         standard = compiler.getStandardFileManager(null, Locale.getDefault(), null);
-        compilerOptions.clear();
     }
+
+    public StandardJavaFileManager getFileManager() {
+        return standard;
+    }
+
+    public List<String> getCompilerOptions() {
+        return compilerOptions;
+    }
+
+    public DiagnosticCollector<JavaFileObject> getDiagnosticCollector() {
+        return diag;
+    }
+
+    public Project getProject() {
+        return total;
+    }
+
+    public JavaCompiler getCompiler() {
+        return compiler;
+    }
+
+    public abstract void prepare();
 
     public Program getProgram(String key) {
         String uri = key.substring(key.indexOf('[') + 1, key.indexOf(']'));
@@ -172,7 +133,7 @@ public class Compiler {
         return txt;
     }
 
-    private static class DynamicJavaSourceCodeObject extends SimpleJavaFileObject {
+    static class DynamicJavaSourceCodeObject extends SimpleJavaFileObject {
 
         private String name;
         private String source;

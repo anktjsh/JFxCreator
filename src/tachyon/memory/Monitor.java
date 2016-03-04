@@ -22,6 +22,8 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Pair;
 import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 import tachyon.memory.MemoryWatcher.ThreadStatus;
 
 /**
@@ -49,6 +51,16 @@ public class Monitor {
         stage.setOnCloseRequest((e) -> {
             stage.hide();
             e.consume();
+        });
+        if (applyCss.get()) {
+            stage.getScene().getStylesheets().add(css);
+        }
+        Tachyon.applyCss.addListener((ob, older, newer) -> {
+            if (newer) {
+                stage.getScene().getStylesheets().add(css);
+            } else {
+                stage.getScene().getStylesheets().remove(css);
+            }
         });
         box.setAlignment(Pos.CENTER);
         ListView<String> one, two, three;

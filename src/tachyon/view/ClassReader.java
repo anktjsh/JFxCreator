@@ -10,6 +10,7 @@ import java.util.Scanner;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
@@ -45,8 +46,8 @@ public class ClassReader extends EnvironmentTab {
         hb.setAlignment(Pos.CENTER_RIGHT);
         hb.setPadding(new Insets(5, 10, 5, 10));
         getCenter().setBottom(hb);
-        Text caret;
-        hb.getChildren().add(caret = new Text(""));
+        Label caret;
+        hb.getChildren().add(caret = new Label(""));
         area.caretPositionProperty().addListener((ob, older, newer) -> {
             caret.setText(getRow(area.getCaretPosition()) + ":" + area.getCaretColumn());
         });

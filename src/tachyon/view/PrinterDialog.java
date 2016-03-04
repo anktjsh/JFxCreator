@@ -28,6 +28,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 
 /**
  *
@@ -61,6 +63,9 @@ public class PrinterDialog {
         currentJob = PrinterJob.createPrinterJob();
 
         stage.setScene(new Scene(main = new BorderPane()));
+        if (applyCss.get()) {
+            stage.getScene().getStylesheets().add(css);
+        }
         main.setPadding(new Insets(5, 10, 5, 10));
         printers = new ComboBox<>();
         for (Printer p : Printer.getAllPrinters()) {

@@ -12,10 +12,14 @@ import java.nio.file.Path;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 
 /**
  *
@@ -52,10 +56,10 @@ public class Details {
         VBox box = new VBox(15);
         box.setAlignment(Pos.CENTER);
         box.setPadding(new Insets(5, 10, 5, 10));
-        box.getChildren().addAll(new Text("File Name : " + d.getPath().getFileName().toString()),
-                new Text("Absolute Path : " + d.getPath().toAbsolutePath().toString()),
-                new Text("File is Directory : " + Files.isDirectory(d.getPath())),
-                new Text("File Size : " + d.size() + " bytes"));
+        box.getChildren().addAll(new Label("File Name : " + d.getPath().getFileName().toString()),
+                new Label("Absolute Path : " + d.getPath().toAbsolutePath().toString()),
+                new Label("File is Directory : " + Files.isDirectory(d.getPath())),
+                new Label("File Size : " + d.size() + " bytes"));
         return box;
     }
 
@@ -67,6 +71,9 @@ public class Details {
         stage.setTitle("Details");
         stage.getIcons().addAll(w.getIcons());
         stage.setScene(new Scene(getDetails(p)));
+        if (applyCss.get()) {
+            stage.getScene().getStylesheets().add(css);
+        }
         return stage;
     }
 

@@ -16,6 +16,9 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 import static tachyon.Tachyon.icon;
 
 /**
@@ -44,6 +47,9 @@ public class ProjectOptions {
         });
         list = new ListView<>();
         stage.setScene(new Scene(main = new BorderPane(list)));
+        if (applyCss.get()) {
+            stage.getScene().getStylesheets().add(css);
+        }
         main.setPadding(new Insets(5, 10, 5, 10));
         list.getItems().addAll("Java Standard Project",
                 "JavaFx Application Standard Project");

@@ -20,6 +20,8 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 
 /**
  * Simple Preloader Using the ProgressBar Control
@@ -54,6 +56,9 @@ public class EnvironmentLoader extends Preloader {
         BorderPane.setAlignment(p.getCenter(), Pos.CENTER);
         BorderPane.setAlignment(c.getTop(), Pos.CENTER);
         Scene sc = new Scene(p, 500, 350);
+        if (applyCss.get()) {
+            sc.getStylesheets().add(css);
+        }
         return sc;
     }
 

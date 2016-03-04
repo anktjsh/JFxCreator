@@ -43,6 +43,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 
 /**
  *
@@ -138,6 +140,9 @@ public class Dependencies {
 
         });
         stage.setScene(new Scene(box));
+        if (applyCss.get()) {
+            stage.getScene().getStylesheets().add(css);
+        }
         box.setPadding(new Insets(5, 10, 5, 10));
         box.setAlignment(Pos.CENTER);
         box.setSpacing(10);
@@ -226,7 +231,8 @@ public class Dependencies {
             if (!Files.exists(p)) {
                 Files.createDirectories(p);
             }
-            Files.write(Paths.get(".cache" + File.separator + "preferences03.txt"), FXCollections.observableArrayList(localVersionProperty.get(), alert + "", workplace_location));
+            Files.write(Paths.get(".cache" + File.separator + "preferences03.txt"),
+                    FXCollections.observableArrayList(localVersionProperty.get(), alert + "", workplace_location, Tachyon.applyCss.get() + ""));
         } catch (IOException ex) {
         }
         try {
@@ -256,6 +262,7 @@ public class Dependencies {
                 localVersionProperty.set(s);
                 alert = b;
                 workplace_location = in.nextLine();
+                Tachyon.applyCss.set(Boolean.parseBoolean(in.nextLine()));
             } catch (Exception ex) {
                 alert = true;
             }
@@ -288,6 +295,9 @@ public class Dependencies {
         s.initModality(Modality.APPLICATION_MODAL);
         VBox box;
         s.setScene(new Scene(box = new VBox(10)));
+        if (applyCss.get()) {
+            s.getScene().getStylesheets().add(css);
+        }
         box.setPadding(new Insets(5, 10, 5, 10));
         box.setAlignment(Pos.CENTER);
         ChoiceBox<String> choice;
@@ -361,6 +371,9 @@ public class Dependencies {
         s.initModality(Modality.APPLICATION_MODAL);
         VBox box;
         s.setScene(new Scene(box = new VBox(10)));
+        if (applyCss.get()) {
+            s.getScene().getStylesheets().add(css);
+        }
         box.setPadding(new Insets(5, 10, 5, 10));
         box.setAlignment(Pos.CENTER);
         HBox bottom;
@@ -375,7 +388,7 @@ public class Dependencies {
         dir.setEditable(false);
         Button choose = new Button("Select Directory");
         box.getChildren().addAll(0, FXCollections.observableArrayList(
-                new Text("Project Workplace Location"),
+                new Label("Project Workplace Location"),
                 dir,
                 choose,
                 defau = new Button("Select Default Directory")
