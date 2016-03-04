@@ -8,6 +8,7 @@ package tachyon;
 import de.codecentric.centerdevice.MenuToolkit;
 import java.io.File;
 import java.util.Optional;
+import java.util.Scanner;
 import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.application.Platform;
@@ -136,6 +137,12 @@ public class Tachyon extends Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        try {
+            File f = new File(".cache" + File.separator + "design03.txt");
+            Scanner in = new Scanner(f);
+            applyCss.set(Boolean.parseBoolean(in.nextLine()));
+        } catch (Exception e) {
+        }
         launch(args);
     }
 

@@ -232,7 +232,9 @@ public class Dependencies {
                 Files.createDirectories(p);
             }
             Files.write(Paths.get(".cache" + File.separator + "preferences03.txt"),
-                    FXCollections.observableArrayList(localVersionProperty.get(), alert + "", workplace_location, Tachyon.applyCss.get() + ""));
+                    FXCollections.observableArrayList(localVersionProperty.get(), alert + "", workplace_location));
+            Files.write(Paths.get(".cache" + File.separator + "design03.txt"), 
+                    FXCollections.observableArrayList(Tachyon.applyCss.get() + ""));
         } catch (IOException ex) {
         }
         try {
@@ -262,7 +264,6 @@ public class Dependencies {
                 localVersionProperty.set(s);
                 alert = b;
                 workplace_location = in.nextLine();
-                Tachyon.applyCss.set(Boolean.parseBoolean(in.nextLine()));
             } catch (Exception ex) {
                 alert = true;
             }
