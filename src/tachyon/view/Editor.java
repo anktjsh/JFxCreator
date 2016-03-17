@@ -232,9 +232,9 @@ public class Editor extends EnvironmentTab {
         });
         canBeSaved.addListener((ob, older, newer) -> {
             if (newer) {
-                getGraph().setStyle("-fx-text-fill:blue;");
+                getGraph().setStyle("-fx-text-fill:lightblue;");
             } else {
-                getGraph().setStyle("-fx-text-fill:black;");
+                getGraph().setStyle("");
             }
         });
         area.textProperty().addListener((ob, older, newer) -> {

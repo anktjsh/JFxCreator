@@ -62,7 +62,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -70,7 +69,10 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.stage.WindowEvent;
 import javafx.util.Pair;
+import org.fxmisc.richtext.Paragraph;
 import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 import tachyon.contact.EmailPicker;
 import tachyon.core.Console;
 import tachyon.core.DebuggerController;
@@ -86,9 +88,6 @@ import tachyon.core.Template;
 import tachyon.core.ZipUtils;
 import tachyon.memory.Monitor;
 import tachyon.view.FileWizard.FileDescription;
-import org.fxmisc.richtext.Paragraph;
-import static tachyon.Tachyon.applyCss;
-import static tachyon.Tachyon.css;
 
 /**
  *
@@ -301,7 +300,7 @@ public class Writer extends BorderPane {
             ComboBox<String> fontSizes;
             box.getChildren().add(hb = new HBox(5, new Label("Modify Font Size"), fontSizes = new ComboBox<>()));
             box.getChildren().add(wrap = new CheckBox("Wrap Text"));
-            box.getChildren().add(css = new CheckBox("Material Design"));
+            box.getChildren().add(css = new CheckBox("Dark Theme"));
             Button hide;
             box.getChildren().add(hide = new Button("Close"));
             css.setSelected(Tachyon.applyCss.get());
@@ -359,6 +358,7 @@ public class Writer extends BorderPane {
                                 list = FXCollections.observableArrayList(one, two, three);
                             }
                         } catch (Exception eg) {
+                            ErrorConsole.addError(Thread.currentThread(), eg, "Error Parsing Code for Template");
                         }
                         if (list != null) {
                             Template.addTemplate(name.get(), list);
@@ -730,7 +730,6 @@ public class Writer extends BorderPane {
             options.setPadding(new Insets(5, 10, 5, 10));
             options.setAlignment(Pos.TOP_CENTER);
             top.setFont(new Font(20));
-            options.setStyle("-fx-background-color:#FFFAFA;");
             for (Node n : options.getChildren()) {
                 if (n instanceof Hyperlink) {
                     Hyperlink h = (Hyperlink) n;

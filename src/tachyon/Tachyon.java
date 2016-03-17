@@ -25,7 +25,7 @@ import javafx.stage.Stage;
 import tachyon.core.ProjectTree;
 import tachyon.memory.Monitor;
 import tachyon.view.Dependencies;
-import tachyon.view.Details;
+import tachyon.view.ErrorConsole;
 import tachyon.view.Writer;
 
 /**
@@ -38,12 +38,20 @@ public class Tachyon extends Application {
     public static final Image icon = new Image(Tachyon.class.getResourceAsStream("icon.png"));
     public static HostServices host;
     public static String css = Tachyon.class.getResource("material.css").toExternalForm();
-    public static BooleanProperty applyCss = new SimpleBooleanProperty(false);
+    public static BooleanProperty applyCss = new SimpleBooleanProperty(true);
 
+    @Override
+    public void init() {
+        Thread.setDefaultUncaughtExceptionHandler((Thread t, Throwable e) -> {
+            ErrorConsole.addError(t, e, null);
+        });
+    }
+    
     @Override
     public void start(Stage env) {
         host = getHostServices();
         Monitor.initialize(env);
+        ErrorConsole.initialize(env);
         Writer script;
         env.setScene(new Scene(script = new Writer()));
         env.getScene().getStylesheets().add(getClass().getResource("java-keywords.css").toExternalForm());

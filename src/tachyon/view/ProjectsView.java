@@ -27,7 +27,6 @@ public class ProjectsView extends BorderPane {
     public ProjectsView() {
         collapse = new Button("Projects");
         collapse.setRotate(270);
-        collapse.setDefaultButton(true);
         collapse.setGraphic(new ImageView(ProjectTreeItem.proj));
         setLeft(box = new VBox(new Label(), new Label(), new Label(), collapse));
         box.setAlignment(Pos.TOP_CENTER);

@@ -5,6 +5,7 @@
  */
 package tachyon.view;
 
+import javafx.collections.ListChangeListener;
 import javafx.scene.control.Button;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToolBar;
@@ -19,7 +20,7 @@ import tachyon.memory.Monitor;
  */
 public class EnvironmentToolBar extends ToolBar {
 
-    private final Button newF, newP, openP;
+    private final Button newF, newP, openP, error;
     private final Button saveAll, undo, redo;
     private final Button cut, copy, debug, paste;
     private final Button build, clean, run, monitor;
@@ -42,7 +43,9 @@ public class EnvironmentToolBar extends ToolBar {
                 new Separator(),
                 debug = new Button("Debug"),
                 new Separator(),
-                monitor = new Button("Monitor"));
+                monitor = new Button("Monitor"), 
+                new Separator(), 
+                error = new Button("Error"));
         getItems().stream().filter((n) -> (n instanceof Button)).map((n) -> (Button) n).forEach((b) -> {
             b.setText("");
         });
@@ -60,6 +63,7 @@ public class EnvironmentToolBar extends ToolBar {
         paste.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/paste.png"), 25, 25, true, true)));
         debug.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/debug.png"), 25, 25, true, true)));
         monitor.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/monitor.png"), 25, 25, true, true)));
+        error.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/error.png"), 25, 25, true, true)));
 
         Tooltip a = new Tooltip("New File");
         Tooltip b = new Tooltip("New Project");
@@ -75,6 +79,7 @@ public class EnvironmentToolBar extends ToolBar {
         Tooltip l = new Tooltip("Paste");
         Tooltip m = new Tooltip("Debug");
         Tooltip n = new Tooltip("Memory Monitor");
+        Tooltip o = new Tooltip("Error Console");
         Tooltip.install(newF, a);
         Tooltip.install(newP, b);
         Tooltip.install(openP, c);
@@ -89,6 +94,7 @@ public class EnvironmentToolBar extends ToolBar {
         Tooltip.install(paste, l);
         Tooltip.install(debug, m);
         Tooltip.install(monitor, n);
+        Tooltip.install(error, o);
 
         newF.setOnAction((e) -> {
             sw.newFile();
@@ -131,6 +137,18 @@ public class EnvironmentToolBar extends ToolBar {
         });
         monitor.setOnAction((e) -> {
             Monitor.show();
+        });
+        error.setDisable(true);
+        ErrorConsole.getErrors().addListener((ListChangeListener.Change<? extends ErrorConsole.Error> c1) -> {
+            c1.next();
+            if (c1.getList().isEmpty()) {
+                error.setDisable(true);
+            } else {
+                error.setDisable(false);
+            }
+        });
+        error.setOnAction((e) -> {
+            ErrorConsole.show();
         });
     }
 

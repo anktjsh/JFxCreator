@@ -205,7 +205,7 @@ public class Monitor {
 
     public static void initialize(Window w) {
         if (monitor != null) {
-            throw new RuntimeException("Already created");
+            throw new RuntimeException("Already Created");
         } else {
             monitor = new Monitor(w);
         }

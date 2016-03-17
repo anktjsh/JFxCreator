@@ -47,10 +47,10 @@ public class DragResizeMod {
                 ((Rectangle) node).setHeight(h);
             } else if (node instanceof Region) {
                 Region r = (Region) node;
-                r.setMinWidth(w);
+                r.setPrefWidth(w);
                 r.setMaxWidth(w);
                 r.setMaxHeight(h);
-                r.setMinHeight(h);
+                r.setPrefHeight(h);
             }
         }
     };

@@ -13,6 +13,8 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javafx.scene.control.TreeItem;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import tachyon.core.JavaLibrary;
 import tachyon.core.Project;
 
@@ -22,6 +24,7 @@ import tachyon.core.Project;
  */
 public class BinaryTreeItem extends TreeItem<String> {
 
+    private static final Image file = new Image(ProgramTreeItem.class.getResourceAsStream("tree/file.png"), 25, 25, true, true);    
     private final ZipEntry entry;
     private final Project project;
     private final JavaLibrary lib;
@@ -31,6 +34,7 @@ public class BinaryTreeItem extends TreeItem<String> {
         this.entry = entry;
         project = proj;
         lib = lisb;
+        setGraphic(new ImageView(file));
     }
 
     public InputStream getInputStream() {

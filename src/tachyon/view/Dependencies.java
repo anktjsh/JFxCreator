@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -32,12 +30,9 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -121,23 +116,9 @@ public class Dependencies {
         box.getChildren().addAll(box.getChildren().indexOf(confirm), FXCollections.observableArrayList(new Label("Choose a Directory for your Projects"), directory, chooser));
 
         confirm.setOnAction((e) -> {
-            String s = options.getValue();
-            if (getVersion(s).compareTo(CURRENT_VERSION) < 0) {
-                Optional<ButtonType> show = Writer.showAlert(Alert.AlertType.WARNING, stage, "", "This version of Java is outdated.\nIf you continue to use it, some features of Tachyon may not work.\nDo you want to continue?",
-                        "");
-                if (show.isPresent()) {
-                    if (show.get() == ButtonType.OK) {
-                    } else {
-                        return;
-                    }
-                } else {
-                    return;
-                }
-            }
             Writer.showAlert(Alert.AlertType.INFORMATION, stage, "Configuration Set",
                     "Settings Applied", "");
             stage.close();
-
         });
         stage.setScene(new Scene(box));
         if (applyCss.get()) {
@@ -146,15 +127,6 @@ public class Dependencies {
         box.setPadding(new Insets(5, 10, 5, 10));
         box.setAlignment(Pos.CENTER);
         box.setSpacing(10);
-    }
-
-    private static String getVersion(String s) {
-        String OS = System.getProperty("os.name").toLowerCase();
-        if (OS.contains("win")) {
-            return getWindowsVersion(s);
-        } else {
-            return getMacVersion(s);
-        }
     }
 
     private static String getWindowsVersion(String s) {
@@ -233,7 +205,7 @@ public class Dependencies {
             }
             Files.write(Paths.get(".cache" + File.separator + "preferences03.txt"),
                     FXCollections.observableArrayList(localVersionProperty.get(), alert + "", workplace_location));
-            Files.write(Paths.get(".cache" + File.separator + "design03.txt"), 
+            Files.write(Paths.get(".cache" + File.separator + "design03.txt"),
                     FXCollections.observableArrayList(Tachyon.applyCss.get() + ""));
         } catch (IOException ex) {
         }
@@ -338,22 +310,7 @@ public class Dependencies {
         });
         confirm.setOnAction((e) -> {
             String sa = field.getText();
-
-            if (getVersion(sa).compareTo(CURRENT_VERSION) < 0) {
-                Optional<ButtonType> show = Writer.showAlert(Alert.AlertType.WARNING, s, "", "This version of Java is outdated.\nIf you continue to use it, some features of Tachyon may not work.\nDo you want to continue?\n"
-                        + "(Optimal Version is jdk1.8.0_72)", "");
-                if (show.isPresent()) {
-                    if (show.get() == ButtonType.OK) {
-                        Dependencies.localVersionProperty.set(sa);
-                    } else {
-                        return;
-                    }
-                } else {
-                    return;
-                }
-            } else {
-                Dependencies.localVersionProperty.set(sa);
-            }
+            Dependencies.localVersionProperty.set(sa);
             Writer.showAlert(Alert.AlertType.INFORMATION, s, "Configuration Set",
                     "Settings Applied", "");
             s.close();

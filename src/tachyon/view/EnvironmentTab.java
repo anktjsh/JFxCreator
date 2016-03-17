@@ -33,7 +33,6 @@ public class EnvironmentTab extends Tab {
 
     public EnvironmentTab(Program scr, Project pro) {
         setGraphic(graph = new Label(scr == null ? "" : scr.getFile().getFileName().toString()));
-        graph.setStyle("-fx-text-fill:black;");
         project = pro;
         content = new BorderPane();
         setContent(content);
