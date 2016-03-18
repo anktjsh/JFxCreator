@@ -5,18 +5,22 @@
  */
 package tachyon.contact;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Properties;
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
+import javax.mail.BodyPart;
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.Multipart;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 
 /**
  *
@@ -29,6 +33,7 @@ public abstract class Email {
     private final Properties pro;
 
     private final ArrayList<String> to;
+    private final ArrayList<String> attachments;
     private String subject;
     private String text;
 
@@ -37,6 +42,7 @@ public abstract class Email {
         password = p;
         pro = new Properties();
         to = new ArrayList<>();
+        attachments = new ArrayList<>();
     }
 
     public String getUsername() {
@@ -49,6 +55,10 @@ public abstract class Email {
 
     public void addRecipient(String s) {
         to.add(s);
+    }
+
+    public void addAttachment(String f) {
+        attachments.add(f);
     }
 
     public void setSubject(String s) {
@@ -81,27 +91,26 @@ public abstract class Email {
                 message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(s));
             }
             message.setSubject(subject);
-            message.setText(text);
+            Multipart multipart = new MimeMultipart();
+
+            BodyPart messageBodyPart = new MimeBodyPart();
+            messageBodyPart.setText(text);
+            multipart.addBodyPart(messageBodyPart);
+
+            for (String f : attachments) {
+                BodyPart temp = new MimeBodyPart();
+                String filename = f;
+                DataSource source = new FileDataSource(filename);
+                temp.setDataHandler(new DataHandler(source));
+                temp.setFileName(filename);
+                multipart.addBodyPart(temp);
+            }
+            
+            message.setContent(multipart);
             Transport.send(message);
             return new Status(true, "");
         } catch (MessagingException ex) {
             return new Status(false, ex.getMessage());
-        }
-    }
-
-    private static boolean testInet(String site) {
-        Socket sock = new Socket();
-        InetSocketAddress addr = new InetSocketAddress(site, 80);
-        try {
-            sock.connect(addr, 3000);
-            return true;
-        } catch (IOException e) {
-            return false;
-        } finally {
-            try {
-                sock.close();
-            } catch (IOException e) {
-            }
         }
     }
 

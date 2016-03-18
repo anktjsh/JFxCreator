@@ -12,8 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -690,7 +688,7 @@ public class Writer extends BorderPane {
             evaluate(e);
         });
         bottom = new ConsolePane();
-        setBottom(bottom);        
+        setBottom(bottom);
         tabPane.getTabs().add(0, new Welcome());
         tabPane.getSelectionModel().select(0);
     }
@@ -804,35 +802,7 @@ public class Writer extends BorderPane {
     }
 
     private void sendEmail(String subject) {
-        File f = new File(".cache" + File.separator + "emailstamp.txt");
-        if (f.exists()) {
-            ArrayList<String> al = new ArrayList<>();
-            try {
-                al.addAll(Files.readAllLines(f.toPath()));
-            } catch (IOException ex) {
-            }
-            LocalDate ld = LocalDate.parse(al.get(0));
-            LocalTime lt = LocalTime.parse(al.get(1));
-            LocalDate today = LocalDate.now();
-            LocalTime now = LocalTime.now();
-            if (today.isEqual(ld)) {
-                if (now.isAfter(lt)) {
-                    if (now.getHour() > lt.getHour() + 1) {
-                        confirmSend(subject);
-                    } else {
-                        unableToSend();
-                    }
-                } else {
-                    unableToSend();
-                }
-            } else if (today.isAfter(ld)) {
-                confirmSend(subject);
-            } else {
-                unableToSend();
-            }
-        } else {
-            confirmSend(subject);
-        }
+        confirmSend(subject);
     }
 
     public final void examples() {
@@ -889,11 +859,6 @@ public class Writer extends BorderPane {
         Project pro = new Project(f.toPath(), mainClass, true, 0);
         pro.getPrograms().get(0).save(Examples.getExamples().getCode(index));
         ProjectTree.getTree().addProject(pro);
-    }
-
-    private void unableToSend() {
-        showAlert(AlertType.ERROR, getScene().getWindow(), "Unable to Send",
-                "Cannot send another email so soon after the last one!", "");
     }
 
     private void confirmSend(String sub) {
@@ -1101,11 +1066,9 @@ public class Writer extends BorderPane {
                         } else if (type.contains("fxml")) {
                             Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
                             addTab(new FXMLTab(pro, parent));
-                        } else {
-                            if (alert(f.getAbsolutePath())) {
-                                Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                                addTab(new Editor(pro, parent));
-                            }
+                        } else if (alert(f.getAbsolutePath())) {
+                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                            addTab(new Editor(pro, parent));
                         }
                     } else {
                         System.out.println(f.getName());
@@ -1134,18 +1097,14 @@ public class Writer extends BorderPane {
                         addTab(new Viewer(prog, prog.getProject()));
                     } else if (type.contains("fxml")) {
                         addTab(new FXMLTab(prog, prog.getProject()));
-                    } else {
-                        if (alert(prog.getFile().toAbsolutePath().toString())) {
-                            addTab(new Editor(prog, prog.getProject()));
-                        }
-                    }
-                } else {
-                    if (prog.getFile().toString().endsWith(".pdf")) {
-                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                        addTab(new PdfReader(pro, parent));
                     } else if (alert(prog.getFile().toAbsolutePath().toString())) {
                         addTab(new Editor(prog, prog.getProject()));
                     }
+                } else if (prog.getFile().toString().endsWith(".pdf")) {
+                    Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                    addTab(new PdfReader(pro, parent));
+                } else if (alert(prog.getFile().toAbsolutePath().toString())) {
+                    addTab(new Editor(prog, prog.getProject()));
                 }
             }
         }
@@ -1272,7 +1231,7 @@ public class Writer extends BorderPane {
     }
 
     private void resizeMenuItems(ObservableList<MenuItem> me, String style) {
-        for (MenuItem m : me){
+        for (MenuItem m : me) {
             m.setStyle(style);
         }
         projects.getTreeView().setStyle(style);
@@ -1497,7 +1456,7 @@ public class Writer extends BorderPane {
                     Editor ed = new Editor(scripts.get(x), pro);
                     tabPane.getTabs().add(ed);
                 }
-                tabPane.getSelectionModel().select(tabPane.getTabs().size()-1);
+                tabPane.getSelectionModel().select(tabPane.getTabs().size() - 1);
                 ProjectTree.getTree().addProject(pro);
             }
         }
@@ -1554,10 +1513,8 @@ public class Writer extends BorderPane {
         if (getSelectedEditor() != null) {
             if (getSelectedEditor().getScript().getProject() != null) {
                 runFile(getSelectedEditor().getScript().getProject(), getSelectedEditor().getScript());
-            } else {
-                if (getSelectedEditor().getScript().getFile().getFileName().toString().endsWith(".java")) {
-                    runFile(getSelectedEditor().getScript());
-                }
+            } else if (getSelectedEditor().getScript().getFile().getFileName().toString().endsWith(".java")) {
+                runFile(getSelectedEditor().getScript());
             }
         }
     }
@@ -1872,21 +1829,19 @@ public class Writer extends BorderPane {
                     selectAll.fire();
                 }
             }
+        } else if (kc.isShiftDown()) {
+            if (kc.getCode() == KeyCode.F6) {
+                clean.fire();
+            }
+            if (kc.getCode() == KeyCode.F5) {
+                runF.fire();
+            }
         } else {
-            if (kc.isShiftDown()) {
-                if (kc.getCode() == KeyCode.F6) {
-                    clean.fire();
-                }
-                if (kc.getCode() == KeyCode.F5) {
-                    runF.fire();
-                }
-            } else {
-                if (kc.getCode() == KeyCode.F6) {
-                    build.fire();
-                }
-                if (kc.getCode() == KeyCode.F5) {
-                    run.fire();
-                }
+            if (kc.getCode() == KeyCode.F6) {
+                build.fire();
+            }
+            if (kc.getCode() == KeyCode.F5) {
+                run.fire();
             }
         }
     }
@@ -1963,7 +1918,7 @@ public class Writer extends BorderPane {
         ale.setTitle(title);
         ale.setHeaderText(head);
         ale.setContentText(cont);
-        if (((Stage) ale.getDialogPane().getScene().getWindow()).getIcons().size() == 0) {
+        if (((Stage) ale.getDialogPane().getScene().getWindow()).getIcons().isEmpty()) {
             ((Stage) ale.getDialogPane().getScene().getWindow()).getIcons().add(Tachyon.icon);
         }
         return ale.showAndWait();

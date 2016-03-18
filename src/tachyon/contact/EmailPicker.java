@@ -11,20 +11,23 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -38,10 +41,10 @@ import tachyon.view.Writer;
  * @author Aniket
  */
 public class EmailPicker {
-
+    
     private final Stage stage;
     private final String subject;
-
+    
     public EmailPicker(Window w, String sub) {
         subject = sub;
         stage = new Stage();
@@ -55,24 +58,24 @@ public class EmailPicker {
             stage.getScene().getStylesheets().add(css);
         }
     }
-
+    
     public void showAndWait() {
         stage.showAndWait();
     }
-
+    
     private class EmailPane extends BorderPane {
-
+        
         private final BorderPane top, bottom, center;
-
-        private final Button cancel, send;
+        
+        private final Button cancel, send, attach;
         private final TextArea message;
         private final VBox box, creds;
         private final TextField username;
         private final PasswordField password;
-        private final HBox options;
+        private final HBox options, attachments;
         private final Button gmail, hotmail;
         private final Label extension;
-
+        
         public EmailPane() {
             setPadding(new Insets(5, 10, 5, 10));
             top = new BorderPane();
@@ -84,7 +87,7 @@ public class EmailPicker {
             setTop(top);
             setBottom(bottom);
             setCenter(center);
-
+            
             bottom.setLeft(cancel = new Button("Cancel"));
             bottom.setRight(send = new Button("Send"));
             cancel.setOnAction((e) -> {
@@ -93,14 +96,17 @@ public class EmailPicker {
             send.setDisable(true);
             center.setCenter(message = new TextArea());
             message.setDisable(true);
-
+            
             box = new VBox(5);
             box.setPadding(getPadding());
             box.setAlignment(Pos.CENTER_LEFT);
             box.getChildren().addAll(new Label("To : serpior.ariad@gmail.com"),
-                    new Label("Subject : " + subject));
+                    new Label("Subject : " + subject),
+                    attach = new Button("Attachments"),
+                    new ScrollPane(attachments = new HBox(5)));
             center.setTop(box);
-
+            attach.setDisable(true);
+            
             creds = new VBox(5);
             creds.setPadding(getPadding());
             creds.getChildren().addAll(
@@ -115,7 +121,7 @@ public class EmailPicker {
             username.setDisable(true);
             password.setDisable(true);
             top.setBottom(creds);
-
+            
             top.setTop(options = new HBox(15));
             options.setAlignment(Pos.CENTER);
             options.setPadding(getPadding());
@@ -126,6 +132,7 @@ public class EmailPicker {
                 gmail.setDisable(true);
                 hotmail.setDisable(true);
                 send.setDisable(false);
+                attach.setDisable(false);
                 message.setDisable(false);
                 username.setDisable(false);
                 password.setDisable(false);
@@ -135,21 +142,37 @@ public class EmailPicker {
                 gmail.setDisable(true);
                 hotmail.setDisable(true);
                 send.setDisable(false);
+                attach.setDisable(false);
                 message.setDisable(false);
                 username.setDisable(false);
                 password.setDisable(false);
             });
-
+            
+            attach.setOnAction((e) -> {
+                FileChooser fc = new FileChooser();
+                fc.setTitle("Open File");
+                List<File> multi = fc.showOpenMultipleDialog(getScene().getWindow());
+                for (File f : multi) {
+                    attachments.getChildren().add(new Label(f.getAbsolutePath()));
+                }                
+            });
+            
             send.setOnAction((e) -> {
+                ArrayList<String> al = new ArrayList<>();
+                for (javafx.scene.Node n : attachments.getChildren()) {
+                    if (n instanceof Label) {
+                        al.add(((Label) n).getText());
+                    }
+                }
                 Email.Status sent = EmailFactory.newEmailFactory().setCredentials(
-                        extension.getText().contains("gmail") ? EmailFactory.GMAIL : EmailFactory.HOTMAIL,
-                        username.getText() + extension.getText(),
-                        password.getText())
+                                extension.getText().contains("gmail") ? EmailFactory.GMAIL : EmailFactory.HOTMAIL,
+                                username.getText() + extension.getText(),
+                                password.getText())
                         .addRecipient("serpior.ariad@gmail.com")
                         .setSubject(subject)
                         .setMessage(message.getText())
+                        .setAttachments(al)
                         .construct().send();
-                System.out.println("hello");
                 if (!sent.isSuccess()) {
                     if (sent.getMessage().contains("Username and Password not accepted")) {
                         error(sent.getMessage());
@@ -160,21 +183,15 @@ public class EmailPicker {
                         error(sent.getMessage());
                     }
                 } else {
-                    try {
-                        Files.write(Paths.get(".cache" + File.separator + "emailstamp.txt"),
-                                FXCollections.observableArrayList(LocalDate.now().toString(),
-                                        LocalTime.now().toString()));
-                    } catch (IOException ex) {
-                    }
                     Writer.showAlert(AlertType.INFORMATION, stage, "Email Sent", "Email Sent", "");
                     stage.close();
                 }
-
+                
             });
         }
-
+        
     }
-
+    
     private void error(String message) {
         Writer.showAlert(AlertType.ERROR, stage, "Error Sending", message, "");
     }

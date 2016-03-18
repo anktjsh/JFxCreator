@@ -45,6 +45,13 @@ public class EmailFactory {
         }
         return this;
     }
+    
+    public EmailFactory setAttachments(List<String> al) {
+        for (String f : al) {
+            email.addAttachment(f);
+        }
+        return this;
+    }
 
     public EmailFactory setSubject(String s) {
         email.setSubject(s);
