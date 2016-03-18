@@ -43,25 +43,25 @@ public class Console {
 
     public void log(String st) {
         content += st;
-        listen.stream().forEach((cl) -> {
+        for (ConsoleListener cl : listen) {
             cl.stringAdded(st);
-        });
+        }
         cancel();
     }
 
     public void log(char c) {
         content += c;
-        listen.stream().forEach((cl) -> {
+        for (ConsoleListener cl : listen) {
             cl.charAdded(c);
-        });
+        }
         cancel();
     }
 
     public void error(String s) {
         content += s;
-        listen.stream().forEach((cl) -> {
+        for (ConsoleListener cl : listen) {
             cl.error(s);
-        });
+        }
         cancel();
     }
 

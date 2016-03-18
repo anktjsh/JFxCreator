@@ -56,9 +56,9 @@ public class ProcessPool {
     }
 
     public void cancel() {
-        items.stream().forEach((pt) -> {
+        for (ProcessItem pt : items) {
             pt.getProcess().destroy();
-        });
+        }
     }
 
 }

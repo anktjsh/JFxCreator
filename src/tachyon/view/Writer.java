@@ -25,7 +25,6 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -115,8 +114,7 @@ public class Writer extends BorderPane {
     private final MenuItem newTemplate, selectTemplate;
     private final ProjectsView projects;
     private final BorderPane top;
-    private final BorderPane bottom;
-    private final TabPane console;
+    private final ConsolePane bottom;
 
     public Writer() {
         tabPane = new TabPane();
@@ -457,9 +455,9 @@ public class Writer extends BorderPane {
                         }
 
                     }));
-                    added.getPrograms().stream().forEach((s) -> {
-                        addScriptTreeItem(item, new ProgramTreeItem(s));
-                    });
+                    for (Program p : added.getPrograms()) {
+                        addScriptTreeItem(item, new ProgramTreeItem(p));
+                    }
                     for (JavaLibrary s : added.getAllLibs()) {
                         item.getChildren().get(1).getChildren().add(new LibraryTreeItem(added, s));
                     }
@@ -691,19 +689,8 @@ public class Writer extends BorderPane {
         setOnKeyPressed((e) -> {
             evaluate(e);
         });
-        bottom = new BorderPane();
-        console = new TabPane();
-        console.getTabs().addListener((ListChangeListener.Change<? extends Tab> c) -> {
-            c.next();
-            if (c.getList().size() == 0) {
-                bottom.setPrefHeight(0);
-            } else {
-                bottom.setPrefHeight(300);
-            }
-        });
-        setBottom(bottom);
-        bottom.setCenter(console);
-        bottom.setPadding(new Insets(5, 10, 5, 10));
+        bottom = new ConsolePane();
+        setBottom(bottom);        
         tabPane.getTabs().add(0, new Welcome());
         tabPane.getSelectionModel().select(0);
     }
@@ -1076,9 +1063,9 @@ public class Writer extends BorderPane {
     }
 
     public void loadFiles(List<File> fil) {
-        fil.stream().forEach((f) -> {
+        for (File f : fil) {
             loadFile(f, null);
-        });
+        }
     }
 
     public void loadFiles(String[] arr) {
@@ -1221,24 +1208,24 @@ public class Writer extends BorderPane {
         } catch (IOException ex) {
         }
         ArrayList<Program> asc = new ArrayList<>();
-        ProjectTree.getTree().getProjects().stream().forEach((p) -> {
-            p.getPrograms().stream().forEach((sc) -> {
+        for (Project p : ProjectTree.getTree().getProjects()) {
+            for (Program sc : p.getPrograms()) {
                 for (int x = al.size() - 1; x >= 0; x--) {
                     if (sc.getFile().toAbsolutePath().toString().equals(al.get(x))) {
                         asc.add(sc);
                         al.remove(x);
                     }
                 }
-            });
-        });
+            }
+        }
         if (!al.isEmpty()) {
             ArrayList<File> af = new ArrayList<>();
-            al.stream().forEach((s) -> {
+            for (String s : al) {
                 af.add(new File(s));
-            });
+            }
             loadFiles(af);
         }
-        asc.stream().forEach((sti) -> {
+        for (Program sti : asc) {
             if (sti.getType() == Program.JAVA) {
                 Editor ed;
                 tabPane.getTabs().add(ed = new Editor(sti, sti.getProject()));
@@ -1247,7 +1234,7 @@ public class Writer extends BorderPane {
                 loadFile(sti.getFile().toFile(), sti, sti.getProject());
 
             }
-        });
+        }
     }
 
     private boolean alert(String s) {
@@ -1277,17 +1264,17 @@ public class Writer extends BorderPane {
     }
 
     private void resizeMenus(ObservableList<Menu> me, String style) {
-        me.stream().forEach((m) -> {
+        for (Menu m : me) {
             resizeMenuItems(m.getItems(), style);
             m.setStyle(style);
-        });
+        }
         projects.getTreeView().setStyle(style);
     }
 
     private void resizeMenuItems(ObservableList<MenuItem> me, String style) {
-        me.stream().forEach((m) -> {
+        for (MenuItem m : me){
             m.setStyle(style);
-        });
+        }
         projects.getTreeView().setStyle(style);
     }
 
@@ -1510,6 +1497,7 @@ public class Writer extends BorderPane {
                     Editor ed = new Editor(scripts.get(x), pro);
                     tabPane.getTabs().add(ed);
                 }
+                tabPane.getSelectionModel().select(tabPane.getTabs().size()-1);
                 ProjectTree.getTree().addProject(pro);
             }
         }
@@ -1837,9 +1825,7 @@ public class Writer extends BorderPane {
     }
 
     private void addConsoleWindow(ProcessItem c) {
-        ConsoleWindow con;
-        console.getTabs().add(con = new ConsoleWindow(c));
-        console.getSelectionModel().select(con);
+        bottom.addConsoleWindow(c);
     }
 
     private void evaluate(KeyEvent kc) {

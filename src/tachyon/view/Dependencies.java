@@ -114,7 +114,6 @@ public class Dependencies {
             }
         });
         box.getChildren().addAll(box.getChildren().indexOf(confirm), FXCollections.observableArrayList(new Label("Choose a Directory for your Projects"), directory, chooser));
-
         confirm.setOnAction((e) -> {
             Writer.showAlert(Alert.AlertType.INFORMATION, stage, "Configuration Set",
                     "Settings Applied", "");
@@ -127,16 +126,6 @@ public class Dependencies {
         box.setPadding(new Insets(5, 10, 5, 10));
         box.setAlignment(Pos.CENTER);
         box.setSpacing(10);
-    }
-
-    private static String getWindowsVersion(String s) {
-        String sh = s.substring(s.indexOf("Java") + 8, s.lastIndexOf(File.separator));
-        return sh;
-    }
-
-    private static String getMacVersion(String s) {
-        String sh = s.substring(s.indexOf("JavaVirtualMachines") + 24, s.lastIndexOf(".jdk"));
-        return sh;
     }
 
     private static List<String> getAvailableOptions() {
@@ -250,10 +239,20 @@ public class Dependencies {
             workplace_location = spl[1];
         }
         Path p = Paths.get(localVersionProperty.get());
+        System.out.println(p.toAbsolutePath().toString());
+        String OS = System.getProperty("os.name").toLowerCase();
+        Path a = Paths.get(localVersionProperty.get() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+        Path b = Paths.get(localVersionProperty.get() + File.separator + "javafxpackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+        System.out.println(Files.exists(a));
+        System.out.println(Files.exists(b));
         if (!Files.exists(p)) {
             Writer.showAlert(AlertType.ERROR, w, "Java Platform",
                     "Previous JDK Files no longer exist",
                     "Click on Settings and Select a new JDK Version or some features of Tachyon may not work properly");
+        } else if (!(Files.exists(a) || Files.exists(b))) {
+            Writer.showAlert(AlertType.ERROR, w, "Java Platform",
+                    "JDK Version is outdated, some features of Tachyon may not work as expected",
+                    "Please download a more recent version of the Java JDK");
         }
     }
 
@@ -313,6 +312,14 @@ public class Dependencies {
             Dependencies.localVersionProperty.set(sa);
             Writer.showAlert(Alert.AlertType.INFORMATION, s, "Configuration Set",
                     "Settings Applied", "");
+            String OS = System.getProperty("os.name").toLowerCase();
+            Path a = Paths.get(localVersionProperty.get() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+            Path b = Paths.get(localVersionProperty.get() + File.separator + "javafxpackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+            if (!(Files.exists(a) || Files.exists(b))) {
+                Writer.showAlert(AlertType.ERROR, w, "Java Platform",
+                        "JDK Version is low, some features of Tachyon may not work as expected",
+                        "Please download a more recent version of the Java JDK");
+            }
             s.close();
         });
         s.showAndWait();

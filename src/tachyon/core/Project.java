@@ -304,17 +304,17 @@ public class Project {
 
     public void addScript(Program scr) {
         if (addProgram(scr)) {
-            listeners.stream().forEach((pl) -> {
+            for (ProjectListener pl : listeners) {
                 pl.fileAdded(this, scr);
-            });
+            }
         }
     }
 
     public void removeScript(Program scr) {
         programs.remove(scr);
-        listeners.stream().forEach((pl) -> {
+        for (ProjectListener pl : listeners) {
             pl.fileRemoved(this, scr);
-        });
+        }
     }
 
     public HashMap<String, String> getCompileTimeArguments() {
@@ -571,11 +571,11 @@ public class Project {
 
     public String getFileList() {
         StringBuilder sb = new StringBuilder();
-        programs.stream().forEach((p) -> {
+        for (Program p : programs) {
             if (p.getFile().toAbsolutePath().toString().endsWith(".java")) {
                 sb.append(" ").append(p.getFile().toAbsolutePath().toString());
             }
-        });
+        }
         return sb.toString();
     }
 

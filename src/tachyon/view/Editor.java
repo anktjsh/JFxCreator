@@ -218,15 +218,15 @@ public class Editor extends EnvironmentTab {
         area.getContextMenu().getItems().get(5).setOnAction((E) -> {
             area.selectAll();
         });
-        area.getContextMenu().getItems().stream().forEach((mi) -> {
+        for (MenuItem mi : area.getContextMenu().getItems()) {
             mi.setStyle("-fx-font-size:" + Writer.fontSize.get().getSize());
-        });
+        }
         AddBreakpoint.setStyle("-fx-font-size:" + Writer.fontSize.get().getSize());
         removeB.setStyle("-fx-font-size:" + Writer.fontSize.get().getSize());
         Writer.fontSize.addListener((ob, older, newer) -> {
-            area.getContextMenu().getItems().stream().forEach((mi) -> {
-                mi.setStyle("-fx-font-size:" + newer.getSize());
-            });
+            for (MenuItem mi : area.getContextMenu().getItems()) {
+                mi.setStyle("-fx-font-size:" + Writer.fontSize.get().getSize());
+            }
             AddBreakpoint.setStyle("-fx-font-size:" + newer.getSize());
             removeB.setStyle("-fx-font-size:" + newer.getSize());
         });

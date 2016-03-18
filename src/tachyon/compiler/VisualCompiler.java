@@ -65,9 +65,9 @@ public class VisualCompiler extends Compiler {
 
     public void prepare() {
         ObservableList<DynamicJavaSourceCodeObject> objs = FXCollections.observableArrayList();
-        allEditors.stream().forEach((ed) -> {
+        for (Editor ed : allEditors) {
             objs.add(new DynamicJavaSourceCodeObject(ed.getScript().getClassName(), ed.getCodeArea().getText()));
-        });
+        }
         for (Program p : allPrograms) {
             objs.add(new DynamicJavaSourceCodeObject(p.getClassName(), p.getLastCode()));
         }

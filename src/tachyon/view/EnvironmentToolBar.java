@@ -46,9 +46,12 @@ public class EnvironmentToolBar extends ToolBar {
                 monitor = new Button("Monitor"), 
                 new Separator(), 
                 error = new Button("Error"));
-        getItems().stream().filter((n) -> (n instanceof Button)).map((n) -> (Button) n).forEach((b) -> {
-            b.setText("");
-        });
+        for (javafx.scene.Node n : getItems()){
+            if (n instanceof Button) {
+                Button b = (Button)n;
+                b.setText("");
+            }
+        }
         newF.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/newFile.png"), 25, 25, true, true)));
         newP.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/newProjec.png"), 25, 25, true, true)));
         openP.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("toolbar/openProject.png"), 25, 25, true, true)));

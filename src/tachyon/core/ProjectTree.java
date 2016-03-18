@@ -33,9 +33,9 @@ public class ProjectTree {
 
     public void addProject(Project pro) {
         projects.add(pro);
-        listeners.stream().forEach((lt) -> {
+        for (ProjectTreeListener lt : listeners) {
             lt.projectAdded(pro);
-        });
+        }
     }
 
     public ObservableList<Project> getProjects() {
@@ -45,15 +45,15 @@ public class ProjectTree {
     public void removeProject(Project pro) {
         projects.remove(pro);
         pro.close();
-        listeners.stream().forEach((lt) -> {
+        for (ProjectTreeListener lt : listeners) {
             lt.projectRemoved(pro);
-        });
+        }
     }
 
     public void close() {
-        projects.stream().forEach((p) -> {
+        for (Project p : projects) {
             p.close();
-        });
+        }
     }
 
     public void addListener(ProjectTreeListener al) {

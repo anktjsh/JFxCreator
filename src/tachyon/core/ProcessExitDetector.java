@@ -29,17 +29,17 @@ public class ProcessExitDetector extends Thread {
     public void run() {
         try {
             int val = process.getProcess().exitValue();
-            listeners.stream().forEach((listener) -> {
-                listener.processFinished(process.getProcess(), val);
-            });
+            for (ProcessListener listen : listeners) {
+                listen.processFinished(process.getProcess(), val);
+            }
             return;
         } catch (IllegalThreadStateException eg) {
         }
         try {
             int val = process.getProcess().waitFor();
-            listeners.stream().forEach((listener) -> {
-                listener.processFinished(process.getProcess(), val);
-            });
+            for (ProcessListener listen : listeners) {
+                listen.processFinished(process.getProcess(), val);
+            }
         } catch (InterruptedException e) {
         }
     }

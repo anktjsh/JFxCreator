@@ -5,14 +5,14 @@
  */
 package tachyon.view;
 
-import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ToolBar;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
 
 /**
  *
@@ -22,14 +22,14 @@ public class ProjectsView extends BorderPane {
 
     private final TreeView<String> tree;
     private final Button collapse;
-    private final VBox box;
+    private final ToolBar box;
 
     public ProjectsView() {
         collapse = new Button("Projects");
         collapse.setRotate(270);
         collapse.setGraphic(new ImageView(ProjectTreeItem.proj));
-        setLeft(box = new VBox(new Label(), new Label(), new Label(), collapse));
-        box.setAlignment(Pos.TOP_CENTER);
+        setLeft(box = new ToolBar(new Label(), new Label(), collapse));
+        box.setOrientation(Orientation.VERTICAL);
         setCenter(null);
         tree = new TreeView<>();
         collapse.setOnAction((e) -> {
