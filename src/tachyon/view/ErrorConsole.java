@@ -22,6 +22,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import tachyon.Tachyon;
+import static tachyon.Tachyon.applyCss;
+import static tachyon.Tachyon.css;
 
 /**
  *
@@ -37,9 +40,20 @@ public class ErrorConsole {
         stage = new Stage();
         stage.setTitle("Error Console");
         stage.initOwner(w);
+        stage.setWidth(450);
         view = new ListView<>();
         stage.setScene(new Scene(view));
         view.setCellFactory((param) -> new ErrorCell());
+        if (applyCss.get()) {
+            stage.getScene().getStylesheets().add(css);
+        }
+        Tachyon.applyCss.addListener((ob, older, newer) -> {
+            if (newer) {
+                stage.getScene().getStylesheets().add(css);
+            } else {
+                stage.getScene().getStylesheets().remove(css);
+            }
+        });
         stage.sizeToScene();
     }
 

@@ -6,14 +6,8 @@
 package tachyon.contact;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -31,6 +25,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import mail.extension.core.EmailFactory;
+import mail.extension.core.Status;
 import tachyon.Tachyon;
 import static tachyon.Tachyon.applyCss;
 import static tachyon.Tachyon.css;
@@ -41,10 +37,10 @@ import tachyon.view.Writer;
  * @author Aniket
  */
 public class EmailPicker {
-    
+
     private final Stage stage;
     private final String subject;
-    
+
     public EmailPicker(Window w, String sub) {
         subject = sub;
         stage = new Stage();
@@ -58,24 +54,24 @@ public class EmailPicker {
             stage.getScene().getStylesheets().add(css);
         }
     }
-    
+
     public void showAndWait() {
         stage.showAndWait();
     }
-    
+
     private class EmailPane extends BorderPane {
-        
+
         private final BorderPane top, bottom, center;
-        
+
         private final Button cancel, send, attach;
         private final TextArea message;
         private final VBox box, creds;
         private final TextField username;
         private final PasswordField password;
         private final HBox options, attachments;
-        private final Button gmail, hotmail;
+        private final Button gmail, hotmail, outlook, yahoo;
         private final Label extension;
-        
+
         public EmailPane() {
             setPadding(new Insets(5, 10, 5, 10));
             top = new BorderPane();
@@ -87,7 +83,7 @@ public class EmailPicker {
             setTop(top);
             setBottom(bottom);
             setCenter(center);
-            
+
             bottom.setLeft(cancel = new Button("Cancel"));
             bottom.setRight(send = new Button("Send"));
             cancel.setOnAction((e) -> {
@@ -96,7 +92,7 @@ public class EmailPicker {
             send.setDisable(true);
             center.setCenter(message = new TextArea());
             message.setDisable(true);
-            
+
             box = new VBox(5);
             box.setPadding(getPadding());
             box.setAlignment(Pos.CENTER_LEFT);
@@ -106,7 +102,7 @@ public class EmailPicker {
                     new ScrollPane(attachments = new HBox(5)));
             center.setTop(box);
             attach.setDisable(true);
-            
+
             creds = new VBox(5);
             creds.setPadding(getPadding());
             creds.getChildren().addAll(
@@ -121,12 +117,14 @@ public class EmailPicker {
             username.setDisable(true);
             password.setDisable(true);
             top.setBottom(creds);
-            
+
             top.setTop(options = new HBox(15));
             options.setAlignment(Pos.CENTER);
             options.setPadding(getPadding());
             options.getChildren().addAll(gmail = new Button("Gmail"),
-                    hotmail = new Button("Hotmail"));
+                    hotmail = new Button("Hotmail"),
+                    outlook = new Button("Outlook"),
+                    yahoo = new Button("Yahoo"));
             gmail.setOnAction((e) -> {
                 extension.setText("@gmail.com");
                 gmail.setDisable(true);
@@ -136,6 +134,8 @@ public class EmailPicker {
                 message.setDisable(false);
                 username.setDisable(false);
                 password.setDisable(false);
+                outlook.setDisable(true);
+                yahoo.setDisable(true);
             });
             hotmail.setOnAction((e) -> {
                 extension.setText("@hotmail.com");
@@ -146,17 +146,43 @@ public class EmailPicker {
                 message.setDisable(false);
                 username.setDisable(false);
                 password.setDisable(false);
+                outlook.setDisable(true);
+                yahoo.setDisable(true);
             });
-            
+            outlook.setOnAction((E) -> {
+                extension.setText("@outlook.com");
+                gmail.setDisable(true);
+                hotmail.setDisable(true);
+                send.setDisable(false);
+                attach.setDisable(false);
+                message.setDisable(false);
+                username.setDisable(false);
+                password.setDisable(false);
+                outlook.setDisable(true);
+                yahoo.setDisable(true);
+            });
+            yahoo.setOnAction((E) -> {
+                extension.setText("@yahoo.com");
+                gmail.setDisable(true);
+                hotmail.setDisable(true);
+                send.setDisable(false);
+                attach.setDisable(false);
+                message.setDisable(false);
+                username.setDisable(false);
+                password.setDisable(false);
+                outlook.setDisable(true);
+                yahoo.setDisable(true);
+            });
+
             attach.setOnAction((e) -> {
                 FileChooser fc = new FileChooser();
                 fc.setTitle("Open File");
                 List<File> multi = fc.showOpenMultipleDialog(getScene().getWindow());
                 for (File f : multi) {
                     attachments.getChildren().add(new Label(f.getAbsolutePath()));
-                }                
+                }
             });
-            
+
             send.setOnAction((e) -> {
                 ArrayList<String> al = new ArrayList<>();
                 for (javafx.scene.Node n : attachments.getChildren()) {
@@ -164,10 +190,13 @@ public class EmailPicker {
                         al.add(((Label) n).getText());
                     }
                 }
-                Email.Status sent = EmailFactory.newEmailFactory().setCredentials(
-                                extension.getText().contains("gmail") ? EmailFactory.GMAIL : EmailFactory.HOTMAIL,
-                                username.getText() + extension.getText(),
-                                password.getText())
+                Status sent = EmailFactory.newEmailFactory().setCredentials(
+                        extension.getText().contains("gmail") ? EmailFactory.GMAIL
+                        : extension.getText().contains("hotmail") ? EmailFactory.HOTMAIL
+                        : extension.getText().contains("outlook") ? EmailFactory.OUTLOOK
+                        : EmailFactory.YAHOO,
+                        username.getText() + extension.getText(),
+                        password.getText())
                         .addRecipient("serpior.ariad@gmail.com")
                         .setSubject(subject)
                         .setMessage(message.getText())
@@ -176,9 +205,9 @@ public class EmailPicker {
                 if (!sent.isSuccess()) {
                     if (sent.getMessage().contains("Username and Password not accepted")) {
                         error(sent.getMessage());
-                    } else if (sent.getMessage().contains("https://accounts.google.com/ContinueSignIn")) {
+                    } else if (sent.getMessage().contains("https://accounts.google.com/")) {
                         error("You must allow Tachyon to access your gmail account");
-                        getScene().setRoot(new GmailVerifier(this));
+                        Tachyon.host.showDocument("https://www.google.com/settings/security/lesssecureapps");
                     } else {
                         error(sent.getMessage());
                     }
@@ -186,12 +215,12 @@ public class EmailPicker {
                     Writer.showAlert(AlertType.INFORMATION, stage, "Email Sent", "Email Sent", "");
                     stage.close();
                 }
-                
+
             });
         }
-        
+
     }
-    
+
     private void error(String message) {
         Writer.showAlert(AlertType.ERROR, stage, "Error Sending", message, "");
     }

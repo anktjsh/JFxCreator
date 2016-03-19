@@ -91,19 +91,25 @@ public class Monitor {
         one.getItems().addListener((ListChangeListener.Change<? extends String> c) -> {
             c.next();
             if (!c.getList().isEmpty()) {
-                one.scrollTo(c.getList().size() - 1);
+                run(() -> {
+                    one.scrollTo(c.getList().size() - 1);
+                });
             }
         });
         two.getItems().addListener((ListChangeListener.Change<? extends String> c) -> {
             c.next();
             if (!c.getList().isEmpty()) {
-                two.scrollTo(c.getList().size() - 1);
+                run(() -> {
+                    two.scrollTo(c.getList().size() - 1);
+                });
             }
         });
         three.getItems().addListener((ListChangeListener.Change<? extends String> c) -> {
             c.next();
             if (!c.getList().isEmpty()) {
-                three.scrollTo(c.getList().size() - 1);
+                run(() -> {
+                    three.scrollTo(c.getList().size() - 1);
+                });
             }
         });
         watch.freeList().addListener((ListChangeListener.Change<? extends Pair<LocalTime, Long>> c) -> {
