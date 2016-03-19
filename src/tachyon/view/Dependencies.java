@@ -241,8 +241,8 @@ public class Dependencies {
         Path p = Paths.get(localVersionProperty.get());
         System.out.println(p.toAbsolutePath().toString());
         String OS = System.getProperty("os.name").toLowerCase();
-        Path a = Paths.get(localVersionProperty.get() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ".dmg"));
-        Path b = Paths.get(localVersionProperty.get() + File.separator + "javafxpackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+        Path a = Paths.get(localVersionProperty.get() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ""));
+        Path b = Paths.get(localVersionProperty.get() + File.separator + "javafxpackager" + (OS.contains("win") ? ".exe" : ""));
         System.out.println(Files.exists(a));
         System.out.println(Files.exists(b));
         if (!Files.exists(p)) {
@@ -313,8 +313,8 @@ public class Dependencies {
             Writer.showAlert(Alert.AlertType.INFORMATION, s, "Configuration Set",
                     "Settings Applied", "");
             String OS = System.getProperty("os.name").toLowerCase();
-            Path a = Paths.get(localVersionProperty.get() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ".dmg"));
-            Path b = Paths.get(localVersionProperty.get() + File.separator + "javafxpackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+            Path a = Paths.get(localVersionProperty.get() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ""));
+            Path b = Paths.get(localVersionProperty.get() + File.separator + "javafxpackager" + (OS.contains("win") ? ".exe" : ""));
             if (!(Files.exists(a) || Files.exists(b))) {
                 Writer.showAlert(AlertType.ERROR, w, "Java Platform",
                         "JDK Version is low, some features of Tachyon may not work as expected",

@@ -106,7 +106,7 @@ public class TaskManager {
     }
 
     private ProcessBuilder getWindowsBuildString() {
-        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ""));
         String one;
         if (f.exists()) {
             one = "\"" + getJavaHomeLocation() + File.separator + "javapackager\"" + " -createjar -appclass " + project.getMainClassName()
@@ -123,7 +123,7 @@ public class TaskManager {
     }
 
     private ProcessBuilder getMacBuildString() {
-        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ""));
         String one;
         if (f.exists()) {
             one = getJavaHomeLocation() + File.separator + "javapackager" + " -createjar -appclass " + project.getMainClassName()
@@ -440,7 +440,7 @@ public class TaskManager {
     }
 
     private ProcessBuilder getWindowsFatJarString() {
-        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ""));
         if (f.exists()) {
             return new ProcessBuilder("\"" + getJavaHomeLocation() + File.separator + "javapackager\"",
                     "-createjar",
@@ -459,7 +459,7 @@ public class TaskManager {
     }
 
     private ProcessBuilder getMacFatJarString() {
-        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ""));
         if (f.exists()) {
             return new ProcessBuilder(getJavaHomeLocation() + File.separator + "javapackager",
                     "-createjar",
@@ -502,7 +502,7 @@ public class TaskManager {
 
     private ProcessBuilder getWindowsExecutableString() {
         String ico = getIconPath();
-        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ""));
         String a;
         if (f.exists()) {
             a = "\"" + getJavaHomeLocation() + File.separator + "javapackager\"" + " -deploy -native exe " + (ico == null ? "" : " -Bicon=" + ico) + " -outdir " + project.getDist().toAbsolutePath().toString()
@@ -518,7 +518,7 @@ public class TaskManager {
 
     private ProcessBuilder getMacExecutableString() {
         String ico = getIconPath();
-        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ".dmg"));
+        File f = new File(getJavaHomeLocation() + File.separator + "javapackager" + (OS.contains("win") ? ".exe" : ""));
         String a;
         if (f.exists()) {
             a = getJavaHomeLocation() + File.separator + "javapackager -deploy -native dmg" + (ico == null ? "" : " -Bicon=" + ico) + " -outdir " + project.getDist().toAbsolutePath().toString()
