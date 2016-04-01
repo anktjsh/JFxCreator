@@ -1056,6 +1056,7 @@ public class Writer extends BorderPane {
                 } catch (IOException ef) {
                 }
                 System.out.println(type);
+                System.out.println(f.getName());
                 if (fileSize(f)) {
                     if (type != null) {
                         if (type.contains("text")) {
@@ -1067,6 +1068,9 @@ public class Writer extends BorderPane {
                         } else if (type.contains("fxml")) {
                             Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
                             addTab(new FXMLTab(pro, parent));
+                        } else if (f.getName().endsWith(".pdf")) {
+                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                            addTab(new PdfReader(pro, parent));
                         } else if (alert(f.getAbsolutePath())) {
                             Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
                             addTab(new Editor(pro, parent));
@@ -1098,6 +1102,9 @@ public class Writer extends BorderPane {
                         addTab(new Viewer(prog, prog.getProject()));
                     } else if (type.contains("fxml")) {
                         addTab(new FXMLTab(prog, prog.getProject()));
+                    } else if (f.getName().endsWith(".pdf")) {
+                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
+                        addTab(new PdfReader(pro, parent));
                     } else if (alert(prog.getFile().toAbsolutePath().toString())) {
                         addTab(new Editor(prog, prog.getProject()));
                     }

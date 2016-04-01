@@ -32,7 +32,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import org.jpedal.examples.viewer.gui.javafx.FXViewerTransitions;
 import org.jpedal.examples.viewer.gui.javafx.FXViewerTransitions.TransitionDirection;
@@ -138,10 +137,6 @@ public class BaseViewer extends BorderPane {
     }
 
     public void addListeners() {
-
-        /**
-         * auto adjust so dynamically resized as viewer width alters
-         */
         widthProperty().addListener((final ObservableValue<? extends Number> observableValue, final Number oldSceneWidth, final Number newSceneWidth) -> {
             fitToX(zoomMode);
         });
@@ -149,64 +144,19 @@ public class BaseViewer extends BorderPane {
         heightProperty().addListener((final ObservableValue<? extends Number> observableValue, final Number oldSceneHeight, final Number newSceneHeight) -> {
             fitToX(zoomMode);
         });
-
-        /**
-         * Controls for dragging a PDF into the scene Using the dragboard, which
-         * extends the clipboard class, detect a file being dragged onto the
-         * scene and if the user drops the file we load it.
-         */
-        /*
-         setOnDragOver(new EventHandler<DragEvent>() {
-         @Override
-         public void handle(final DragEvent event) {
-         final Dragboard db = event.getDragboard();
-         if (db.hasFiles()) {
-         event.acceptTransferModes(TransferMode.COPY);
-         } else {
-         event.consume();
-         }
-         }
-         });
-        
-         setOnDragDropped(new EventHandler<DragEvent>() {        
-         @Override
-         public void handle(final DragEvent event) {
-         final Dragboard db = event.getDragboard();
-         boolean success = false;
-         if(db.hasFiles()){
-         success = true;
-         // Only get the first file from the list
-         file = db.getFiles().get(0);
-         Platform.runLater(new Runnable() {
-         @Override
-         public void run() {
-         loadPDF(file);
-         }
-         });
-         }
-         event.setDropCompleted(success);
-         event.consume();
-         }
-         });
-         */
     }
-
-    /**
-     * Sets up a MenuBar to be used at the top of the window.
-     *
-     * It contains one Menu - navMenu - which allows the user to open and
-     * navigate pdf files
-     *
-     * @return
-     */
+    
+    private Label pageCount;
+    private ComboBox<String> pages;
+    private Button back, forward;
     private ToolBar setupToolBar() {
 
         final ToolBar toolbar = new ToolBar();
 
-        final Button back = new Button("Back");
-        final ComboBox<String> pages = new ComboBox<>();
-        final Label pageCount = new Label();
-        final Button forward = new Button("Forward");
+        back = new Button("Back");
+        pages = new ComboBox<>();
+        pageCount = new Label();
+        forward = new Button("Forward");
         final Button zoomIn = new Button("Zoom in");
         final Button zoomOut = new Button("Zoom out");
         final Button fitWidth = new Button("Fit to Width");
@@ -446,8 +396,7 @@ public class BaseViewer extends BorderPane {
             }
 
             // Set up top bar values
-            ((Label) top.lookup("#pgCount")).setText("/" + pdf.getPageCount());
-            final ComboBox<String> pages = ((ComboBox<String>) top.lookup("#pages"));
+            pageCount.setText("/" + pdf.getPageCount());
             pages.getItems().clear();
             for (int i = 1; i <= pdf.getPageCount(); i++) {
                 pages.getItems().add(String.valueOf(i));
@@ -583,18 +532,17 @@ public class BaseViewer extends BorderPane {
 
     private void updateNavButtons() {
         if (currentPage > 1) {
-            top.lookup("#back").setDisable(false);
+            back.setDisable(false);
         } else {
-            top.lookup("#back").setDisable(true);
+            back.setDisable(true);
         }
 
         if (currentPage < pdf.getPageCount()) {
-            top.lookup("#forward").setDisable(false);
+            forward.setDisable(false);
         } else {
-            top.lookup("#forward").setDisable(true);
+            forward.setDisable(true);
         }
-
-        ((ComboBox) top.lookup("#pages")).getSelectionModel().select(currentPage - 1);
+        pages.getSelectionModel().select(currentPage - 1);
     }
 
     private void goToPage(final int newPage) {

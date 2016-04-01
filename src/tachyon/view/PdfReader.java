@@ -5,7 +5,6 @@
  */
 package tachyon.view;
 
-import javafx.application.Platform;
 import tachyon.core.Program;
 import tachyon.core.Project;
 
@@ -19,22 +18,7 @@ public class PdfReader extends EnvironmentTab {
         super(scr, pro);
         BaseViewer f;
         setContent(f = new BaseViewer());
-        selectedProperty().addListener((ob, older, newer) -> {
-            if (newer) {
-                if (f.getPDFfilename() == null) {
-                    (new Thread(() -> {
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                        }
-                        Platform.runLater(() -> {
-                            f.loadPDF(scr.getFile().toFile());
-                        });
-                    })).start();
-                }
-            }
-        });
-
+        f.loadPDF(scr.getFile().toFile());
     }
 
 }
