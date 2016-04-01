@@ -9,12 +9,15 @@ import java.util.Collections;
 import java.util.List;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import tachyon.core.Highlighter;
 import org.fxmisc.richtext.CodeArea;
+import tachyon.core.Highlighter;
 
 /**
  *
@@ -63,6 +66,34 @@ public class HistoryPane extends BorderPane {
                 }
             }
         });
+        options.setCellFactory((param) -> new HistoryCell());
+    }
+    
+    private class HistoryCell extends ListCell<String> {
+
+        private final Button remove;
+        private final Label text;
+        private final HBox box;
+        public HistoryCell() {
+            remove = new Button("Remove Entry");
+            box = new HBox(5, text = new Label(""), remove);
+            remove.setOnAction((e) -> {
+                edit.getScript().deletePrevious(getItem());
+                options.getItems().remove(getItem());
+            });
+        }
+        @Override
+        protected void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+            if (item!=null) {
+                text.setText(item);
+                setGraphic(box);
+            } else {
+                setGraphic(null);
+            }
+        }
+        
+        
     }
 
     public void refresh() {

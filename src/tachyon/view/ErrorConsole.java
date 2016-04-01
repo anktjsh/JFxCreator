@@ -40,7 +40,7 @@ public class ErrorConsole {
         stage = new Stage();
         stage.setTitle("Error Console");
         stage.initOwner(w);
-        stage.setWidth(450);
+        stage.setWidth(500);
         view = new ListView<>();
         stage.setScene(new Scene(view));
         view.setCellFactory((param) -> new ErrorCell());
@@ -54,7 +54,6 @@ public class ErrorConsole {
                 stage.getScene().getStylesheets().remove(css);
             }
         });
-        stage.sizeToScene();
     }
 
     private class ErrorCell extends ListCell<Error> {

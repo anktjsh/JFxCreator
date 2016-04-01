@@ -5,7 +5,6 @@
  */
 package tachyon.view;
 
-import javafx.application.Platform;
 import javafx.application.Preloader;
 import javafx.application.Preloader.ProgressNotification;
 import javafx.application.Preloader.StateChangeNotification;
@@ -77,15 +76,7 @@ public class EnvironmentLoader extends Preloader {
     @Override
     public void handleStateChangeNotification(StateChangeNotification scn) {
         if (scn.getType() == StateChangeNotification.Type.BEFORE_START) {
-            new Thread(() -> {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                }
-                Platform.runLater(() -> {
-                    stage.hide();
-                });
-            }).start();
+            stage.hide();
         }
     }
 

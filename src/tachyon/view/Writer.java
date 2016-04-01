@@ -117,6 +117,7 @@ public class Writer extends BorderPane {
     public Writer() {
         tabPane = new TabPane();
         setCenter(tabPane);
+        BorderPane.setMargin(tabPane, new Insets(5));
         setTop(top = new BorderPane(bar = new MenuBar()));
         String OS = System.getProperty("os.name").toLowerCase();
         if (OS.contains("mac")) {
@@ -1331,7 +1332,7 @@ public class Writer extends BorderPane {
         dc.setInitialDirectory(fc);
         File show = dc.showDialog(getScene().getWindow());
         if (show != null) {
-            Project pro = Project.loadProject(show.toPath(), false);
+            Project pro = Project.loadProject(show.toPath());
             if (pro != null) {
                 if (!ProjectTree.getTree().getProjects().contains(pro)) {
                     ProjectTree.getTree().addProject(pro);

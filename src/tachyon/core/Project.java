@@ -49,6 +49,9 @@ import tachyon.view.LibraryTreeItem.LibraryListener;
  */
 public class Project {
 
+    public static final int STANDARD_JAVA_PROJECT = 0, JAVAFX_PROJECT = 1;
+
+    private final int projectType;
     private final Path rootDirectory;
     private final String projectName;
     private final Path source, libs, dist, build;
@@ -109,28 +112,44 @@ public class Project {
 
         programs = new ArrayList<>();
         listeners = FXCollections.observableArrayList();
+
+        config = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "settings.tachyon");
+
         if (isNew) {
             initializeProject(conf[0]);
+            projectType = conf[0];
         } else {
             addExistingPrograms();
+            int n = readConfig();
+            if (n == -1) {
+                projectType = 0;
+            } else {
+                projectType = n;
+            }
         }
 
         (new Thread(task = new FileWatcher())).start();
-        config = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "settings.config");
+
         if (!Files.exists(config)) {
             saveConfig();
-        } else {
-            readConfig();
         }
         manager = new TaskManager(this);
+    }
+
+    public boolean isStandardJavaProject() {
+        return projectType == STANDARD_JAVA_PROJECT;
+    }
+
+    public boolean isJavaFxProject() {
+        return projectType == JAVAFX_PROJECT;
     }
 
     public Path getConfig() {
         return config;
     }
 
-    public static Project loadProject(Path pro, boolean isNew) {
-        Path config = Paths.get(pro.toAbsolutePath().toString() + File.separator + "settings.config");
+    public static Project loadProject(Path pro) {
+        Path config = Paths.get(pro.toAbsolutePath().toString() + File.separator + "settings.tachyon");
         if (Files.exists(config)) {
             String main;
             try {
@@ -141,7 +160,7 @@ public class Project {
             if (main == null) {
                 return null;
             }
-            return new Project(pro, main, isNew);
+            return new Project(pro, main, false);
         }
         return null;
     }
@@ -203,14 +222,12 @@ public class Project {
                         System.out.println(kind.name());
                         if (Files.isDirectory(child)) {
                             registerAll(child, watch);
-                        } else {
-                            if (kind == ENTRY_CREATE) {
+                        } else if (kind == ENTRY_CREATE) {
 
-                            } else if (kind == ENTRY_MODIFY) {
+                        } else if (kind == ENTRY_MODIFY) {
 
-                            } else if (kind == ENTRY_DELETE) {
+                        } else if (kind == ENTRY_DELETE) {
 
-                            }
                         }
                         checkAll();
                     }
@@ -275,12 +292,10 @@ public class Project {
                 } else {
                     addProgram(new Program(Program.JAVA, f.toPath(), new ArrayList<>(), this));
                 }
+            } else if (b) {
+                addScript(new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), this));
             } else {
-                if (b) {
-                    addScript(new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), this));
-                } else {
-                    addProgram(new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), this));
-                }
+                addProgram(new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), this));
             }
         } else {
             for (File fa : f.listFiles()) {
@@ -374,16 +389,17 @@ public class Project {
         try {
             Files.write(config,
                     FXCollections.observableArrayList(mainClassName,
-                            "Libs : " + allLibs,
+                            "Libs : " + allLibs.toString(),
                             compileArguments.toString(),
                             runtimeArguments.toString(),
-                            iconFilePath == null ? "" : iconFilePath
+                            iconFilePath == null ? "" : iconFilePath, 
+                            projectType +""
                     ));
         } catch (IOException e) {
         }
     }
 
-    private void readConfig() {
+    private int readConfig() {
         ArrayList<String> al = new ArrayList<>();
         try {
             al.addAll(Files.readAllLines(config));
@@ -429,6 +445,12 @@ public class Project {
                 iconFilePath = al.get(4);
             }
         }
+        if (al.size() >= 6) {
+            if (!al.get(5).isEmpty()) {
+                return Integer.parseInt(al.get(5));
+            }
+        }
+        return -1;
     }
 
     public String getCompileList() {
@@ -720,7 +742,7 @@ public class Project {
     }
 
     public static Project unserialize(Path f) {
-        return loadProject(f, false);
+        return loadProject(f);
     }
 
     public void addListener(ProjectListener al) {

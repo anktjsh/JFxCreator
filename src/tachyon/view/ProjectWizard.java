@@ -132,6 +132,9 @@ public class ProjectWizard {
     }
 
     private boolean valid(String packageName) {
+        if (packageName.isEmpty()) {
+            return true;
+        }
         for (char c : packageName.toCharArray()) {
             if (!Character.isAlphabetic((int) c) && !(c == '.')) {
                 return false;

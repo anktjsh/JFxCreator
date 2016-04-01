@@ -153,6 +153,25 @@ public class Program {
         return al;
     }
 
+    public void deletePrevious(String date) {
+        previous.remove(date);
+        File se = new File(".cache" + File.separator
+                + getProject().getProjectName() + File.separator + "previous"
+                + File.separator + getClassName() + File.separator);
+        File det = null;
+        if (se.exists()) {
+            for (File f : se.listFiles()) {
+                if (f.getName().contains(date)) {
+                    det = f;
+                    break;
+                }
+            }
+            if (det != null) {
+                det.delete();
+            }
+        }
+    }
+
     public List<String> getPreviousCode(String date) {
         ArrayList<String> al = new ArrayList<>();
         if (getProject() == null) {

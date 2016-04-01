@@ -182,7 +182,7 @@ public class TaskManager {
     public static void runIsolatedFile(ProcessItem item, Program f) {
         String name;
         System.out.println(name = getName(f));
-        compileFile(item, f);
+        compileIsolatedFile(item, f);
         if (!item.isCancelled()) {
             ProcessBuilder pb;
             if (OS.contains("win")) {
@@ -251,7 +251,7 @@ public class TaskManager {
     }
 //
 
-    private static void compileFile(ProcessItem item, Program pro) {
+    private static void compileIsolatedFile(ProcessItem item, Program pro) {
         if (!item.isCancelled()) {
             ProcessBuilder pb;
             if (OS.contains("mac")) {
