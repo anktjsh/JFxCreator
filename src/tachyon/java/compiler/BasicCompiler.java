@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.compiler;
+package tachyon.java.compiler;
 
 import java.util.Locale;
 import java.util.TreeMap;
@@ -11,8 +11,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javax.tools.Diagnostic;
 import javax.tools.JavaCompiler;
-import tachyon.core.JavaProgram;
-import tachyon.core.Program;
+import tachyon.java.core.JavaProgram;
+import tachyon.framework.core.Program;
 import tachyon.view.Editor;
 
 /**

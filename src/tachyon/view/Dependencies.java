@@ -47,8 +47,6 @@ import static tachyon.Tachyon.css;
  */
 public class Dependencies {
 
-    public static final String CURRENT_VERSION = "1.8.0_72";
-
     private final Stage stage;
     private final VBox box;
     private final TextField field;

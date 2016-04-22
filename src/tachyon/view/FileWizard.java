@@ -30,7 +30,7 @@ import tachyon.Tachyon;
 import static tachyon.Tachyon.applyCss;
 import static tachyon.Tachyon.css;
 import static tachyon.Tachyon.icon;
-import tachyon.core.Project;
+import tachyon.framework.core.Project;
 import tachyon.features.Template;
 
 /**

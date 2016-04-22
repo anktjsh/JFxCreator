@@ -71,20 +71,20 @@ import tachyon.Tachyon;
 import static tachyon.Tachyon.applyCss;
 import static tachyon.Tachyon.css;
 import tachyon.contact.EmailPicker;
-import tachyon.core.Console;
-import tachyon.core.DebuggerController;
-import tachyon.core.JavaFxProject;
-import tachyon.core.JavaLibrary;
-import tachyon.core.JavaProgram;
-import tachyon.core.JavaProject;
-import tachyon.core.Program;
-import tachyon.core.Project;
-import tachyon.core.ProjectTree;
-import tachyon.core.Resource;
-import tachyon.core.StandardJavaProject;
+import tachyon.framework.core.Console;
+import tachyon.java.core.DebuggerController;
+import tachyon.java.core.JavaFxProject;
+import tachyon.java.core.JavaLibrary;
+import tachyon.java.core.JavaProgram;
+import tachyon.java.core.JavaProject;
+import tachyon.framework.core.Program;
+import tachyon.framework.core.Project;
+import tachyon.framework.core.ProjectTree;
+import tachyon.java.core.Resource;
+import tachyon.java.core.StandardJavaProject;
 import tachyon.features.Examples;
 import tachyon.features.Template;
-import tachyon.manager.JavaFileManager;
+import tachyon.java.manager.JavaFileManager;
 import tachyon.memory.Monitor;
 import tachyon.process.ProcessItem;
 import tachyon.process.ProcessPool;
@@ -413,7 +413,7 @@ public class Writer extends BorderPane {
         information.setOnAction((e) -> {
             showAlert(AlertType.INFORMATION, getScene().getWindow(),
                     "About",
-                    "Tachyon 1.0.0", "Created by Aniket Joshi");
+                    "Tachyon v1.0.0", "Created by Aniket Joshi");
         });
         request.setOnAction((e) -> {
             sendEmail("Feature Request");
@@ -1139,15 +1139,9 @@ public class Writer extends BorderPane {
     }
 
     public final void openPreviousProjects() {
-        Path f = Paths.get(".cache" + File.separator + "previous03.txt");
-        ArrayList<String> al = new ArrayList<>();
-        try {
-            al.addAll(Files.readAllLines(f));
-        } catch (IOException ex) {
-        }
-        al.stream().map((s) -> Project.unserialize(s)).filter((p) -> (p != null)).forEach((p) -> {
+        for (Project p : Tachyon.onStarted) {
             ProjectTree.getTree().addProject(p);
-        });
+        }
         openPreviousTabs();
     }
 
@@ -1391,51 +1385,6 @@ public class Writer extends BorderPane {
                 String name = f.getName().substring(0, f.getName().lastIndexOf(".java"));
                 JavaProgram pro = new JavaProgram(f.toPath(), Template.getTemplateCode("Java Main Class", null, name), null, name);
                 loadFile(pro);
-                /*<Pair<String, String>> dialog = new Dialog<>();
-                dialog.initOwner(getScene().getWindow());
-                dialog.setTitle("Class Name");
-                dialog.setHeaderText("Enter Class Name");
-
-                GridPane grid = new GridPane();
-                grid.setHgap(10);
-                grid.setVgap(10);
-                grid.setPadding(new Insets(20, 150, 10, 10));
-
-                TextField username = new TextField();
-                username.setPromptText("Package");
-                TextField password = new TextField(f.getName().replace(".java", ""));
-                password.setPromptText("Class");
-
-                grid.add(new Label("Package:"), 0, 0);
-                grid.add(username, 1, 0);
-                grid.add(new Label("Class:"), 0, 1);
-                grid.add(password, 1, 1);
-
-                ButtonType loginButtonType = new ButtonType("Finish", ButtonData.OK_DONE);
-                dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
-
-                dialog.getDialogPane().setContent(grid);
-                Platform.runLater(() -> username.requestFocus());
-                dialog.setResultConverter(dialogButton -> {
-                    if (dialogButton == loginButtonType) {
-                        return new Pair<>(username.getText(), password.getText());
-                    }
-                    return null;
-                });
-                Optional<Pair<String, String>> result = dialog.showAndWait();
-                if (result.isPresent()) {
-                    String key = result.get().getKey() == null ? "" : result.get().getKey();
-                    String val = result.get().getValue() == null ? "" : result.get().getValue();
-                    if (!val.isEmpty()) {
-                        Resource pro = new Resource(f.toPath(), Template.getTemplateCode("Java Main Class", key, val), null);
-                        loadFile(pro.getFile().toFile(), pro, null);
-                    } else {
-                        showAlert(AlertType.INFORMATION,
-                                getScene().getWindow(),
-                                "New File",
-                                "No Class Name Specified", "");
-                    }
-                }*/
             }
         }
     }

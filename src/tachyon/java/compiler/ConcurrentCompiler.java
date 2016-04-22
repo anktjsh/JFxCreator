@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.compiler;
+package tachyon.java.compiler;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import tachyon.core.JavaProject;
+import tachyon.java.core.JavaProject;
 import tachyon.view.Editor;
 
 /**
@@ -53,8 +53,8 @@ public class ConcurrentCompiler {
                     VisualCompiler comp = new VisualCompiler(edit);
                     File fi = new File(".cache" + File.separator + edit.getProject().getProjectName() + File.separator + "builds");
                     comp.setDirectory(fi);
-                    if (((JavaProject)edit.getProject()).getNumLibs() != 0) {
-                        comp.addToClassPath(((JavaProject)edit.getProject()).getAllLibs());
+                    if (((JavaProject) edit.getProject()).getNumLibs() != 0) {
+                        comp.addToClassPath(((JavaProject) edit.getProject()).getAllLibs());
                     }
                     comp.prepare();
                 }

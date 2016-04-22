@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.core;
+package tachyon.java.core;
 
+import tachyon.java.core.JavaProgram;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -12,6 +13,8 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import tachyon.framework.core.Program;
+import tachyon.framework.core.Project;
 
 /**
  *

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.manager;
+package tachyon.java.manager;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -23,12 +23,13 @@ import javafx.scene.image.Image;
 import net.sf.image4j.codec.ico.ICOEncoder;
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
-import tachyon.core.DebuggerController;
-import tachyon.core.JavaLibrary;
-import tachyon.core.JavaProgram;
-import tachyon.core.JavaProject;
-import tachyon.core.Program;
-import tachyon.core.Project;
+import tachyon.framework.core.Program;
+import tachyon.framework.core.Project;
+import tachyon.framework.manager.TaskManager;
+import tachyon.java.core.DebuggerController;
+import tachyon.java.core.JavaLibrary;
+import tachyon.java.core.JavaProgram;
+import tachyon.java.core.JavaProject;
 import tachyon.process.ProcessItem;
 import tachyon.process.ProcessPool;
 
@@ -36,11 +37,11 @@ import tachyon.process.ProcessPool;
  *
  * @author Aniket
  */
-public class JavaManager extends ParentManager {
+public class JavaFxManager extends TaskManager {
 
     private static final String OS = System.getProperty("os.name").toLowerCase();
 
-    public JavaManager(JavaProject project) {
+    public JavaFxManager(JavaProject project) {
         super(project);
     }
 

@@ -10,7 +10,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import tachyon.core.Console;
+import tachyon.framework.core.Console;
 
 /**
  *

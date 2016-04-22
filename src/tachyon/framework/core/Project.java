@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.core;
+package tachyon.framework.core;
 
+import tachyon.java.core.DebuggerController;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +37,7 @@ import java.util.logging.Logger;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import tachyon.manager.ParentManager;
+import tachyon.framework.manager.TaskManager;
 import tachyon.process.ProcessItem;
 
 /**
@@ -48,7 +49,7 @@ public abstract class Project {
     private final Path rootDirectory;
     private final Path config;
     private final Path source, dist;
-    private final ParentManager manager;
+    private final TaskManager manager;
     private final String projectName;
     private final ArrayList<Program> programs;
     private final Task<Void> task;
@@ -80,7 +81,7 @@ public abstract class Project {
         programs = new ArrayList<>();
         listeners = FXCollections.observableArrayList();
         config = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "settings.tachyon");
-        (new Thread(task = new FileWatcher())).start();        
+        (new Thread(task = new FileWatcher())).start();
         manager = constructManager();
     }
 
@@ -147,7 +148,7 @@ public abstract class Project {
         }
     }
 
-    public ParentManager getTaskManager() {
+    public TaskManager getTaskManager() {
         return manager;
     }
 
@@ -289,7 +290,7 @@ public abstract class Project {
         return new String(b);
     }
 
-    protected abstract ParentManager constructManager();
+    protected abstract TaskManager constructManager();
 
     protected abstract void checkAll();
 

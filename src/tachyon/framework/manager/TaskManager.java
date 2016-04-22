@@ -3,11 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.manager;
+package tachyon.framework.manager;
 
-import tachyon.core.DebuggerController;
-import tachyon.core.Program;
-import tachyon.core.Project;
+import tachyon.java.core.DebuggerController;
+import tachyon.framework.core.Program;
+import tachyon.framework.core.Project;
 import tachyon.process.ProcessItem;
 import tachyon.view.Dependencies;
 
@@ -15,18 +15,18 @@ import tachyon.view.Dependencies;
  *
  * @author Aniket
  */
-public abstract class ParentManager {
+public abstract class TaskManager {
 
     private final Project project;
 
-    public ParentManager(Project project) {
+    public TaskManager(Project project) {
         this.project = project;
     }
 
     public Project getProject() {
         return project;
     }
-    
+
     protected static String getJavaHomeLocation() {
         return Dependencies.localVersionProperty.get();
     }
@@ -42,6 +42,6 @@ public abstract class ParentManager {
     public abstract void runIndividualFile(ProcessItem pro, Program java);
 
     public abstract void fatBuild(ProcessItem pro);
-    
+
     public abstract void debugProject(ProcessItem pro, DebuggerController con);
 }

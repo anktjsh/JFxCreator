@@ -7,7 +7,7 @@ package tachyon.features;
 
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
-import tachyon.core.JavaProgram;
+import tachyon.java.core.JavaProgram;
 import tachyon.view.Editor;
 
 /**

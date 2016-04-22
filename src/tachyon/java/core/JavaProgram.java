@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.core;
+package tachyon.java.core;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -14,6 +14,8 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import tachyon.framework.core.Program;
+import tachyon.framework.core.Project;
 
 /**
  *

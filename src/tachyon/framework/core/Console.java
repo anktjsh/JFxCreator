@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.core;
+package tachyon.framework.core;
 
 import java.util.ArrayList;
 import javafx.application.Platform;

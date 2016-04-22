@@ -7,6 +7,11 @@ package tachyon;
 
 import de.codecentric.centerdevice.MenuToolkit;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Scanner;
 import javafx.application.Application;
@@ -22,7 +27,8 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-import tachyon.core.ProjectTree;
+import tachyon.framework.core.Project;
+import tachyon.framework.core.ProjectTree;
 import tachyon.memory.Monitor;
 import tachyon.view.Dependencies;
 import tachyon.view.ErrorConsole;
@@ -39,12 +45,25 @@ public class Tachyon extends Application {
     public static HostServices host;
     public static String css = Tachyon.class.getResource("material.css").toExternalForm();
     public static BooleanProperty applyCss = new SimpleBooleanProperty(true);
+    public static final ArrayList<Project> onStarted = new ArrayList<>();
 
     @Override
     public void init() {
         Thread.setDefaultUncaughtExceptionHandler((Thread t, Throwable e) -> {
             ErrorConsole.addError(t, e, null);
         });
+        Path f = Paths.get(".cache" + File.separator + "previous03.txt");
+        ArrayList<String> al = new ArrayList<>();
+        try {
+            al.addAll(Files.readAllLines(f));
+        } catch (IOException ex) {
+        }
+        for (String s : al) {
+            Project p = Project.unserialize(s);
+            if (p != null) {
+                onStarted.add(p);
+            }
+        }
     }
 
     @Override

@@ -3,16 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.manager;
+package tachyon.java.manager;
 
+import tachyon.framework.manager.TaskManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import tachyon.core.DebuggerController;
-import tachyon.core.JavaProgram;
-import tachyon.core.Program;
-import tachyon.core.Project.ErrorReader;
-import tachyon.core.Project.OutputReader;
+import tachyon.java.core.DebuggerController;
+import tachyon.java.core.JavaProgram;
+import tachyon.framework.core.Program;
+import tachyon.framework.core.Project.ErrorReader;
+import tachyon.framework.core.Project.OutputReader;
 import tachyon.process.ProcessItem;
 import tachyon.process.ProcessPool;
 
@@ -20,7 +21,7 @@ import tachyon.process.ProcessPool;
  *
  * @author Aniket
  */
-public class JavaFileManager extends ParentManager {
+public class JavaFileManager extends TaskManager {
 
     private static final String OS = System.getProperty("os.name").toLowerCase();
     private static JavaFileManager instance;

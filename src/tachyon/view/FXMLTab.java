@@ -11,8 +11,8 @@ import java.nio.file.Files;
 import javafx.application.Platform;
 import javafx.scene.control.Button;
 import javafx.scene.control.Separator;
-import tachyon.core.Project;
-import tachyon.core.Resource;
+import tachyon.framework.core.Project;
+import tachyon.java.core.Resource;
 
 /**
  *
@@ -69,8 +69,6 @@ public class FXMLTab extends Editor {
         } catch (IOException | InterruptedException e) {
         }
     }
-    
-    
 
     private void launchMacSceneBuilder() {
         String JAVA_HOME = Dependencies.localVersionProperty.get();

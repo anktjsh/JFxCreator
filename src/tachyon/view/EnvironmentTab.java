@@ -17,8 +17,8 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-import tachyon.core.Program;
-import tachyon.core.Project;
+import tachyon.framework.core.Program;
+import tachyon.framework.core.Project;
 
 /**
  *

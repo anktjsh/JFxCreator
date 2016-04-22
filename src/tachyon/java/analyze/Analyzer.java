@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.analyze;
+package tachyon.java.analyze;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,9 +27,9 @@ import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
-import tachyon.analyze.Method.Parameter;
-import tachyon.core.JavaProgram;
-import tachyon.core.Program;
+import tachyon.java.analyze.Method.Parameter;
+import tachyon.java.core.JavaProgram;
+import tachyon.framework.core.Program;
 import tachyon.view.Editor;
 
 /**

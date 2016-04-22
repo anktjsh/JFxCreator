@@ -50,10 +50,10 @@ import org.apache.commons.imaging.Imaging;
 import tachyon.Tachyon;
 import static tachyon.Tachyon.applyCss;
 import static tachyon.Tachyon.css;
-import tachyon.core.JavaLibrary;
-import tachyon.core.JavaProgram;
-import tachyon.core.JavaProject;
-import tachyon.core.Program;
+import tachyon.java.core.JavaLibrary;
+import tachyon.java.core.JavaProgram;
+import tachyon.java.core.JavaProject;
+import tachyon.framework.core.Program;
 
 /**
  *

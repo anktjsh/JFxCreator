@@ -44,13 +44,13 @@ import javafx.stage.Popup;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
 import org.fxmisc.richtext.PopupAlignment;
-import tachyon.analyze.Analyzer.Option;
-import tachyon.compiler.ConcurrentCompiler;
-import tachyon.core.JavaProgram;
-import tachyon.core.JavaProgram.JavaProgramListener;
-import tachyon.core.Program;
-import tachyon.core.Project;
-import tachyon.core.Resource;
+import tachyon.java.analyze.Analyzer.Option;
+import tachyon.java.compiler.ConcurrentCompiler;
+import tachyon.java.core.JavaProgram;
+import tachyon.java.core.JavaProgram.JavaProgramListener;
+import tachyon.framework.core.Program;
+import tachyon.framework.core.Project;
+import tachyon.java.core.Resource;
 import tachyon.features.Highlighter;
 
 /**

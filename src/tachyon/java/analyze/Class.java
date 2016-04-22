@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.analyze;
+package tachyon.java.analyze;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

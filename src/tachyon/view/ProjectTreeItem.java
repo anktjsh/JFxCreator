@@ -9,7 +9,7 @@ import java.util.Arrays;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import tachyon.core.Project;
+import tachyon.framework.core.Project;
 
 /**
  *

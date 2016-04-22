@@ -19,8 +19,8 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import static tachyon.Tachyon.applyCss;
 import static tachyon.Tachyon.css;
-import tachyon.core.Program;
-import tachyon.core.Project;
+import tachyon.framework.core.Program;
+import tachyon.framework.core.Project;
 
 /**
  *

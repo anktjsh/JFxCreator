@@ -8,9 +8,9 @@ package tachyon.view;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import tachyon.core.JavaLibrary;
-import tachyon.core.JavaPlatform;
-import tachyon.core.Project;
+import tachyon.java.core.JavaLibrary;
+import tachyon.java.core.JavaPlatform;
+import tachyon.framework.core.Project;
 
 /**
  *

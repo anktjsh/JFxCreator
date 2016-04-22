@@ -16,7 +16,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.fxmisc.richtext.CodeArea;
-import tachyon.core.Project;
+import tachyon.framework.core.Project;
 import tachyon.features.Highlighter;
 
 /**

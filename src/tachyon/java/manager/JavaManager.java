@@ -3,19 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.core;
+package tachyon.java.manager;
 
-import java.nio.file.Path;
-import java.util.List;
+import tachyon.java.core.JavaProject;
 
 /**
  *
  * @author Aniket
  */
-public class Resource extends Program {
+public class JavaManager extends JavaFxManager {
 
-    public Resource(Path p, List<String> cod, Project pro) {
-        super(p, cod, pro);
+    public JavaManager(JavaProject project) {
+        super(project);
     }
-
 }

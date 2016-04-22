@@ -8,7 +8,7 @@ package tachyon.view;
 import java.nio.file.Path;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import tachyon.core.Project;
+import tachyon.framework.core.Project;
 
 /**
  *

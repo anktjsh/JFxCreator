@@ -16,9 +16,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
-import tachyon.core.JavaProgram;
-import tachyon.core.JavaProgram.JavaProgramListener;
-import tachyon.core.Program;
+import tachyon.java.core.JavaProgram;
+import tachyon.java.core.JavaProgram.JavaProgramListener;
+import tachyon.framework.core.Program;
 
 /**
  *

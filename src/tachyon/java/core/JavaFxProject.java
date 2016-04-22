@@ -3,38 +3,40 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.core;
+package tachyon.java.core;
 
+import tachyon.java.core.JavaProgram;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import javafx.collections.FXCollections;
-import tachyon.manager.JavaManager;
-import tachyon.manager.ParentManager;
+import tachyon.framework.core.Program;
+import tachyon.java.manager.JavaFxManager;
+import tachyon.framework.manager.TaskManager;
 import tachyon.view.FileWizard;
 
 /**
  *
  * @author Aniket
  */
-public class StandardJavaProject extends JavaProject{
+public class JavaFxProject extends JavaProject {
 
-    public StandardJavaProject(Path rot, boolean isNew, String mcn) {
+    public JavaFxProject(Path rot, boolean isNew, String mcn) {
         super(rot, isNew, mcn);
     }
 
     @Override
-    protected ParentManager constructManager() {
-        return new JavaManager(this);
+    protected TaskManager constructManager() {
+        return new JavaFxManager(this);
     }
 
     @Override
     protected void initializeProject() {
         JavaProgram pro = new JavaProgram(Paths.get(getSource().toAbsolutePath() + Program.getFilePath(getMainClassName()) + ".java"),
-                    FileWizard.getTemplateCode("Java Main Class", getMainClassName()),
-                    this, getMainClassName());
+                FileWizard.getTemplateCode("JavaFx Main Class", getMainClassName()),
+                this, getMainClassName());
         addScript(pro);
     }
 
@@ -52,5 +54,5 @@ public class StandardJavaProject extends JavaProject{
         } catch (IOException e) {
         }
     }
-    
+
 }

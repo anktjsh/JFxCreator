@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tachyon.core;
+package tachyon.java.core;
 
+import tachyon.java.core.JavaProgram;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,7 +17,9 @@ import java.util.HashMap;
 import java.util.List;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import tachyon.manager.ParentManager;
+import tachyon.framework.core.Program;
+import tachyon.framework.core.Project;
+import tachyon.framework.manager.TaskManager;
 import tachyon.view.LibraryTreeItem.LibraryListener;
 
 /**
@@ -64,11 +67,11 @@ public abstract class JavaProject extends Project {
             readConfig();
         }
     }
-    
+
     public Path getBuild() {
         return build;
     }
-    
+
     public Path getLibs() {
         return libs;
     }
@@ -84,7 +87,7 @@ public abstract class JavaProject extends Project {
     public String getMainClassName() {
         return mainClassName;
     }
-    
+
     public void setMainClassName(String main) {
         mainClassName = main;
     }
@@ -95,8 +98,8 @@ public abstract class JavaProject extends Project {
     }
 
     @Override
-    protected abstract ParentManager constructManager();
-    
+    protected abstract TaskManager constructManager();
+
     private void addAllPaths(ArrayList<Path> al, File p) {
         if (p.isDirectory()) {
             for (File f : p.listFiles()) {
@@ -198,25 +201,25 @@ public abstract class JavaProject extends Project {
             addScriptsToList(f, false);
         }
     }
-    
+
     public HashMap<String, String> getCompileTimeArguments() {
         return compileArguments;
     }
-    
+
     public ArrayList<String> getRuntimeArguments() {
         return runtimeArguments;
     }
-    
+
     protected String getIconFilePath() {
         return iconFilePath;
     }
-    
+
     private String getClassName(File f) {
         String name = f.getAbsolutePath().replace(getSource().toFile().getAbsolutePath(), "");
         name = name.substring(0, name.lastIndexOf(".java"));
         return JavaProgram.getClassName(name);
     }
-    
+
     private void addScriptsToList(File f, boolean b) {
         if (!f.isDirectory()) {
             if (f.getName().endsWith(".java")) {
@@ -236,7 +239,7 @@ public abstract class JavaProject extends Project {
             }
         }
     }
-    
+
     public String getFileIconPath() {
         if (iconFilePath == null) {
             iconFilePath = "";
@@ -247,7 +250,7 @@ public abstract class JavaProject extends Project {
     public void setFileIconPath(String s) {
         iconFilePath = s;
     }
-    
+
     public void setCompileTimeArguments(HashMap<String, String> map) {
         compileArguments.clear();
         compileArguments.putAll(map);
@@ -281,7 +284,7 @@ public abstract class JavaProject extends Project {
         }
         saveConfig();
     }
-    
+
     public String getCompileList() {
         StringBuilder sb = new StringBuilder();
         for (String s : compileArguments.keySet()) {
@@ -297,7 +300,7 @@ public abstract class JavaProject extends Project {
         }
         return sb.toString();
     }
-    
+
     public String getFileList() {
         StringBuilder sb = new StringBuilder();
         for (Program p : getPrograms()) {

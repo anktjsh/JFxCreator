@@ -5,8 +5,8 @@
  */
 package tachyon.view;
 
-import tachyon.core.Project;
-import tachyon.core.Resource;
+import tachyon.framework.core.Project;
+import tachyon.java.core.Resource;
 
 /**
  *

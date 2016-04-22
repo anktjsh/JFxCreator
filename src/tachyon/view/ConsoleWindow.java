@@ -36,15 +36,15 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Popup;
 import tachyon.Tachyon;
-import tachyon.core.Console;
-import tachyon.core.JavaPlatform;
+import tachyon.framework.core.Console;
+import tachyon.java.core.JavaPlatform;
 import tachyon.process.ProcessItem;
 import static tachyon.view.Writer.fontSize;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.MouseOverTextEvent;
 import org.fxmisc.richtext.Paragraph;
-import tachyon.core.JavaProgram;
-import tachyon.core.Program;
+import tachyon.java.core.JavaProgram;
+import tachyon.framework.core.Program;
 
 /**
  *
