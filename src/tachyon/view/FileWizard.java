@@ -31,7 +31,7 @@ import static tachyon.Tachyon.applyCss;
 import static tachyon.Tachyon.css;
 import static tachyon.Tachyon.icon;
 import tachyon.core.Project;
-import tachyon.core.Template;
+import tachyon.features.Template;
 
 /**
  *
@@ -97,12 +97,10 @@ public class FileWizard {
                 } else {
                     Writer.showAlert(Alert.AlertType.WARNING, stage, "", "You must select a file type first", "");
                 }
+            } else if (destination.getText().length() > 0) {
+                finish();
             } else {
-                if (destination.getText().length() > 0) {
-                    finish();
-                } else {
-                    Writer.showAlert(Alert.AlertType.ERROR, stage, "Error", "File", "File name cannot be empty");
-                }
+                Writer.showAlert(Alert.AlertType.ERROR, stage, "Error", "File", "File name cannot be empty");
             }
         });
         cancel.setOnAction((e) -> {

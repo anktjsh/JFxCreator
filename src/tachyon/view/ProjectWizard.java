@@ -25,12 +25,13 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import tachyon.Tachyon;
 import static tachyon.Tachyon.applyCss;
 import static tachyon.Tachyon.css;
 import static tachyon.Tachyon.icon;
-import tachyon.core.Highlighter;
+import tachyon.core.JavaFxProject;
 import tachyon.core.Project;
+import tachyon.core.StandardJavaProject;
+import tachyon.features.Highlighter;
 
 /**
  *
@@ -51,7 +52,11 @@ public class ProjectWizard {
         if (file.isEmpty()) {
             return null;
         }
-        return new Project(Paths.get(file.get(0)), file.get(1), true, n);
+        if (n==0) {
+            return new StandardJavaProject(Paths.get(file.get(0)), true, file.get(1));
+        } else {
+            return new JavaFxProject(Paths.get(file.get(0)), true, file.get(1));
+        }        
     }
 
     private final Stage stage;

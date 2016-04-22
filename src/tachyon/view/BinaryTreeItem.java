@@ -24,7 +24,7 @@ import tachyon.core.Project;
  */
 public class BinaryTreeItem extends TreeItem<String> {
 
-    private static final Image file = new Image(ProgramTreeItem.class.getResourceAsStream("tree/file.png"), 25, 25, true, true);    
+    private static final Image file = new Image(ProgramTreeItem.class.getResourceAsStream("tree/file.png"), 25, 25, true, true);
     private final ZipEntry entry;
     private final Project project;
     private final JavaLibrary lib;

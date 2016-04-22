@@ -15,11 +15,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.text.Text;
-import tachyon.core.Highlighter;
-import tachyon.core.Program;
-import tachyon.core.Project;
 import org.fxmisc.richtext.CodeArea;
+import tachyon.core.Project;
+import tachyon.features.Highlighter;
 
 /**
  *
@@ -29,8 +27,8 @@ public class ClassReader extends EnvironmentTab {
 
     private final CodeArea area;
 
-    public ClassReader(Program sc, Project pro, String name, InputStream input) {
-        super(sc, pro);
+    public ClassReader(Project pro, String name, InputStream input) {
+        super(null, pro);
         getGraph().setText(name);
         area = new CodeArea();
         area.setEditable(false);

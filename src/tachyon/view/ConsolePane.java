@@ -12,7 +12,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
-import tachyon.core.ProcessItem;
+import tachyon.process.ProcessItem;
 
 /**
  *

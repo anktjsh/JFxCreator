@@ -16,6 +16,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import tachyon.core.JavaProgram;
+import tachyon.core.JavaProgram.JavaProgramListener;
 import tachyon.core.Program;
 
 /**
@@ -33,39 +35,38 @@ public class ProgramTreeItem extends TreeItem<String> {
     private final HBox graphic;
 
     public ProgramTreeItem(Program pro) {
-        setValue(pro.getFile().getFileName().toString());
+        setValue(pro.getFileName());
         script = pro;
         graphic = new HBox();
         graphic.getChildren().add(new ImageView(getIconImage()));
         setGraphic(graphic);
-        script.addProgramListener(new Program.ProgramListener() {
-
-            @Override
-            public void hasErrors(Program pro, TreeMap<Long, String> errors) {
-                Platform.runLater(() -> {
-                    if (errors.isEmpty()) {
-                        if (graphic.getChildren().get(0) instanceof Text) {
-                            graphic.getChildren().remove(0);
-                        }
-                    } else {
-                        if (!(graphic.getChildren().get(0) instanceof Text)) {
+        if (script instanceof JavaProgram) {
+            ((JavaProgram) script).addProgramListener(new JavaProgramListener() {
+                @Override
+                public void hasErrors(JavaProgram pro, TreeMap<Long, String> errors) {
+                    Platform.runLater(() -> {
+                        if (errors.isEmpty()) {
+                            if (graphic.getChildren().get(0) instanceof Text) {
+                                graphic.getChildren().remove(0);
+                            }
+                        } else if (!(graphic.getChildren().get(0) instanceof Text)) {
                             Text t;
                             graphic.getChildren().add(0, t = new Text("X"));
                             t.setFill(Color.RED);
                         }
-                    }
-                });
-            }
+                    });
+                }
 
-            @Override
-            public void hasBreakPoints(Program pro, List<Long> points) {
+                @Override
+                public void hasBreakPoints(JavaProgram pro, List<Long> points) {
 
-            }
-        });
+                }
+            });
+        }
     }
 
     private Image getIconImage() {
-        if (getScript().getType() == Program.JAVA) {
+        if (getScript() instanceof JavaProgram) {
             return java_file;
         }
         String type = null;

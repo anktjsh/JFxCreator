@@ -10,13 +10,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.TreeMap;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -24,6 +21,7 @@ import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import tachyon.core.JavaLibrary;
+import tachyon.core.JavaProgram;
 import tachyon.core.Program;
 import tachyon.core.Project;
 
@@ -86,14 +84,17 @@ public abstract class Compiler {
 
     public abstract void prepare();
 
-    public Program getProgram(String key) {
+    public JavaProgram getProgram(String key) {
         String uri = key.substring(key.indexOf('[') + 1, key.indexOf(']'));
         uri = uri.replace("string:///", "");
         uri = replaceAll(uri, "/", ".");
         uri = uri.substring(0, uri.indexOf(".java"));
-        for (Program p : total.getPrograms()) {
-            if (p.getClassName().equals(uri)) {
-                return p;
+        for (Program pp : total.getPrograms()) {
+            if (pp instanceof JavaProgram) {
+                JavaProgram p = (JavaProgram) pp;
+                if (p.getClassName().equals(uri)) {
+                    return p;
+                }
             }
         }
         return null;

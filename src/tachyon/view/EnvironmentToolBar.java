@@ -43,12 +43,12 @@ public class EnvironmentToolBar extends ToolBar {
                 new Separator(),
                 debug = new Button("Debug"),
                 new Separator(),
-                monitor = new Button("Monitor"), 
-                new Separator(), 
+                monitor = new Button("Monitor"),
+                new Separator(),
                 error = new Button("Error"));
-        for (javafx.scene.Node n : getItems()){
+        for (javafx.scene.Node n : getItems()) {
             if (n instanceof Button) {
-                Button b = (Button)n;
+                Button b = (Button) n;
                 b.setText("");
             }
         }

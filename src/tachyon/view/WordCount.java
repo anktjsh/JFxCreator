@@ -17,7 +17,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import tachyon.Tachyon;
 import static tachyon.Tachyon.applyCss;
 import static tachyon.Tachyon.css;
 import tachyon.core.Program;
@@ -43,7 +42,7 @@ public class WordCount {
             al.addAll(Files.readAllLines(pro.getFile()));
         } catch (IOException ex) {
         }
-        box.getChildren().addAll(new Label("Program  : " + pro.getClassName()));
+        box.getChildren().addAll(new Label("File  : " + pro.getFileName()));
         box.getChildren().addAll(new Label("Lines : " + al.size()));
         StringBuilder sb = new StringBuilder();
         for (String s : al) {

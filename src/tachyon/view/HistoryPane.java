@@ -17,7 +17,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.fxmisc.richtext.CodeArea;
-import tachyon.core.Highlighter;
+import tachyon.features.Highlighter;
 
 /**
  *
@@ -68,12 +68,13 @@ public class HistoryPane extends BorderPane {
         });
         options.setCellFactory((param) -> new HistoryCell());
     }
-    
+
     private class HistoryCell extends ListCell<String> {
 
         private final Button remove;
         private final Label text;
         private final HBox box;
+
         public HistoryCell() {
             remove = new Button("Remove Entry");
             box = new HBox(5, text = new Label(""), remove);
@@ -82,18 +83,18 @@ public class HistoryPane extends BorderPane {
                 options.getItems().remove(getItem());
             });
         }
+
         @Override
         protected void updateItem(String item, boolean empty) {
             super.updateItem(item, empty);
-            if (item!=null) {
+            if (item != null) {
                 text.setText(item);
                 setGraphic(box);
             } else {
                 setGraphic(null);
             }
         }
-        
-        
+
     }
 
     public void refresh() {

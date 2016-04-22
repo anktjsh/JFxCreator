@@ -145,10 +145,11 @@ public class BaseViewer extends BorderPane {
             fitToX(zoomMode);
         });
     }
-    
+
     private Label pageCount;
     private ComboBox<String> pages;
     private Button back, forward;
+
     private ToolBar setupToolBar() {
 
         final ToolBar toolbar = new ToolBar();

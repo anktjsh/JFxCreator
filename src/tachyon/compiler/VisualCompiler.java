@@ -5,28 +5,17 @@
  */
 package tachyon.compiler;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.TreeMap;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Tab;
 import javax.tools.Diagnostic;
-import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
-import javax.tools.JavaFileObject;
-import javax.tools.SimpleJavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.StandardLocation;
-import tachyon.core.JavaLibrary;
+import tachyon.core.JavaProgram;
 import tachyon.core.Program;
-import tachyon.core.Project;
 import tachyon.view.Editor;
 
 /**
@@ -36,28 +25,28 @@ import tachyon.view.Editor;
 public class VisualCompiler extends Compiler {
 
     private final ObservableList<Editor> allEditors;
-    private final ObservableList<Program> allPrograms;
+    private final ObservableList<JavaProgram> allPrograms;
 
     public VisualCompiler(Editor edit) {
         super(edit.getProject());
         allEditors = FXCollections.observableArrayList();
         allPrograms = FXCollections.observableArrayList();
-        ArrayList<Program> al = new ArrayList<>();
+        ArrayList<JavaProgram> al = new ArrayList<>();
         for (Tab b : edit.getTabPane().getTabs()) {
             if (b instanceof Editor) {
                 Editor ed = (Editor) b;
-                if (!al.contains(ed.getScript())) {
-                    if (ed.getScript().getType() == Program.JAVA) {
-                        al.add(ed.getScript());
+                if (ed.getScript() instanceof JavaProgram) {
+                    if (!al.contains((JavaProgram) ed.getScript())) {
+                        al.add((JavaProgram) ed.getScript());
                         allEditors.add(ed);
                     }
                 }
             }
         }
         for (Program p : getProject().getPrograms()) {
-            if (!al.contains(p)) {
-                if (p.getType() == Program.JAVA) {
-                    allPrograms.add(p);
+            if (p instanceof JavaProgram) {
+                if (!al.contains((JavaProgram) p)) {
+                    allPrograms.add((JavaProgram) p);
                 }
             }
         }
@@ -66,13 +55,13 @@ public class VisualCompiler extends Compiler {
     public void prepare() {
         ObservableList<DynamicJavaSourceCodeObject> objs = FXCollections.observableArrayList();
         for (Editor ed : allEditors) {
-            objs.add(new DynamicJavaSourceCodeObject(ed.getScript().getClassName(), ed.getCodeArea().getText()));
+            objs.add(new DynamicJavaSourceCodeObject(((JavaProgram) ed.getScript()).getClassName(), ed.getCodeArea().getText()));
         }
-        for (Program p : allPrograms) {
+        for (JavaProgram p : allPrograms) {
             objs.add(new DynamicJavaSourceCodeObject(p.getClassName(), p.getLastCode()));
         }
-        System.out.println(allPrograms.size());
-        System.out.println(objs.size());
+//        System.out.println(allPrograms.size());
+//        System.out.println(objs.size());
         JavaCompiler.CompilationTask task = getCompiler().getTask(null, getFileManager(), getDiagnosticCollector(), getCompilerOptions(), null, objs);
         HashMap<String, TreeMap<Long, String>> map = new HashMap<>();
         boolean status = task.call();
@@ -86,17 +75,19 @@ public class VisualCompiler extends Compiler {
                 }
             }
         }
-        ArrayList<Program> sent = new ArrayList<>();
+        ArrayList<JavaProgram> sent = new ArrayList<>();
         for (String key : map.keySet()) {
-            Program p = getProgram(key);
+            JavaProgram p = getProgram(key);
             if (p != null) {
                 sent.add(p);
                 p.hasErrors(map.get(key));
             }
         }
         for (Program p : getProject().getPrograms()) {
-            if (!sent.contains(p)) {
-                p.hasErrors(new TreeMap<>());
+            if (p instanceof JavaProgram) {
+                if (!sent.contains((JavaProgram) p)) {
+                    ((JavaProgram) p).hasErrors(new TreeMap<>());
+                }
             }
         }
         recreateFileManager();

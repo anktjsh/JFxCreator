@@ -41,15 +41,17 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Popup;
-import tachyon.analyze.Analyzer.Option;
-import tachyon.compiler.ConcurrentCompiler;
-import tachyon.core.Highlighter;
-import tachyon.core.Program;
-import tachyon.core.Project;
-import tachyon.Tachyon;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
 import org.fxmisc.richtext.PopupAlignment;
+import tachyon.analyze.Analyzer.Option;
+import tachyon.compiler.ConcurrentCompiler;
+import tachyon.core.JavaProgram;
+import tachyon.core.JavaProgram.JavaProgramListener;
+import tachyon.core.Program;
+import tachyon.core.Project;
+import tachyon.core.Resource;
+import tachyon.features.Highlighter;
 
 /**
  *
@@ -146,11 +148,15 @@ public class Editor extends EnvironmentTab {
         });
         MenuItem AddBreakpoint = new MenuItem("Insert Breakpoint");
         AddBreakpoint.setOnAction((e) -> {
-            getScript().addBreakPoint(rowPosition.get());
+            if (getScript() instanceof JavaProgram) {
+                ((JavaProgram) getScript()).addBreakPoint(rowPosition.get());
+            }
         });
         MenuItem removeB = new MenuItem("Remove Breakpoint");
         removeB.setOnAction((e) -> {
-            getScript().removeBreakPoint(rowPosition.get());
+            if (getScript() instanceof JavaProgram) {
+                ((JavaProgram) getScript()).removeBreakPoint(rowPosition.get());
+            }
         });
         area.getContextMenu().getItems().addAll(
                 new MenuItem("Undo"),
@@ -257,41 +263,43 @@ public class Editor extends EnvironmentTab {
             c.next();
             placeFactory();
         });
-        sc.addProgramListener(new Program.ProgramListener() {
-
-            @Override
-            public void hasErrors(Program pro, TreeMap<Long, String> errors) {
-                if (Platform.isFxApplicationThread()) {
-                    setErrorLines(errors);
-                } else {
-                    Platform.runLater(() -> {
+        if (getScript() instanceof JavaProgram) {
+            ((JavaProgram) getScript()).addProgramListener(new JavaProgramListener() {
+                @Override
+                public void hasErrors(JavaProgram pro, TreeMap<Long, String> errors) {
+                    if (Platform.isFxApplicationThread()) {
                         setErrorLines(errors);
-                    });
+                    } else {
+                        Platform.runLater(() -> {
+                            setErrorLines(errors);
+                        });
+                    }
                 }
-            }
 
-            @Override
-            public void hasBreakPoints(Program pro, List<Long> points) {
-                if (Platform.isFxApplicationThread()) {
-                    setBreakpoints(points);
-                } else {
-                    Platform.runLater(() -> {
+                @Override
+                public void hasBreakPoints(JavaProgram pro, List<Long> points) {
+                    if (Platform.isFxApplicationThread()) {
                         setBreakpoints(points);
-                    });
+                    } else {
+                        Platform.runLater(() -> {
+                            setBreakpoints(points);
+                        });
+                    }
                 }
-            }
-        });
+            });
+            setBreakpoints(((JavaProgram) getScript()).getBreakPoints());
+            selectedProperty().addListener((ob, older, newer) -> {
+                if (newer) {
+                    if (getScript().getFile().getFileName().toString().endsWith(".java")) {
+                        ConcurrentCompiler.getInstance().compile(Editor.this);
+                    }
+                }
+            });
+        }
         if (getScript().getProject() != null) {
             hPane = new HistoryPane(this);
         }
-        setBreakpoints(getScript().getBreakPoints());
-        selectedProperty().addListener((ob, older, newer) -> {
-            if (newer) {
-                if (getScript().getFile().getFileName().toString().endsWith(".java")) {
-                    ConcurrentCompiler.getInstance().compile(Editor.this);
-                }
-            }
-        });
+
     }
 
     public final void setErrorLines(Map<Long, String> map) {
@@ -653,7 +661,7 @@ public class Editor extends EnvironmentTab {
                     uncomment = new Button("X-"));
             source.setStyle("-fx-min-width:80");
             history.setStyle("-fx-min-width:80");
-            if (editor.getScript().getProject() == null || editor.getScript().getType() == Program.RESOURCE) {
+            if (editor.getScript().getProject() == null || editor.getScript() instanceof Resource) {
                 source.setDisable(true);
                 history.setDisable(true);
             }

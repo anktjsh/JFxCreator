@@ -5,15 +5,13 @@
  */
 package tachyon.core;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
@@ -31,72 +29,46 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import tachyon.view.FileWizard;
-import tachyon.view.LibraryTreeItem.LibraryListener;
+import tachyon.manager.ParentManager;
+import tachyon.process.ProcessItem;
 
 /**
  *
  * @author Aniket
  */
-public class Project {
+public abstract class Project {
 
-    public static final int STANDARD_JAVA_PROJECT = 0, JAVAFX_PROJECT = 1;
-
-    private final int projectType;
     private final Path rootDirectory;
-    private final String projectName;
-    private final Path source, libs, dist, build;
     private final Path config;
+    private final Path source, dist;
+    private final ParentManager manager;
+    private final String projectName;
     private final ArrayList<Program> programs;
-    private final ObservableList<ProjectListener> listeners;
-    private LibraryListener ll;
     private final Task<Void> task;
-    private final ObservableList<JavaLibrary> allLibs;
-    private final HashMap<String, String> compileArguments;
-    private final ArrayList<String> runtimeArguments;
-    private final TaskManager manager;
-    private String mainClassName;
-    private String iconFilePath;
+    private final ObservableList<ProjectListener> listeners;
 
-    public Project(Path src, String mcn, boolean isNew, int... conf) {
-        rootDirectory = src;
+    public Project(Path rot, boolean isNew) {
+        rootDirectory = rot;
+        projectName = rootDirectory.getFileName().toString();
         if (!Files.exists(rootDirectory)) {
             try {
                 Files.createDirectories(rootDirectory);
             } catch (IOException ex) {
             }
         }
-        this.mainClassName = mcn;
-        projectName = rootDirectory.getFileName().toString();
         source = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "src");
-        libs = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "libs");
-        build = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "build");
         dist = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "dist");
         if (!Files.exists(source)) {
             try {
                 Files.createDirectories(source);
             } catch (IOException ex) {
-            }
-        }
-        if (!Files.exists(libs)) {
-            try {
-                Files.createDirectories(libs);
-            } catch (IOException ex) {
-            }
-        }
-        if (!Files.exists(build)) {
-            try {
-                Files.createDirectories(build);
-            } catch (IOException e) {
             }
         }
         if (!Files.exists(dist)) {
@@ -105,81 +77,11 @@ public class Project {
             } catch (IOException ex) {
             }
         }
-
-        allLibs = FXCollections.observableArrayList();
-        compileArguments = new HashMap<>();
-        runtimeArguments = new ArrayList<>();
-
         programs = new ArrayList<>();
         listeners = FXCollections.observableArrayList();
-
         config = Paths.get(rootDirectory.toAbsolutePath().toString() + File.separator + "settings.tachyon");
-
-        if (isNew) {
-            initializeProject(conf[0]);
-            projectType = conf[0];
-        } else {
-            addExistingPrograms();
-            int n = readConfig();
-            if (n == -1) {
-                projectType = 0;
-            } else {
-                projectType = n;
-            }
-        }
-
-        (new Thread(task = new FileWatcher())).start();
-
-        if (!Files.exists(config)) {
-            saveConfig();
-        }
-        manager = new TaskManager(this);
-    }
-
-    public boolean isStandardJavaProject() {
-        return projectType == STANDARD_JAVA_PROJECT;
-    }
-
-    public boolean isJavaFxProject() {
-        return projectType == JAVAFX_PROJECT;
-    }
-
-    public Path getConfig() {
-        return config;
-    }
-
-    public static Project loadProject(Path pro) {
-        Path config = Paths.get(pro.toAbsolutePath().toString() + File.separator + "settings.tachyon");
-        if (Files.exists(config)) {
-            String main;
-            try {
-                main = getMainClassFromConfig(config);
-            } catch (IOException ex) {
-                return null;
-            }
-            if (main == null) {
-                return null;
-            }
-            return new Project(pro, main, false);
-        }
-        return null;
-    }
-
-    public static String getMainClassFromConfig(Path pa) throws IOException {
-        List<String> al = Files.readAllLines(pa);
-        if (al.isEmpty()) {
-            return null;
-        } else {
-            return al.get(0);
-        }
-    }
-
-    public LibraryListener getLibraryListener() {
-        return ll;
-    }
-
-    public void setLibraryListener(LibraryListener ll) {
-        this.ll = ll;
+        (new Thread(task = new FileWatcher())).start();        
+        manager = constructManager();
     }
 
     private class FileWatcher extends Task<Void> {
@@ -245,66 +147,15 @@ public class Project {
         }
     }
 
-    private void checkAll() {
-        ArrayList<Program> remove = new ArrayList<>();
-        ArrayList<Path> add = new ArrayList<>();
-        addAllPaths(add, source.toFile());
-        for (Path p : add) {
-            System.out.println("All : " + p.toAbsolutePath().toString());
-        }
-        for (Program p : getPrograms()) {
-            if (!add.contains(p.getFile())) {
-                remove.add(p);
-            } else {
-                add.remove(p.getFile());
-            }
-        }
-        for (Program p : getPrograms()) {
-            System.out.println("program : " + p.getFile().toAbsolutePath().toString());
-        }
-        for (Program p : remove) {
-            System.out.println("Remove : " + p.getFile().toAbsolutePath().toString());
-            removeScript(p);
-            System.out.println("Removed");
-        }
-        for (Path p : add) {
-            System.out.println("Add : " + p.toAbsolutePath().toString());
-            addScriptsToList(p.toFile(), true);
-            System.out.println("Added");
-        }
+    public ParentManager getTaskManager() {
+        return manager;
     }
 
-    private void addAllPaths(ArrayList<Path> al, File p) {
-        if (p.isDirectory()) {
-            for (File f : p.listFiles()) {
-                addAllPaths(al, f);
-            }
-        } else {
-            al.add(p.toPath());
-        }
+    public Path getConfig() {
+        return config;
     }
 
-    private void addScriptsToList(File f, boolean b) {
-        if (!f.isDirectory()) {
-            if (f.getName().endsWith(".java")) {
-                if (b) {
-                    addScript(new Program(Program.JAVA, f.toPath(), new ArrayList<>(), this));
-                } else {
-                    addProgram(new Program(Program.JAVA, f.toPath(), new ArrayList<>(), this));
-                }
-            } else if (b) {
-                addScript(new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), this));
-            } else {
-                addProgram(new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), this));
-            }
-        } else {
-            for (File fa : f.listFiles()) {
-                addScriptsToList(fa, b);
-            }
-        }
-    }
-
-    private boolean addProgram(Program pro) {
+    protected boolean addProgram(Program pro) {
         try {
             if (!programs.contains(pro)) {
                 if (!Files.isHidden(pro.getFile())) {
@@ -332,185 +183,16 @@ public class Project {
         }
     }
 
-    public HashMap<String, String> getCompileTimeArguments() {
-        return compileArguments;
-    }
-
-    public ArrayList<String> getRuntimeArguments() {
-        return runtimeArguments;
-    }
-
-    public String getFileIconPath() {
-        if (iconFilePath == null) {
-            iconFilePath = "";
-        }
-        return iconFilePath;
-    }
-
-    public void setFileIconPath(String s) {
-        iconFilePath = s;
-    }
-
-    public void setCompileTimeArguments(HashMap<String, String> map) {
-        compileArguments.clear();
-        compileArguments.putAll(map);
-    }
-
-    public void setRuntimeArguments(List<String> map) {
-        runtimeArguments.clear();
-        runtimeArguments.addAll(map);
-    }
-
-    public List<JavaLibrary> getAllLibs() {
-        return allLibs;
-    }
-
-    public void setAllLibs(List<String> all) {
-        for (File f : libs.toFile().listFiles()) {
-            f.delete();
-        }
-        all.stream().map((s) -> Paths.get(s)).forEach((p) -> {
-            try {
-                Files.copy(p, Paths.get(libs.toAbsolutePath().toString() + File.separator + p.getFileName().toString()));
-            } catch (IOException ex) {
-            }
-        });
-        allLibs.clear();
-        for (String s : all) {
-            allLibs.add(new JavaLibrary(s));
-        }
-        if (ll != null) {
-            ll.librariesChanged(all);
-        }
-        saveConfig();
-    }
-
-    private void saveConfig() {
-        try {
-            Files.write(config,
-                    FXCollections.observableArrayList(mainClassName,
-                            "Libs : " + allLibs.toString(),
-                            compileArguments.toString(),
-                            runtimeArguments.toString(),
-                            iconFilePath == null ? "" : iconFilePath, 
-                            projectType +""
-                    ));
-        } catch (IOException e) {
-        }
-    }
-
-    private int readConfig() {
-        ArrayList<String> al = new ArrayList<>();
-        try {
-            al.addAll(Files.readAllLines(config));
-        } catch (IOException ex) {
-        }
-        if (al.size() >= 2) {
-            if (!al.get(1).isEmpty()) {
-                String spl[] = al.get(1).split(" : ");
-                String liberator = spl[1].substring(1, spl[1].length() - 1);
-                List<String> list = Arrays.asList(liberator.split(", "));
-                for (String s : list) {
-                    if (!s.isEmpty()) {
-                        allLibs.add(new JavaLibrary(s));
-                    }
-                }
-            }
-        }
-        if (al.size() >= 3) {
-            if (!al.get(2).isEmpty()) {
-                String check = al.get(2).substring(1, al.get(2).length() - 1);
-                List<String> list = Arrays.asList(check.split(", "));
-                for (String s : list) {
-                    String spl[] = s.split("=");
-                    if (spl.length == 2) {
-                        compileArguments.put(spl[0], spl[1]);
-                    }
-                }
-            }
-        }
-        if (al.size() >= 4) {
-            if (!al.get(3).isEmpty()) {
-                String check = al.get(3).substring(1, al.get(3).length() - 1);
-                List<String> list = Arrays.asList(check.split(", "));
-                if (!list.isEmpty()) {
-                    if (!list.get(0).isEmpty()) {
-                        runtimeArguments.addAll(list);
-                    }
-                }
-            }
-        }
-        if (al.size() >= 5) {
-            if (!al.get(4).isEmpty()) {
-                iconFilePath = al.get(4);
-            }
-        }
-        if (al.size() >= 6) {
-            if (!al.get(5).isEmpty()) {
-                return Integer.parseInt(al.get(5));
-            }
-        }
-        return -1;
-    }
-
-    public String getCompileList() {
-        StringBuilder sb = new StringBuilder();
-        for (String s : compileArguments.keySet()) {
-            sb.append(" ").append(s).append(":").append(compileArguments.get(s));
-        }
-        return sb.toString();
-    }
-
-    public String getRuntimeList() {
-        StringBuilder sb = new StringBuilder();
-        for (String s : runtimeArguments) {
-            sb.append(" ").append(s);
-        }
-        return sb.toString();
-    }
-
-    public String serialize() {
-        return "Project : " + getRootDirectory().toAbsolutePath().toString() + " : " + getMainClassName();
-    }
-
-    private void initializeProject(int check) {
-        Program pro = null;
-        if (check == 0) {
-            pro = new Program(Program.JAVA,
-                    Paths.get(source.toAbsolutePath() + Program.getFilePath(mainClassName) + ".java"),
-                    FileWizard.getTemplateCode("Java Main Class", mainClassName),
-                    this);
-        } else if (check == 1) {
-            pro = new Program(Program.JAVA,
-                    Paths.get(source.toAbsolutePath() + Program.getFilePath(mainClassName) + ".java"),
-                    FileWizard.getTemplateCode("JavaFx Main Class", mainClassName),
-                    this);
-        }
-        if (pro != null) {
-            addScript(pro);
-        }
-    }
-
     public ArrayList<Program> getPrograms() {
         return programs;
-    }
-
-    private void addExistingPrograms() {
-        for (File f : source.toFile().listFiles()) {
-            addScriptsToList(f, false);
-        }
     }
 
     public void addProjectListener(ProjectListener pl) {
         listeners.add(pl);
     }
 
-    public String getMainClassName() {
-        return mainClassName;
-    }
-
-    public void setMainClassName(String main) {
-        mainClassName = main;
+    public void removeProjectListener(ProjectListener pr) {
+        listeners.remove(pr);
     }
 
     public Path getRootDirectory() {
@@ -523,14 +205,6 @@ public class Project {
 
     public Path getSource() {
         return source;
-    }
-
-    public Path getBuild() {
-        return build;
-    }
-
-    public Path getLibs() {
-        return libs;
     }
 
     public Path getDist() {
@@ -548,97 +222,119 @@ public class Project {
         saveConfig();
     }
 
-    public static void uncompress(String compress, String folderPath) {
-        int BUFFER = 2048;
-        System.out.println(System.currentTimeMillis());
+    public void clean() {
+        almostDeepDelete(dist.toFile());
+    }
+
+    public abstract String serialize();
+
+    public static Project unserialize(String s) {
         try {
-            String uncompress;
-            BufferedOutputStream dest;
-            FileInputStream fis = new FileInputStream(compress);
-            try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fis))) {
-                ZipEntry entry;
-                while ((entry = zis.getNextEntry()) != null) {
-                    uncompress = folderPath + entry.getName();
-                    System.out.println("Extracting entry");
-                    if (entry.isDirectory()) {
-                        File f = new File(uncompress);
-                        f.mkdir();
-                    } else {
-                        int count;
-                        byte[] data = new byte[BUFFER];
+            String[] split = s.split(" : ");
+            return unserialize(Paths.get(split[1]));
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
-                        FileOutputStream fos = new FileOutputStream(new File(uncompress));
-                        dest = new BufferedOutputStream(fos, BUFFER);
-                        while ((count = zis.read(data, 0, BUFFER)) != -1) {
-                            dest.write(data, 0, count);
+    public static Project unserialize(Path f) {
+        return loadProject(f);
+    }
+
+    public static Project loadProject(Path p) {
+        Path config = Paths.get(p.toAbsolutePath().toString() + File.separator + "settings.tachyon");
+        if (Files.exists(config)) {
+            try {
+                ArrayList<String> al = new ArrayList<>();
+                al.addAll(Files.readAllLines(config));
+                if (al.size() > 0) {
+                    String type = getType(al.get(al.size() - 1));
+                    Constructor c;
+                    try {
+                        int n = (c = (Class.forName(type)).getConstructors()[0]).getParameterCount();
+                        int diff = n - 2;
+                        if (al.size() >= diff + 1) {
+                            Object[] ob = getObjectArray(p, false, al.subList(0, diff));
+                            Project pa = (Project) c.newInstance(ob);
+                            return pa;
                         }
-                        dest.flush();
-                        dest.close();
+                    } catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                        e.printStackTrace();
                     }
-
                 }
-            }
-        } catch (IOException ex) {
-        }
-        System.out.println(System.currentTimeMillis());
-    }
-
-    public void runFile(ProcessItem item, Program program) {
-        manager.runFile(item, program);
-    }
-
-    public void fatJar(ProcessItem pro) throws IOException {
-        manager.fatJar(pro);
-    }
-
-    public String getFileList() {
-        StringBuilder sb = new StringBuilder();
-        for (Program p : programs) {
-            if (p.getFile().toAbsolutePath().toString().endsWith(".java")) {
-                sb.append(" ").append(p.getFile().toAbsolutePath().toString());
+            } catch (IOException ex) {
+                Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        return sb.toString();
+        return null;
     }
 
-    public int getNumLibs() {
-        return allLibs.size();
-    }
-
-    public String getLibsList() {
-        StringBuilder sb = new StringBuilder();
-        File f = new File(rootDirectory.toAbsolutePath().toString() + File.separator + "libs");
-        for (File file : f.listFiles()) {
-            if (file.getName().endsWith(".jar")) {
-                sb.append(" ").append(file.getAbsolutePath());
-            }
+    private static Object[] getObjectArray(Path p, boolean b, List<String> al) {
+        Object[] o = new Object[al.size() + 2];
+        o[0] = p;
+        o[1] = b;
+        for (int x = 0; x < al.size(); x++) {
+            o[x + 2] = al.get(x);
         }
-        return sb.toString();
+        return o;
     }
+
+    private static String getType(String s) {
+        String temp = s.substring(1, s.length() - 1);
+        String spl[] = temp.split(", ");
+        byte[] b = new byte[spl.length];
+        for (int x = 0; x < spl.length; x++) {
+            b[x] = Byte.parseByte(spl[x]);
+        }
+        return new String(b);
+    }
+
+    protected abstract ParentManager constructManager();
+
+    protected abstract void checkAll();
+
+    protected abstract void initializeProject();
+
+    protected abstract void readConfig();
+
+    protected abstract void saveConfig();
+
+    protected abstract void addExistingPrograms();
 
     public void compile(ProcessItem pro) {
-        manager.compile(pro);
+        getTaskManager().compile(pro);
     }
 
     public void build(ProcessItem pro) {
-        manager.build(pro);
+        getTaskManager().build(pro);
     }
 
     public void run(ProcessItem pro) {
-        manager.run(pro);
+        getTaskManager().run(pro);
     }
 
     public void nativeExecutable(ProcessItem pro) {
-        manager.nativeExecutable(pro);
+        getTaskManager().nativeExecutable(pro);
     }
 
     public void debugProject(ProcessItem pro, DebuggerController con) {
-        manager.debugProject(pro, con);
+        getTaskManager().debugProject(pro, con);
     }
 
-    public void clean() {
-        almostDeepDelete(build.toFile());
-        almostDeepDelete(dist.toFile());
+    public void runIndividualFile(ProcessItem pro, Program program) {
+        getTaskManager().runIndividualFile(pro, program);
+    }
+
+    public void fatBuild(ProcessItem pro) {
+        getTaskManager().fatBuild(pro);
+    }
+
+    public interface ProjectListener {
+
+        public void fileAdded(Project pro, Program add);
+
+        public void fileRemoved(Project pro, Program scr);
+
     }
 
     private void almostDeepDelete(File p) {
@@ -672,12 +368,15 @@ public class Project {
         }
     }
 
-    public interface ProjectListener {
-
-        public void fileAdded(Project pro, Program add);
-
-        public void fileRemoved(Project pro, Program scr);
-
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Project) {
+            Project pro = (Project) obj;
+            if (pro.getRootDirectory().equals(getRootDirectory())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static class OutputReader implements Runnable {
@@ -730,33 +429,5 @@ public class Project {
                 }
             }
         }
-    }
-
-    public static Project unserialize(String s) {
-        try {
-            String[] split = s.split(" : ");
-            return unserialize(Paths.get(split[1]));
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public static Project unserialize(Path f) {
-        return loadProject(f);
-    }
-
-    public void addListener(ProjectListener al) {
-        listeners.add(al);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Project) {
-            Project pro = (Project) obj;
-            if (pro.getRootDirectory().equals(getRootDirectory())) {
-                return true;
-            }
-        }
-        return false;
     }
 }

@@ -20,11 +20,11 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javax.imageio.ImageIO;
-import tachyon.core.Program;
 import tachyon.core.Project;
 import net.sf.image4j.codec.ico.ICODecoder;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.Imaging;
+import tachyon.core.Resource;
 
 /**
  *
@@ -38,7 +38,7 @@ public class Viewer extends EnvironmentTab {
     private final ImageView view;
     private final DoubleProperty zoom = new SimpleDoubleProperty(1.0);
 
-    public Viewer(Program scr, Project pro) {
+    public Viewer(Resource scr, Project pro) {
         super(scr, pro);
         getCenter().setCenter(new ScrollPane(view = new ImageView(image = readFromFile(scr.getFile()))));
         controls = new ToolBar();

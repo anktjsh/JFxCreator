@@ -46,7 +46,7 @@ public class Tachyon extends Application {
             ErrorConsole.addError(t, e, null);
         });
     }
-    
+
     @Override
     public void start(Stage env) {
         host = getHostServices();

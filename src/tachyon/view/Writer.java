@@ -73,17 +73,22 @@ import static tachyon.Tachyon.css;
 import tachyon.contact.EmailPicker;
 import tachyon.core.Console;
 import tachyon.core.DebuggerController;
-import tachyon.core.Examples;
+import tachyon.core.JavaFxProject;
 import tachyon.core.JavaLibrary;
-import tachyon.core.ProcessItem;
-import tachyon.core.ProcessPool;
+import tachyon.core.JavaProgram;
+import tachyon.core.JavaProject;
 import tachyon.core.Program;
 import tachyon.core.Project;
 import tachyon.core.ProjectTree;
-import tachyon.core.TaskManager;
-import tachyon.core.Template;
-import tachyon.core.ZipUtils;
+import tachyon.core.Resource;
+import tachyon.core.StandardJavaProject;
+import tachyon.features.Examples;
+import tachyon.features.Template;
+import tachyon.manager.JavaFileManager;
 import tachyon.memory.Monitor;
+import tachyon.process.ProcessItem;
+import tachyon.process.ProcessPool;
+import tachyon.utility.ZipUtils;
 import tachyon.view.FileWizard.FileDescription;
 
 /**
@@ -431,7 +436,7 @@ public class Writer extends BorderPane {
                     ProjectTreeItem item;
                     tree.getRoot().getChildren().add(item = new ProjectTreeItem(added, true));
                     item.setExpanded(true);
-                    added.addListener((new Project.ProjectListener() {
+                    added.addProjectListener((new Project.ProjectListener() {
 
                         @Override
                         public void fileAdded(Project pro, Program add) {
@@ -457,15 +462,17 @@ public class Writer extends BorderPane {
                     for (Program p : added.getPrograms()) {
                         addScriptTreeItem(item, new ProgramTreeItem(p));
                     }
-                    for (JavaLibrary s : added.getAllLibs()) {
-                        item.getChildren().get(1).getChildren().add(new LibraryTreeItem(added, s));
-                    }
-                    added.setLibraryListener((List<String> filePaths) -> {
-                        item.getChildren().get(1).getChildren().clear();
-                        for (String s : filePaths) {
-                            item.getChildren().get(1).getChildren().add(new LibraryTreeItem(added, new JavaLibrary(s)));
+                    if (added instanceof JavaProject) {
+                        for (JavaLibrary s : ((JavaProject) added).getAllLibs()) {
+                            item.getChildren().get(1).getChildren().add(new LibraryTreeItem(added, s));
                         }
-                    });
+                        ((JavaProject) added).setLibraryListener((List<String> filePaths) -> {
+                            item.getChildren().get(1).getChildren().clear();
+                            for (String s : filePaths) {
+                                item.getChildren().get(1).getChildren().add(new LibraryTreeItem(added, new JavaLibrary(s)));
+                            }
+                        });
+                    }
                 }
             }
 
@@ -491,7 +498,9 @@ public class Writer extends BorderPane {
                         }
                     }
                 }
-                pro.setLibraryListener(null);
+                if (pro instanceof JavaProject) {
+                    ((JavaProject) pro).setLibraryListener(null);
+                }
             }
         });
 
@@ -515,12 +524,12 @@ public class Writer extends BorderPane {
                             }
                         }
                         if (contains) {
-                            if (sti.getScript().getType() == Program.JAVA) {
+                            if (sti.getScript() instanceof JavaProgram) {
                                 Editor ed;
                                 tabPane.getTabs().add(ed = new Editor(sti.getScript(), sti.getScript().getProject()));
                                 tabPane.getSelectionModel().select(ed);
                             } else {
-                                loadFile(sti.getScript().getFile().toFile(), sti.getScript(), sti.getScript().getProject());
+                                loadFile(sti.getScript());
                             }
                         } else {
                             tabPane.getSelectionModel().select(st);
@@ -591,12 +600,12 @@ public class Writer extends BorderPane {
                         }
                     }
                     if (contains) {
-                        if (sti.getScript().getType() == Program.JAVA) {
+                        if (sti.getScript() instanceof JavaProgram) {
                             Editor ed;
                             tabPane.getTabs().add(ed = new Editor(sti.getScript(), sti.getScript().getProject()));
                             tabPane.getSelectionModel().select(ed);
                         } else {
-                            loadFile(sti.getScript().getFile().toFile(), sti.getScript(), sti.getScript().getProject());
+                            loadFile(sti.getScript());
                         }
                     } else {
                         tabPane.getSelectionModel().select(st);
@@ -794,9 +803,9 @@ public class Writer extends BorderPane {
                             "Unfortunately this file already exists",
                             "");
                 } else {
-                    Program pro = new Program(Program.JAVA, cName, f.toPath(), Template.getTemplateCode(temp, result.get().getKey(), result.get().getValue()), getCurrentProject());
+                    JavaProgram pro = new JavaProgram(f.toPath(), Template.getTemplateCode(temp, result.get().getKey(), result.get().getValue()), getCurrentProject(), cName);
                     getCurrentProject().addScript(pro);
-                    loadFile(pro.getFile().toFile(), pro, pro.getProject());
+                    loadFile(pro);
                 }
             }
         }
@@ -852,12 +861,14 @@ public class Writer extends BorderPane {
             x++;
         }
         String mainClass;
+        JavaProject pro;
         if (index == 0) {
             mainClass = "user.input.Launcher";
+            pro = new StandardJavaProject(f.toPath(), true, mainClass);
         } else {
             mainClass = "web.browser.Launcher";
+            pro = new JavaFxProject(f.toPath(), true, mainClass);
         }
-        Project pro = new Project(f.toPath(), mainClass, true, 0);
         pro.getPrograms().get(0).save(Examples.getExamples().getCode(index));
         ProjectTree.getTree().addProject(pro);
     }
@@ -868,8 +879,10 @@ public class Writer extends BorderPane {
 
     private void reload(Project pro) {
         closeProject(pro);
-        String main = pro.getMainClassName();
-        ProjectTree.getTree().addProject(new Project(pro.getRootDirectory(), main, false));
+        Project p = Project.loadProject(pro.getRootDirectory());
+        if (p != null) {
+            ProjectTree.getTree().addProject(p);
+        }
     }
 
     private void findScriptTreeItem(ProjectTreeItem pro, Program scr) {
@@ -1030,7 +1043,7 @@ public class Writer extends BorderPane {
 
     public void loadFiles(List<File> fil) {
         for (File f : fil) {
-            loadFile(f, null);
+            loadFile(f);
         }
     }
 
@@ -1042,79 +1055,54 @@ public class Writer extends BorderPane {
         loadFiles(al);
     }
 
-    private void loadFile(File f, Program prog, Project parent) {
-        if (prog == null) {
-            if (f.isDirectory()) {
-                Project p = Project.unserialize(f.toPath());
-                if (p != null) {
-                    ProjectTree.getTree().addProject(p);
-                }
-            } else if (f.isFile()) {
-                String type = "";
-                try {
-                    type = Files.probeContentType(f.toPath());
-                } catch (IOException ef) {
-                }
-                System.out.println(type);
-                System.out.println(f.getName());
-                if (fileSize(f)) {
-                    if (type != null) {
-                        if (type.contains("text")) {
-                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                            addTab(new Editor(pro, parent));
-                        } else if (type.contains("image")) {
-                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                            addTab(new Viewer(pro, parent));
-                        } else if (type.contains("fxml")) {
-                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                            addTab(new FXMLTab(pro, parent));
-                        } else if (f.getName().endsWith(".pdf")) {
-                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                            addTab(new PdfReader(pro, parent));
-                        } else if (alert(f.getAbsolutePath())) {
-                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                            addTab(new Editor(pro, parent));
-                        }
-                    } else {
-                        System.out.println(f.getName());
-                        if (f.getName().endsWith(".pdf")) {
-                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                            addTab(new PdfReader(pro, parent));
-                        } else if (alert(f.getAbsolutePath())) {
-                            Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                            addTab(new Editor(pro, parent));
-                        }
-                    }
-                }
+    private void loadDirectory(File f) {
+        if (f.isDirectory()) {
+            Project p = Project.unserialize(f.toPath());
+            if (p != null) {
+                ProjectTree.getTree().addProject(p);
             }
-        } else {
-            String type = "";
-            try {
-                type = Files.probeContentType(prog.getFile());
-            } catch (IOException ef) {
-            }
-            System.out.println(type);
-            if (fileSize(prog.getFile().toFile())) {
-                if (type != null) {
-                    if (type.contains("text")) {
-                        addTab(new Editor(prog, prog.getProject()));
-                    } else if (type.contains("image")) {
-                        addTab(new Viewer(prog, prog.getProject()));
-                    } else if (type.contains("fxml")) {
-                        addTab(new FXMLTab(prog, prog.getProject()));
-                    } else if (f.getName().endsWith(".pdf")) {
-                        Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                        addTab(new PdfReader(pro, parent));
-                    } else if (alert(prog.getFile().toAbsolutePath().toString())) {
-                        addTab(new Editor(prog, prog.getProject()));
-                    }
-                } else if (prog.getFile().toString().endsWith(".pdf")) {
-                    Program pro = new Program(Program.RESOURCE, f.toPath(), new ArrayList<>(), parent);
-                    addTab(new PdfReader(pro, parent));
+        }
+    }
+
+    private void loadFile(Program prog) {
+        String type = "";
+        try {
+            type = Files.probeContentType(prog.getFile());
+        } catch (IOException ef) {
+        }
+        System.out.println(type);
+        if (fileSize(prog.getFile().toFile())) {
+            if (type != null) {
+                if (type.contains("text")) {
+                    addTab(new Editor(prog, prog.getProject()));
+                } else if (type.contains("image")) {
+                    addTab(new Viewer((Resource) prog, prog.getProject()));
+                } else if (type.contains("fxml")) {
+                    addTab(new FXMLTab((Resource) prog, prog.getProject()));
+                } else if (type.contains("application") && type.contains("pdf")) {
+                    addTab(new PdfReader((Resource) prog, prog.getProject()));
                 } else if (alert(prog.getFile().toAbsolutePath().toString())) {
                     addTab(new Editor(prog, prog.getProject()));
                 }
+            } else if (prog.getFile().toString().endsWith(".java")) {
+                addTab(new Editor(prog, prog.getProject()));
+            } else if (prog.getFile().toString().endsWith(".pdf")) {
+                addTab(new PdfReader((Resource) prog, prog.getProject()));
+            } else if (alert(prog.getFile().toAbsolutePath().toString())) {
+                addTab(new Editor(prog, prog.getProject()));
             }
+        }
+    }
+
+    private void loadFile(File f) {
+        if (f.isDirectory()) {
+            loadDirectory(f);
+        } else if (f.getName().endsWith(".java")) {
+            JavaProgram java = new JavaProgram(f.toPath(), new ArrayList<>(), null, f.getName().substring(0, f.getName().lastIndexOf(".java")));
+            loadFile(java);
+        } else {
+            Resource r = new Resource(f.toPath(), new ArrayList<>(), null);
+            loadFile(r);
         }
     }
 
@@ -1148,10 +1136,6 @@ public class Writer extends BorderPane {
     private void addTab(EnvironmentTab tab) {
         tabPane.getTabs().add(tab);
         tabPane.getSelectionModel().select(tab);
-    }
-
-    private void loadFile(File f, Project parent) {
-        loadFile(f, null, parent);
     }
 
     public final void openPreviousProjects() {
@@ -1188,18 +1172,20 @@ public class Writer extends BorderPane {
         if (!al.isEmpty()) {
             ArrayList<File> af = new ArrayList<>();
             for (String s : al) {
-                af.add(new File(s));
+                File fa = new File(s);
+                if (fa.exists()) {
+                    af.add(fa);
+                }
             }
             loadFiles(af);
         }
         for (Program sti : asc) {
-            if (sti.getType() == Program.JAVA) {
+            if (sti instanceof JavaProgram) {
                 Editor ed;
                 tabPane.getTabs().add(ed = new Editor(sti, sti.getProject()));
                 tabPane.getSelectionModel().select(ed);
             } else {
-                loadFile(sti.getFile().toFile(), sti, sti.getProject());
-
+                loadFile(sti);
             }
         }
     }
@@ -1355,13 +1341,13 @@ public class Writer extends BorderPane {
                 Program sc;
                 if (show.get().getDescription().contains("Other")) {
                     String extension = show.get().getName().substring(show.get().getName().lastIndexOf('.'));
-                    sc = new Program(Program.RESOURCE,
+                    sc = new Resource(
                             Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separatorChar + Program.getFilePath(show.get().getName().substring(0, show.get().getName().lastIndexOf('.'))) + extension),
                             FileWizard.getTemplateCode(show.get().getDescription(),
                                     show.get().getName()),
                             getCurrentProject());
                     getCurrentProject().addScript(sc);
-                    loadFile(sc.getFile().toFile(), sc, sc.getProject());
+                    loadFile(sc);
                 } else if (show.get().getDescription().contains("FXML")
                         || show.get().getDescription().contains("HTML")
                         || show.get().getDescription().contains("Text")) {
@@ -1373,20 +1359,19 @@ public class Writer extends BorderPane {
                     } else {
                         extension = ".txt";
                     }
-                    sc = new Program(Program.RESOURCE,
+                    sc = new Resource(
                             Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separatorChar + Program.getFilePath(show.get().getName()) + extension),
                             FileWizard.getTemplateCode(show.get().getDescription(),
                                     show.get().getName()),
                             getCurrentProject());
                     getCurrentProject().addScript(sc);
-                    loadFile(sc.getFile().toFile(), sc, sc.getProject());
+                    loadFile(sc);
                 } else {
-                    sc = new Program(Program.JAVA,
-                            show.get().getName(),
+                    sc = new JavaProgram(
                             Paths.get(getCurrentProject().getSource().toAbsolutePath().toString() + File.separator + Program.getFilePath(show.get().getName()) + ".java"),
                             FileWizard.getTemplateCode(show.get().getDescription(),
                                     show.get().getName()),
-                            getCurrentProject());
+                            getCurrentProject(), show.get().getName());
                     getCurrentProject().addScript(sc);
                     Editor ed;
                     tabPane.getTabs().add(ed = new Editor(sc, sc.getProject()));
@@ -1403,10 +1388,13 @@ public class Writer extends BorderPane {
                 if (!f.getAbsolutePath().endsWith(".java")) {
                     f = new File(f.getAbsolutePath() + ".java");
                 }
-                Dialog<Pair<String, String>> dialog = new Dialog<>();
+                String name = f.getName().substring(0, f.getName().lastIndexOf(".java"));
+                JavaProgram pro = new JavaProgram(f.toPath(), Template.getTemplateCode("Java Main Class", null, name), null, name);
+                loadFile(pro);
+                /*<Pair<String, String>> dialog = new Dialog<>();
                 dialog.initOwner(getScene().getWindow());
                 dialog.setTitle("Class Name");
-                dialog.setHeaderText("Enter Package Name and Class Name");
+                dialog.setHeaderText("Enter Class Name");
 
                 GridPane grid = new GridPane();
                 grid.setHgap(10);
@@ -1439,7 +1427,7 @@ public class Writer extends BorderPane {
                     String key = result.get().getKey() == null ? "" : result.get().getKey();
                     String val = result.get().getValue() == null ? "" : result.get().getValue();
                     if (!val.isEmpty()) {
-                        Program pro = new Program(Program.RESOURCE, f.toPath(), Template.getTemplateCode("Java Main Class", key, val), null);
+                        Resource pro = new Resource(f.toPath(), Template.getTemplateCode("Java Main Class", key, val), null);
                         loadFile(pro.getFile().toFile(), pro, null);
                     } else {
                         showAlert(AlertType.INFORMATION,
@@ -1447,7 +1435,7 @@ public class Writer extends BorderPane {
                                 "New File",
                                 "No Class Name Specified", "");
                     }
-                }
+                }*/
             }
         }
     }
@@ -1520,21 +1508,23 @@ public class Writer extends BorderPane {
         saveAll();
         if (getSelectedEditor() != null) {
             if (getSelectedEditor().getScript().getProject() != null) {
-                runFile(getSelectedEditor().getScript().getProject(), getSelectedEditor().getScript());
-            } else if (getSelectedEditor().getScript().getFile().getFileName().toString().endsWith(".java")) {
-                runFile(getSelectedEditor().getScript());
+                if (getSelectedEditor().getScript() instanceof JavaProgram) {
+                    runFile(getSelectedEditor().getScript().getProject(), (JavaProgram) getSelectedEditor().getScript());
+                }
+            } else if (getSelectedEditor().getScript().getFileName().endsWith(".java")) {
+                runFile(((JavaProgram) getSelectedEditor().getScript()));
             }
         }
     }
 
-    private void runFile(Program pro) {
+    private void runFile(JavaProgram pro) {
         ProcessItem item = new ProcessItem(null, null, new Console(null));
         addConsoleWindow(item);
         Task<Void> tk = new Task<Void>() {
 
             @Override
             protected Void call() throws Exception {
-                TaskManager.runIsolatedFile(item, pro);
+                JavaFileManager.getIsolatedJavaFileManager().runIndividualFile(item, pro);
                 return null;
             }
 
@@ -1542,14 +1532,14 @@ public class Writer extends BorderPane {
         (new Thread(tk)).start();
     }
 
-    private void runFile(Project projec, Program pro) {
+    private void runFile(Project projec, JavaProgram pro) {
         ProcessItem item = new ProcessItem(null, null, new Console(projec));
         addConsoleWindow(item);
         Task<Void> tk = new Task<Void>() {
 
             @Override
             protected Void call() throws Exception {
-                projec.runFile(item, pro);
+                projec.runIndividualFile(item, pro);
                 return null;
             }
 
@@ -1567,7 +1557,7 @@ public class Writer extends BorderPane {
 
                 @Override
                 protected Void call() throws Exception {
-                    getCurrentProject().fatJar(pro);
+                    getCurrentProject().fatBuild(pro);
                     Platform.runLater(() -> {
                         showAlert(AlertType.INFORMATION,
                                 getScene().getWindow(),
@@ -1620,7 +1610,7 @@ public class Writer extends BorderPane {
 
                 @Override
                 protected Void call() throws Exception {
-                    TaskManager.launchJar(pro, id);
+                    JavaFileManager.getIsolatedJavaFileManager().launchJar(pro, id);
                     return null;
                 }
 
@@ -1712,7 +1702,9 @@ public class Writer extends BorderPane {
 
     private void property(Project prop) {
         if (getCurrentProject() != null) {
-            new ProjectProperties(prop, getScene().getWindow()).showAndWait();
+            if (prop instanceof JavaProject) {
+                new ProjectProperties((JavaProject) prop, getScene().getWindow()).showAndWait();
+            }
         }
     }
 
@@ -1884,7 +1876,7 @@ public class Writer extends BorderPane {
                 }
             }
             if (cr == null) {
-                cr = new ClassReader(null, pro, name + ".class", stream);
+                cr = new ClassReader(pro, name + ".class", stream);
                 tabPane.getTabs().add(cr);
             }
             tabPane.getSelectionModel().select(cr);

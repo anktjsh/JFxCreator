@@ -48,9 +48,12 @@ public class DebuggerController {
 
     private ArrayList<String> getBreakpoints(Project pro) {
         ArrayList<String> sb = new ArrayList<>();
-        for (Program pr : pro.getPrograms()) {
-            for (Long l : pr.getBreakPoints()) {
-                sb.add("stop at " + pr.getClassName() + ":" + l.toString());
+        for (Program p : pro.getPrograms()) {
+            if (p instanceof JavaProgram) {
+                JavaProgram pr = (JavaProgram) p;
+                for (Long l : pr.getBreakPoints()) {
+                    sb.add("stop at " + pr.getClassName() + ":" + l.toString());
+                }
             }
         }
         return sb;

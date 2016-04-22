@@ -5,8 +5,8 @@
  */
 package tachyon.view;
 
-import tachyon.core.Program;
 import tachyon.core.Project;
+import tachyon.core.Resource;
 
 /**
  *
@@ -14,7 +14,7 @@ import tachyon.core.Project;
  */
 public class PdfReader extends EnvironmentTab {
 
-    public PdfReader(Program scr, Project pro) {
+    public PdfReader(Resource scr, Project pro) {
         super(scr, pro);
         BaseViewer f;
         setContent(f = new BaseViewer());

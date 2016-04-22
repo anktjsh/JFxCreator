@@ -97,16 +97,14 @@ public class JavaPlatform {
                 for (File fa : f.listFiles()) {
                     addAllFiles(fa, jars);
                 }
-            } else {
-                if (f.getName().endsWith(".jar")) {
-                    if (f.getName().equals("deploy.jar")
-                            || f.getName().equals("javaws.jar")
-                            || f.getName().equals("management-agent.jar")
-                            || f.getName().equals("plugin.jar")) {
-                        return;
-                    }
-                    jars.add(f);
+            } else if (f.getName().endsWith(".jar")) {
+                if (f.getName().equals("deploy.jar")
+                        || f.getName().equals("javaws.jar")
+                        || f.getName().equals("management-agent.jar")
+                        || f.getName().equals("plugin.jar")) {
+                    return;
                 }
+                jars.add(f);
             }
         }
     }

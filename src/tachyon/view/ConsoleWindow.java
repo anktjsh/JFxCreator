@@ -38,12 +38,13 @@ import javafx.stage.Popup;
 import tachyon.Tachyon;
 import tachyon.core.Console;
 import tachyon.core.JavaPlatform;
-import tachyon.core.ProcessItem;
-import tachyon.core.Program;
+import tachyon.process.ProcessItem;
 import static tachyon.view.Writer.fontSize;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.MouseOverTextEvent;
 import org.fxmisc.richtext.Paragraph;
+import tachyon.core.JavaProgram;
+import tachyon.core.Program;
 
 /**
  *
@@ -140,12 +141,15 @@ public class ConsoleWindow extends Tab {
                             int lineNum = Integer.parseInt(spl[1]);
                             String fullName = beforeParen.substring(0, beforeParen.lastIndexOf(className)) + className;
 //HERE
-                            Program chosen = null;
+                            JavaProgram chosen = null;
                             if (console.getConsole().getProject() != null) {
-                                for (Program p : console.getConsole().getProject().getPrograms()) {
-                                    if (p.getClassName().equals(fullName)) {
-                                        System.out.println(p.getClassName());
-                                        chosen = p;
+                                for (Program pp : console.getConsole().getProject().getPrograms()) {
+                                    if (pp instanceof JavaProgram) {
+                                        JavaProgram p = (JavaProgram) pp;
+                                        if (p.getClassName().equals(fullName)) {
+                                            System.out.println(p.getClassName());
+                                            chosen = p;
+                                        }
                                     }
                                 }
                                 if (chosen != null) {
@@ -163,7 +167,7 @@ public class ConsoleWindow extends Tab {
                                 }
                             }
                         } else {
-                            Program chosen = null;
+                            JavaProgram chosen = null;
                             Integer line = null;
                             String loc[] = arr[0].split(":");
                             String OS = System.getProperty("os.name").toLowerCase();
@@ -171,23 +175,25 @@ public class ConsoleWindow extends Tab {
                                 if (console.getConsole().getProject() != null) {
                                     File location = new File("C:" + loc[1]);
                                     for (Program pro : console.getConsole().getProject().getPrograms()) {
-                                        if (pro.getFile().toAbsolutePath().toString().equals(location.getAbsolutePath())) {
-                                            System.out.println(pro.getClassName());
-                                            System.out.println(loc[2]);
-                                            line = Integer.parseInt(loc[2]);
-                                            chosen = pro;
+                                        if (pro.getFileName().equals(location.getAbsolutePath())) {
+                                            if (pro instanceof JavaProgram) {
+                                                System.out.println(((JavaProgram) pro).getClassName());
+                                                System.out.println(loc[2]);
+                                                line = Integer.parseInt(loc[2]);
+                                                chosen = (JavaProgram) pro;
+                                            }
                                         }
                                     }
                                 }
-                            } else {
-                                if (console.getConsole().getProject() != null) {
-                                    File location = new File(loc[0]);
-                                    for (Program pro : console.getConsole().getProject().getPrograms()) {
-                                        if (pro.getFile().toAbsolutePath().toString().equals(location.getAbsolutePath())) {
-                                            System.out.println(pro.getClassName());
+                            } else if (console.getConsole().getProject() != null) {
+                                File location = new File(loc[0]);
+                                for (Program pro : console.getConsole().getProject().getPrograms()) {
+                                    if (pro.getFileName().equals(location.getAbsolutePath())) {
+                                        if (pro instanceof JavaProgram) {
+                                            System.out.println(((JavaProgram) pro).getClassName());
                                             System.out.println(loc[1]);
                                             line = Integer.parseInt(loc[1]);
-                                            chosen = pro;
+                                            chosen = (JavaProgram) pro;
                                         }
                                     }
                                 }
@@ -277,10 +283,8 @@ public class ConsoleWindow extends Tab {
                 } else {
                     e.consume();
                 }
-            } else {
-                if (timer.isAlive()) {
-                    timer.stop();
-                }
+            } else if (timer.isAlive()) {
+                timer.stop();
             }
         });
         errorOutput = new TreeMap<>();

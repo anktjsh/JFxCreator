@@ -44,15 +44,16 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Pair;
 import javax.imageio.ImageIO;
-import tachyon.Tachyon;
-import tachyon.core.JavaLibrary;
-import tachyon.core.Program;
-import tachyon.core.Project;
 import net.sf.image4j.codec.ico.ICODecoder;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.Imaging;
+import tachyon.Tachyon;
 import static tachyon.Tachyon.applyCss;
 import static tachyon.Tachyon.css;
+import tachyon.core.JavaLibrary;
+import tachyon.core.JavaProgram;
+import tachyon.core.JavaProject;
+import tachyon.core.Program;
 
 /**
  *
@@ -65,12 +66,12 @@ public class ProjectProperties {
     private final VBox box1, box2, box3;
     private final TextField mainClass;
     private final Button select, confirm, cancel;
-    private final Project project;
+    private final JavaProject project;
 
     private final ListView<String> libsView;
     private final Button addJar, removeJar;
 
-    public ProjectProperties(Project project, Window w) {
+    public ProjectProperties(JavaProject project, Window w) {
         this.project = project;
         stage = new Stage();
         stage.initOwner(w);
@@ -360,15 +361,17 @@ public class ProjectProperties {
     private List<String> getAll() {
         ArrayList<String> al = new ArrayList<>();
         for (Program pr : project.getPrograms()) {
-            List<String> str = Arrays.asList(pr.getLastCode().split("\n"));
-            ArrayList<String> ret = new ArrayList<>();
-            for (String s : str) {
-                if (s.contains("public") && s.contains("static") && s.contains("void") && s.contains("main")) {
-                    ret.add(s);
+            if (pr instanceof JavaProgram) {
+                List<String> str = Arrays.asList(pr.getLastCode().split("\n"));
+                ArrayList<String> ret = new ArrayList<>();
+                for (String s : str) {
+                    if (s.contains("public") && s.contains("static") && s.contains("void") && s.contains("main")) {
+                        ret.add(s);
+                    }
                 }
-            }
-            if (!ret.isEmpty()) {
-                al.add(pr.getClassName());
+                if (!ret.isEmpty()) {
+                    al.add(((JavaProgram) pr).getClassName());
+                }
             }
         }
 

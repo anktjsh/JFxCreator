@@ -28,6 +28,7 @@ import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 import tachyon.analyze.Method.Parameter;
+import tachyon.core.JavaProgram;
 import tachyon.core.Program;
 import tachyon.view.Editor;
 
@@ -71,26 +72,30 @@ public class Analyzer {
             f.mkdirs();
         }
 
-        SimpleJavaFileObject fileObject = new DynamicJavaSourceCodeObject(edit.getScript().getClassName(), edit.getCodeArea().getText());
+        SimpleJavaFileObject fileObject = new DynamicJavaSourceCodeObject(((JavaProgram) edit.getScript()).getClassName(), edit.getCodeArea().getText());
         JavaFileObject objects[] = new JavaFileObject[]{fileObject};
         ObservableList<JavaFileObject> objs = FXCollections.observableArrayList(objects);
-        ArrayList<Program> prog = new ArrayList<>();
-        prog.add(edit.getScript());
+        ArrayList<JavaProgram> prog = new ArrayList<>();
+        prog.add((JavaProgram) edit.getScript());
         for (Tab b : edit.getTabPane().getTabs()) {
             if (b instanceof Editor) {
                 Editor ed = (Editor) b;
                 if (ed.getScript().getProject().equals(edit.getScript().getProject())) {
-                    if (!prog.contains(ed.getScript())) {
-                        prog.add(ed.getScript());
-                        objs.add(new DynamicJavaSourceCodeObject(ed.getScript().getClassName(), ed.getCodeArea().getText()));
+                    if (ed.getScript() instanceof JavaProgram) {
+                        if (!prog.contains((JavaProgram) ed.getScript())) {
+                            prog.add((JavaProgram) ed.getScript());
+                            objs.add(new DynamicJavaSourceCodeObject(((JavaProgram) ed.getScript()).getClassName(), ed.getCodeArea().getText()));
+                        }
                     }
                 }
             }
         }
         for (Program p : edit.getScript().getProject().getPrograms()) {
-            if (!prog.contains(p)) {
-                prog.add(p);
-                objs.add(new DynamicJavaSourceCodeObject(p.getClassName(), p.getLastCode()));
+            if (p instanceof JavaProgram) {
+                if (!prog.contains((JavaProgram) p)) {
+                    prog.add((JavaProgram) p);
+                    objs.add(new DynamicJavaSourceCodeObject(((JavaProgram) p).getClassName(), ((JavaProgram) p).getLastCode()));
+                }
             }
         }
         for (JavaFileObject obj : objs) {
@@ -118,7 +123,7 @@ public class Analyzer {
 
         }
         String filePath = ".cache" + File.separator + edit.getScript().getProject().getProjectName() + File.separator
-                + "builds" + File.separator + replaceAll(edit.getScript().getClassName(), ".", File.separator) + ".class";
+                + "builds" + File.separator + replaceAll(((JavaProgram) edit.getScript()).getClassName(), ".", File.separator) + ".class";
         try {
             new URLClassLoader(((URLClassLoader) ClassLoader.getSystemClassLoader()).getURLs()) {
 
@@ -128,7 +133,7 @@ public class Analyzer {
                 }
 
             }.addURL(new File(filePath).toURI().toURL());
-            java.lang.Class<?> loadClass = ClassLoader.getSystemClassLoader().loadClass(edit.getScript().getClassName());
+            java.lang.Class<?> loadClass = ClassLoader.getSystemClassLoader().loadClass(((JavaProgram) edit.getScript()).getClassName());
             for (java.lang.reflect.Method m : loadClass.getMethods()) {
                 al.add(new Option(m.getName(), m.getName()));
             }
