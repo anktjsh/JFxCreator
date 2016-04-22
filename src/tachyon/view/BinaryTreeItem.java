@@ -15,8 +15,8 @@ import java.util.zip.ZipFile;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import tachyon.java.core.JavaLibrary;
 import tachyon.framework.core.Project;
+import tachyon.java.core.JavaLibrary;
 
 /**
  *

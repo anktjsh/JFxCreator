@@ -32,6 +32,8 @@ import tachyon.java.core.JavaFxProject;
 import tachyon.framework.core.Project;
 import tachyon.java.core.StandardJavaProject;
 import tachyon.features.Highlighter;
+import tachyon.view.Dependencies;
+import tachyon.view.Writer;
 
 /**
  *

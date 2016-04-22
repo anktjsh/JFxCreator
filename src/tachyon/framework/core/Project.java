@@ -5,7 +5,6 @@
  */
 package tachyon.framework.core;
 
-import tachyon.java.core.DebuggerController;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +37,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import tachyon.framework.manager.TaskManager;
+import tachyon.java.core.DebuggerController;
 import tachyon.process.ProcessItem;
 
 /**

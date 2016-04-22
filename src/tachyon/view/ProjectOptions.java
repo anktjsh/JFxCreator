@@ -16,7 +16,6 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import tachyon.Tachyon;
 import static tachyon.Tachyon.applyCss;
 import static tachyon.Tachyon.css;
 import static tachyon.Tachyon.icon;

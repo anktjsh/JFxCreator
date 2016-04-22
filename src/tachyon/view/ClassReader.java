@@ -18,6 +18,8 @@ import javafx.scene.layout.HBox;
 import org.fxmisc.richtext.CodeArea;
 import tachyon.framework.core.Project;
 import tachyon.features.Highlighter;
+import tachyon.view.EnvironmentTab;
+import tachyon.view.Writer;
 
 /**
  *
